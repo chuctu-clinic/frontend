@@ -1,0 +1,13 @@
+# Chạy giao diện bằng nginx (cần backend đang chạy, mặc định ở cổng 4000 của máy):
+#   docker compose up --build
+# Sau đó mở http://localhost:8080 (trang khách) và http://localhost:8080/noi-bo/ (tiếp tân, Admin).
+services:
+  client:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:4000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

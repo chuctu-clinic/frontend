@@ -1,0 +1,177 @@
+
+
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur: 220ms;
+  --dur-slow: 320ms;
+}
+
+html { scroll-behavior: smooth; }
+
+/* ---------- Liên kết, nút, ô chọn: đổi màu mượt ---------- */
+
+a {
+  transition: color var(--dur-fast) ease, text-decoration-color var(--dur-fast) ease, text-decoration-thickness var(--dur-fast) ease;
+}
+
+.btn,
+.h-btn,
+.btn-login,
+.i-anchor,
+.i-call-big,
+.main-nav a,
+.user-menu-list a,
+.user-menu-list button,
+.side-nav a,
+.f-col a,
+.tab,
+.choice {
+  transition:
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.btn:active:not(:disabled),
+.h-btn:active,
+.btn-login:active,
+.i-anchor:active,
+.i-call-big:active,
+.choice:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Nút chính đổ bóng rõ hơn khi rê chuột */
+.h-btn-primary:hover,
+.btn-primary:hover:not(:disabled),
+.i-call-big:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.input,
+.select,
+.textarea {
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out);
+}
+.input:hover:not(:disabled):not(:focus),
+.select:hover:not(:disabled):not(:focus),
+.textarea:hover:not(:disabled):not(:focus) {
+  border-color: var(--green-600);
+}
+
+:focus-visible {
+  transition: outline-offset var(--dur-fast) var(--ease-out);
+}
+
+/* ---------- Thẻ: nổi lên nhẹ khi rê chuột ---------- */
+
+.h-service,
+.h-news,
+.card-link {
+  transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+.h-service:hover,
+.h-news:hover,
+.card-link:hover {
+  transform: translateY(-3px);
+}
+
+.h-service .h-arrow {
+  transition: transform var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out);
+}
+.h-service:hover .h-arrow {
+  transform: translateX(4px);
+}
+
+.h-link svg,
+.h-link-lg svg {
+  transition: transform var(--dur) var(--ease-out);
+}
+.h-link:hover svg,
+.h-link-lg:hover svg {
+  transform: translateX(3px);
+}
+
+/* Ảnh trong thẻ tin tức phóng rất nhẹ, khung thẻ giữ nguyên */
+.h-news img {
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.h-news:hover img {
+  transform: scale(1.03);
+}
+
+/* ---------- Xuất hiện: trang mới, menu, hộp thoại, thông báo ---------- */
+
+@keyframes ct-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ct-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes ct-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Mỗi lần chuyển trang, nội dung hiện dần lên */
+.route-fade {
+  animation: ct-fade-up var(--dur-slow) var(--ease-out) both;
+}
+
+.user-menu-list {
+  transform-origin: top right;
+  animation: ct-pop var(--dur) var(--ease-out) both;
+}
+
+@media (max-width: 1100px) {
+  .main-nav.open {
+    animation: ct-fade-up var(--dur) var(--ease-out) both;
+  }
+}
+
+.modal-backdrop {
+  animation: ct-fade var(--dur) ease both;
+}
+.modal {
+  animation: ct-pop var(--dur-slow) var(--ease-out) both;
+}
+
+.alert,
+.field-error {
+  animation: ct-fade-up var(--dur) var(--ease-out) both;
+}
+
+/* ---------- Tôn trọng cài đặt giảm chuyển động ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  .h-service:hover,
+  .h-news:hover,
+  .card-link:hover,
+  .h-service:hover .h-arrow,
+  .h-link:hover svg,
+  .h-link-lg:hover svg,
+  .h-news:hover img,
+  .btn:active,
+  .h-btn:active,
+  .btn-login:active,
+  .i-anchor:active,
+  .i-call-big:active,
+  .choice:active {
+    transform: none;
+  }
+  .spinner { animation-duration: 2400ms !important; animation-iteration-count: infinite !important; }
+}

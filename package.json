@@ -1,0 +1,21 @@
+{
+  "name": "chuctu-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Giao diện Phòng khám Chúc Từ: client-users (khách) và client-admin (tiếp tân, Admin)",
+  "workspaces": [
+    "shared",
+    "client-users",
+    "client-admin"
+  ],
+  "scripts": {
+    "dev": "concurrently -n users,admin -c yellow,cyan \"npm run dev -w client-users\" \"npm run dev -w client-admin\"",
+    "build": "npm run build -w client-users && npm run build -w client-admin"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
