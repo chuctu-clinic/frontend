@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { CLINIC } from '@chuctu/shared/lib/format.ts';
 import { isStaff, useSession } from '@chuctu/shared/lib/session.tsx';
@@ -7,6 +7,7 @@ import { Icon, type IconName } from '@chuctu/shared/components/Icon.tsx';
 import { adminUrl } from '@chuctu/shared/lib/apps.ts';
 import type { User } from '@chuctu/shared/types.ts';
 import './layout.css';
+import '../user.css';
 
 const NAV = [
   { to: '/gioi-thieu', label: 'Giới thiệu' },
@@ -16,13 +17,14 @@ const NAV = [
   { to: '/lien-he', label: 'Liên hệ' },
 ];
 
-export const ACCOUNT_LINKS: { to: string; label: string; icon: IconName }[] = [
-  { to: '/tai-khoan', label: 'Thông tin tài khoản', icon: 'user' },
-  { to: '/tai-khoan/ho-so', label: 'Hồ sơ khám bệnh', icon: 'users' },
-  { to: '/phieu-kham', label: 'Phiếu khám bệnh', icon: 'ticket' },
-  { to: '/lich-su-kham', label: 'Lịch sử khám', icon: 'clipboard' },
+export const ACCOUNT_LINKS: { to: string; label: string; icon: IconName; desc: string }[] = [
+  { to: '/tai-khoan', label: 'Thông tin tài khoản', icon: 'user', desc: 'Họ tên, ngày sinh, địa chỉ' },
+  { to: '/tai-khoan/ho-so', label: 'Hồ sơ khám bệnh', icon: 'users', desc: 'Cô chú và người thân' },
+  { to: '/phieu-kham', label: 'Phiếu khám bệnh', icon: 'ticket', desc: 'Lịch khám đã đặt' },
+  { to: '/lich-su-kham', label: 'Lịch sử khám', icon: 'clipboard', desc: 'Kết quả các lần khám' },
 ];
 
+/** Nút tài khoản: ảnh đại diện tròn, tên, mở danh sách trang tài khoản (prototype: đã đăng nhập). */
 function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -42,25 +44,54 @@ function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   return (
     <div className="user-menu" ref={ref}>
-      <button type="button" className="btn btn-secondary" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((v) => !v)}>
-        <Icon name="user" />
-        <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.fullName}</span>
+      <button type="button" className="u-userbtn" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((v) => !v)}>
+        <span className="u-avatar" aria-hidden="true">
+          <Icon name="userSoft" size={22} strokeWidth={1.75} />
+        </span>
+        <span className="u-userbtn-name">{user.fullName}</span>
         <Icon name="chevronDown" size={20} />
       </button>
       {open && (
-        <div className="user-menu-list" onClick={() => setOpen(false)}>
+        <div className="u-usermenu" role="menu" onClick={() => setOpen(false)}>
           {ACCOUNT_LINKS.map((l) => (
-            <Link key={l.to} to={l.to}>
-              <Icon name={l.icon} />
-              {l.label}
+            <Link key={l.to} to={l.to} role="menuitem">
+              <span className="u-usermenu-ic" aria-hidden="true">
+                <Icon name={l.icon} size={22} strokeWidth={1.75} />
+              </span>
+              <span>
+                <span className="u-usermenu-t">{l.label}</span>
+                <span className="u-usermenu-d">{l.desc}</span>
+              </span>
             </Link>
           ))}
-          <button type="button" onClick={onLogout}>
-            <Icon name="logout" />
+          <span className="u-usermenu-sep" />
+          <button type="button" role="menuitem" className="u-usermenu-out" onClick={onLogout}>
+            <span className="u-usermenu-ic" aria-hidden="true">
+              <Icon name="logout" size={22} strokeWidth={1.75} />
+            </span>
             Đăng xuất
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Dải đường dẫn nền be ngay dưới đầu trang (prototype: các trang tài khoản, đặt lịch). */
+export function Crumbs({ items }: { items: { label: string; to?: string }[] }) {
+  return (
+    <div className="u-crumbs">
+      <nav aria-label="Đường dẫn">
+        <Link to="/">Trang chủ</Link>
+        {items.map((it, i) => (
+          <span key={i}>
+            <span className="u-crumbs-sep" aria-hidden="true">
+              ›
+            </span>
+            {it.to ? <Link to={it.to}>{it.label}</Link> : <span aria-current="page">{it.label}</span>}
+          </span>
+        ))}
+      </nav>
     </div>
   );
 }
@@ -70,6 +101,7 @@ export function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const isHome = location.pathname === '/';
 
   useEffect(() => {
     setMenuOpen(false);
@@ -87,22 +119,24 @@ export function PublicLayout() {
       <a className="skip-link" href="#noi-dung">
         Bỏ qua, tới nội dung chính
       </a>
-      <div className="topbar">
-        <div className="container">
-          <span className="topbar-item">
-            <Icon name="phone" size={20} strokeWidth={1.75} />
-            <a href={CLINIC.phoneHref}>{CLINIC.phone}</a>
-          </span>
-          <span className="topbar-item">
-            <Icon name="pin" size={20} strokeWidth={1.75} />
-            {CLINIC.address}
-          </span>
-          <span className="topbar-item topbar-free">
-            <Icon name="heartSoft" size={20} strokeWidth={1.75} />
-            Khám và điều trị từ thiện — không thu phí
-          </span>
+      {isHome && (
+        <div className="topbar">
+          <div className="container">
+            <span className="topbar-item">
+              <Icon name="phone" size={20} strokeWidth={1.75} />
+              <a href={CLINIC.phoneHref}>{CLINIC.phone}</a>
+            </span>
+            <span className="topbar-item">
+              <Icon name="pin" size={20} strokeWidth={1.75} />
+              {CLINIC.address}
+            </span>
+            <span className="topbar-item topbar-free">
+              <Icon name="heartSoft" size={20} strokeWidth={1.75} />
+              Khám và điều trị từ thiện — không thu phí
+            </span>
+          </div>
         </div>
-      </div>
+      )}
       <header className="site-header">
         <div className="container">
           <Brand />
@@ -146,35 +180,73 @@ export function PublicLayout() {
           <Outlet />
         </div>
       </main>
-      <Footer user={user} />
+      {user?.role === 'USER' ? <MemberFooter onLogout={handleLogout} /> : <Footer />}
     </>
   );
 }
 
-/** Chân trang theo prototype: 3 thẻ liên hệ, thương hiệu + liên kết, dòng bản quyền. */
-type FooterLink = { label: string; to: string } | { label: string; href: string };
+/** Khung trang đăng nhập và tạo tài khoản: đầu trang và chân trang tối giản (prototype: Đăng nhập, Tạo tài khoản). */
+export function AuthLayout() {
+  const location = useLocation();
+  const onRegister = location.pathname.startsWith('/dang-ky');
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname]);
+  return (
+    <div className="u-auth-page">
+      <a className="skip-link" href="#noi-dung">
+        Bỏ qua, tới nội dung chính
+      </a>
+      <header className="u-auth-header">
+        <div>
+          <Brand />
+          <div className="u-auth-header-r">
+            <span>{onRegister ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'}</span>
+            <Link to={onRegister ? '/dang-nhap' : '/dang-ky'} className="u-btn u-btn-ghost u-btn-md">
+              {onRegister ? 'Đăng nhập' : 'Tạo tài khoản'}
+            </Link>
+          </div>
+        </div>
+      </header>
+      <main id="noi-dung" className="u-auth-main">
+        <Outlet />
+      </main>
+      <footer className="u-auth-footer">
+        <div>
+          <span>
+            © {new Date().getFullYear()} Phòng khám Chúc Từ · {CLINIC.address}
+          </span>
+          <Link to="/lien-he">Cần giúp đỡ? Liên hệ phòng khám</Link>
+        </div>
+      </footer>
+    </div>
+  );
+}
 
-function Footer({ user }: { user: User | null | undefined }) {
-  const cols: [string, FooterLink[]][] = [
-    ['Nội dung', NAV],
-    [
-      'Tài khoản',
-      user?.role === 'USER'
-        ? ACCOUNT_LINKS
-        : [
-            { to: '/dang-nhap', label: 'Đăng nhập' },
-            { to: '/dang-ky', label: 'Tạo tài khoản' },
-          ],
-    ],
-    [
-      'Cần giúp đỡ',
-      [
-        { to: '/huong-dan', label: 'Hướng dẫn đặt lịch' },
-        { to: '/huong-dan', label: 'Câu hỏi thường gặp' },
-        { href: adminUrl('dang-nhap'), label: 'Đăng nhập nội bộ' },
-      ],
-    ],
-  ];
+function FooterBottom() {
+  return (
+    <div className="f-bottom">
+      <div className="f-bottom-row">
+        <p>
+          © {new Date().getFullYear()} {CLINIC.name}.
+        </p>
+        <p>Thông tin trên trang chỉ mang tính tham khảo, không thay thế chẩn đoán của thầy thuốc.</p>
+      </div>
+    </div>
+  );
+}
+
+function FooterCol({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <nav className="f-col" aria-label={title}>
+      <h3>{title}</h3>
+      {children}
+    </nav>
+  );
+}
+
+/** Chân trang khi chưa đăng nhập: 3 thẻ liên hệ, thương hiệu + liên kết, dòng bản quyền. */
+function Footer() {
   return (
     <footer className="site-footer">
       <div className="f-contacts">
@@ -221,32 +293,86 @@ function Footer({ user }: { user: User | null | undefined }) {
             <Brand tag="Y học cổ truyền · Từ thiện" />
             <p>{CLINIC.name} — khám và điều trị không thu phí cho bà con.</p>
           </div>
-          {cols.map(([title, links]) => (
-            <nav key={title} className="f-col" aria-label={title}>
-              <h3>{title}</h3>
-              {links.map((l) => (
-                'href' in l ? (
-                  <a key={l.label} href={l.href}>
-                    {l.label}
-                  </a>
-                ) : (
-                  <Link key={l.label} to={l.to}>
-                    {l.label}
-                  </Link>
-                )
-              ))}
-            </nav>
-          ))}
+          <FooterCol title="Nội dung">
+            {NAV.map((n) => (
+              <Link key={n.to} to={n.to}>
+                {n.label}
+              </Link>
+            ))}
+          </FooterCol>
+          <FooterCol title="Tài khoản">
+            <Link to="/dang-nhap">Đăng nhập</Link>
+            <Link to="/dang-ky">Tạo tài khoản</Link>
+          </FooterCol>
+          <FooterCol title="Cần giúp đỡ">
+            <Link to="/huong-dan">Hướng dẫn đặt lịch</Link>
+            <Link to="/huong-dan#cau-hoi">Câu hỏi thường gặp</Link>
+          </FooterCol>
         </div>
       </div>
-      <div className="f-bottom">
-        <div className="f-bottom-row">
-          <p>
-            © {new Date().getFullYear()} {CLINIC.name}.
-          </p>
-          <p>Thông tin trên trang chỉ mang tính tham khảo, không thay thế chẩn đoán của thầy thuốc.</p>
+      <FooterBottom />
+    </footer>
+  );
+}
+
+/** Chân trang khi đã đăng nhập: liên kết tài khoản, trợ giúp, thông tin phòng khám (prototype: đã đăng nhập). */
+function MemberFooter({ onLogout }: { onLogout: () => void }) {
+  return (
+    <footer className="site-footer">
+      <div className="f-links" style={{ borderTop: 0, padding: '44px 24px 40px' }}>
+        <div className="f-links-row" style={{ gap: '40px 48px' }}>
+          <div className="f-brand" style={{ flex: '1 1 300px' }}>
+            <Brand tag="Y học cổ truyền · Từ thiện" />
+            <p style={{ maxWidth: '40ch' }}>Khám và điều trị không thu phí cho bà con. Cần gì cô chú cứ gọi, có người trực nghe máy.</p>
+          </div>
+          <FooterCol title="Tài khoản của tôi">
+            {ACCOUNT_LINKS.map((l) => (
+              <Link key={l.to} to={l.to}>
+                {l.label}
+              </Link>
+            ))}
+            <Link to="/dat-lich" className="f-strong">
+              Đặt lịch khám mới
+            </Link>
+          </FooterCol>
+          <FooterCol title="Cần giúp đỡ">
+            <Link to="/huong-dan">Hướng dẫn đặt lịch</Link>
+            <Link to="/huong-dan#cau-hoi">Câu hỏi thường gặp</Link>
+            <Link to="/lien-he">Liên hệ phòng khám</Link>
+            <button type="button" className="f-logout" onClick={onLogout}>
+              Đăng xuất
+            </button>
+          </FooterCol>
+          <div className="f-col f-clinic" style={{ flex: '1 1 300px' }}>
+            <h3>Phòng khám</h3>
+            <div>
+              <span className="f-dot f-dot-sm">
+                <Icon name="pin" size={20} strokeWidth={1.75} />
+              </span>
+              <p>{CLINIC.address}</p>
+            </div>
+            <div>
+              <span className="f-dot f-dot-sm">
+                <Icon name="clockSoft" size={20} strokeWidth={1.75} />
+              </span>
+              <p>
+                Mỗi ngày kể cả Chủ Nhật:
+                <br />
+                <strong>{CLINIC.hours}</strong>
+              </p>
+            </div>
+            <div>
+              <span className="f-dot f-dot-sm">
+                <Icon name="phone" size={20} strokeWidth={1.75} />
+              </span>
+              <a href={CLINIC.phoneHref} className="f-phone">
+                {CLINIC.phone}
+              </a>
+            </div>
+          </div>
         </div>
       </div>
+      <FooterBottom />
     </footer>
   );
 }

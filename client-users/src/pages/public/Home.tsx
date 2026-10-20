@@ -140,7 +140,7 @@ export default function Home() {
             </p>
           </div>
           <ol className="h-grid-4">
-            {STEPS.map(([title, text], i) => (
+            {(user?.role === 'USER' ? [['Đã đăng nhập', 'Cô chú đang đăng nhập rồi, không cần làm lại bước này.'], ...STEPS.slice(1)] : STEPS).map(([title, text], i) => (
               <li key={title} className="h-card h-step">
                 <span className="h-num" aria-hidden="true">
                   {i + 1}
@@ -263,7 +263,7 @@ export default function Home() {
         <div className="h-wrap h-cta-row">
           <div style={{ flex: '1 1 420px', minWidth: 0 }}>
             <h2>Cô chú muốn đặt lịch khám?</h2>
-            <p>Đăng nhập rồi đặt lịch, chỉ mất vài phút. Nếu thấy khó, cô chú cứ gọi điện cho phòng khám.</p>
+            <p>{user?.role === 'USER' ? 'Đặt lịch' : 'Đăng nhập rồi đặt lịch,'} chỉ mất vài phút. Nếu thấy khó, cô chú cứ gọi điện cho phòng khám.</p>
           </div>
           <div className="h-actions">
             <Link to={bookTo} className="h-btn h-btn-light">

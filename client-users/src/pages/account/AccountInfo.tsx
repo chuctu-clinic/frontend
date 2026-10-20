@@ -1,11 +1,13 @@
 import type { ApiError } from '@chuctu/shared/lib/api.ts';
-import { useState, type FormEvent } from 'react';
-import { Alert, Button, ErrorAlert, Loading, PageHeader, SelectInput, TextInput, type InputEvent } from '@chuctu/shared/components/ui.tsx';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Icon } from '@chuctu/shared/components/Icon.tsx';
+import { Loading } from '@chuctu/shared/components/ui.tsx';
 import { api } from '@chuctu/shared/lib/api.ts';
-import { CLINIC, GENDERS, fmtDate, todayVN } from '@chuctu/shared/lib/format.ts';
+import { joinAddress, splitAddress } from '@chuctu/shared/lib/diaGioi.ts';
+import { GENDERS } from '@chuctu/shared/lib/format.ts';
 import { useSession } from '@chuctu/shared/lib/session.tsx';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.ts';
-import { AccountShell } from './AccountShell.tsx';
+import { AddressBox, DobField, PhoneField, Spinner, UError, UField, phoneDigits, type AddressParts } from '../../components/uparts.tsx';
 import type { User } from '@chuctu/shared/types.ts';
 
 /** Xem và cập nhật thông tin tài khoản; số điện thoại không tự sửa (UC.1.4, UC.1.5). */
@@ -13,27 +15,30 @@ interface AccountForm {
   fullName: string;
   dob: string;
   gender: string;
-  address: string;
+  addr: AddressParts;
 }
 
+const toForm = (u: User): AccountForm => ({ fullName: u.fullName, dob: u.dob ? u.dob.slice(0, 10) : '', gender: u.gender || '', addr: splitAddress(u.address) });
+
 export default function AccountInfo() {
-  useDocumentTitle('Thông tin tài khoản');
+  useDocumentTitle('Tài khoản của tôi');
   const { setUser } = useSession();
   const { data, loading, setData } = useAsync(() => api.get<{ user: User; patientCode: string | null }>('/me'), []);
-  const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<AccountForm | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [saved, setSaved] = useState(false);
+  // Đổi lại khi Bỏ thay đổi để ba ô ngày sinh lấy lại giá trị cũ
+  const [formKey, setFormKey] = useState(0);
 
-  const startEdit = () => {
-    const u = data?.user;
-    if (!u) return;
-    setForm({ fullName: u.fullName, dob: u.dob ? u.dob.slice(0, 10) : '', gender: u.gender || '', address: u.address || '' });
-    setEditing(true);
+  useEffect(() => {
+    if (data?.user) setForm(toForm(data.user));
+  }, [data]);
+
+  const set = <K extends keyof AccountForm>(k: K, v: AccountForm[K]) => {
     setSaved(false);
+    setForm((f) => (f ? { ...f, [k]: v } : f));
   };
-  const set = (k: keyof AccountForm) => (e: InputEvent) => setForm((f) => (f ? { ...f, [k]: e.target.value } : f));
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,11 +46,16 @@ export default function AccountInfo() {
     setPending(true);
     setError(null);
     try {
-      const res = await api.patch<{ user: User; patientCode: string | null }>('/me', { ...form, dob: form.dob || null, gender: form.gender || null });
+      const res = await api.patch<{ user: User; patientCode: string | null }>('/me', {
+        fullName: form.fullName,
+        dob: form.dob || null,
+        gender: form.gender || null,
+        address: joinAddress(form.addr.street, form.addr.ward, form.addr.province) || null,
+      });
       setData(res);
       setUser(res.user);
-      setEditing(false);
       setSaved(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       setError(err as ApiError);
     } finally {
@@ -57,60 +67,88 @@ export default function AccountInfo() {
   const u = data?.user;
 
   return (
-    <AccountShell crumbs={[{ label: 'Thông tin tài khoản' }]}>
-      <PageHeader title="Thông tin tài khoản" actions={u && !editing && <Button variant="secondary" icon="edit" onClick={startEdit}>Sửa thông tin</Button>} />
-      {loading && <Loading />}
-      {saved && <Alert type="success" title="Đã lưu thông tin tài khoản." />}
-      {u && !editing && (
-        <div className="card card-lg">
-          <dl className="info">
-            <dt>Họ và tên</dt>
-            <dd>{u.fullName}</dd>
-            <dt>Số điện thoại</dt>
-            <dd className="mono">{u.phone}</dd>
-            <dt>Mã bệnh nhân</dt>
-            <dd className="mono">{data.patientCode || '—'}</dd>
-            <dt>Ngày sinh</dt>
-            <dd>{fmtDate(u.dob)}</dd>
-            <dt>Giới tính</dt>
-            <dd>{u.gender ? GENDERS[u.gender] : '—'}</dd>
-            <dt>Địa chỉ</dt>
-            <dd>{u.address || '—'}</dd>
-          </dl>
+    <>
+      <section className="u-band">
+        <div className="u-wrap">
+          <h1 className="u-h1">Tài khoản của tôi</h1>
         </div>
-      )}
-      {editing && form && u && (
-        <form className="card card-lg stack" onSubmit={submit} noValidate>
-          <TextInput label="Họ và tên" required value={form.fullName} onChange={set('fullName')} error={fe.fullName} />
-          <TextInput
-            label="Số điện thoại"
-            value={u.phone}
-            disabled
-            hint={`Số điện thoại là tên đăng nhập nên không tự sửa được. Cần đổi số, cô chú gọi ${CLINIC.phone}.`}
-          />
-          <div className="form-grid">
-            <TextInput label="Ngày sinh" type="date" max={todayVN()} value={form.dob} onChange={set('dob')} error={fe.dob} />
-            <SelectInput
-              label="Giới tính"
-              placeholder="Chọn giới tính"
-              options={Object.entries(GENDERS).map(([value, label]) => ({ value, label }))}
-              value={form.gender}
-              onChange={set('gender')}
-              error={fe.gender}
-            />
-          </div>
-          <TextInput label="Địa chỉ" value={form.address} onChange={set('address')} error={fe.address} />
-          {error && !Object.keys(fe).length && <ErrorAlert error={error} />}
-          <div className="row">
-            <Button type="submit" loading={pending}>
-              Lưu thông tin
-            </Button>
-            <Button variant="ghost" onClick={() => setEditing(false)}>
-              Huỷ, không sửa nữa
-            </Button>
-          </div>
-        </form>
-      )}
-    </AccountShell>
+      </section>
+      <section className="u-section">
+        <div className="u-wrap" style={{ maxWidth: 1160 }}>
+          {loading && <Loading />}
+          {saved && (
+            <div className="u-ok" role="status">
+              <Icon name="checkCircle" />
+              Đã lưu thay đổi thông tin tài khoản.
+            </div>
+          )}
+          {u && (
+            <div className="u-linked">
+              <span aria-hidden="true">
+                <Icon name="file" size={28} />
+              </span>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#2a2118' }}>Hồ sơ bệnh nhân đã liên kết</h2>
+                <p className="u-text" style={{ marginTop: 6 }}>
+                  Mã bệnh nhân <strong className="u-ink">{data.patientCode || '—'}</strong> — do phòng khám tạo. Lịch sử và kết quả khám của hồ sơ này, cùng các hồ sơ người thân, xem ở mục
+                  Lịch sử khám.
+                </p>
+              </div>
+            </div>
+          )}
+          {u && form && (
+            <form key={formKey} className="u-card-lg" style={{ padding: 32 }} onSubmit={submit} noValidate>
+              <div>
+                <h2 className="u-h2" style={{ fontSize: 26, lineHeight: '36px' }}>
+                  Thông tin cá nhân
+                </h2>
+                <p className="u-text u-muted" style={{ fontSize: 17 }}>
+                  Số điện thoại là tên đăng nhập nên không sửa được tại đây. Cần đổi, cô chú gọi cho phòng khám.
+                </p>
+              </div>
+              <UField label="Họ và tên" required error={fe.fullName}>
+                {({ id, describedBy, invalid }) => (
+                  <input id={id} className="u-input u-input-md" autoComplete="name" value={form.fullName} aria-invalid={invalid} aria-describedby={describedBy} onChange={(e) => set('fullName', e.target.value)} />
+                )}
+              </UField>
+              <PhoneField label="Số điện thoại (tên đăng nhập)" value={phoneDigits(u.phone)} readOnly hint="Ô này không sửa được." />
+              <DobField value={form.dob} onChange={(v) => set('dob', v)} error={fe.dob} hint="Dùng để bác sĩ biết tuổi khi khám." />
+              <UField label="Giới tính" error={fe.gender}>
+                {({ id, invalid }) => (
+                  <select id={id} className="u-select u-select-md" value={form.gender} aria-invalid={invalid} onChange={(e) => set('gender', e.target.value)}>
+                    <option value="">Không muốn nêu</option>
+                    {Object.entries(GENDERS).map(([v, t]) => (
+                      <option key={v} value={v}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </UField>
+              <AddressBox value={form.addr} onChange={(v) => set('addr', v)} error={fe.address} />
+              {error && !Object.keys(fe).length && <UError>{error.message}</UError>}
+              <div className="u-row" style={{ gap: 16, paddingTop: 24, borderTop: '1px solid #e0d3bc' }}>
+                <button type="submit" className="u-btn u-btn-primary u-btn-lg" style={{ padding: '0 32px' }} disabled={pending}>
+                  {pending ? <Spinner /> : <Icon name="check" />}
+                  Lưu thay đổi
+                </button>
+                <button
+                  type="button"
+                  className="u-btn u-btn-ghost u-btn-lg"
+                  onClick={() => {
+                    setForm(toForm(u));
+                    setFormKey((k) => k + 1);
+                    setError(null);
+                    setSaved(false);
+                  }}
+                >
+                  Bỏ thay đổi
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </section>
+    </>
   );
 }

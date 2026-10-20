@@ -73,6 +73,8 @@ export interface Appointment {
     relationship: Relationship | null;
     birthYear: number | null;
     phone?: string | null;
+    dob?: string | null;
+    address?: string | null;
     isLocked: boolean;
   } | null;
   /** Chỉ có ở API của người dùng. */

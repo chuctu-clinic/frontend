@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { PublicLayout } from './components/PublicLayout.tsx';
+import { AuthLayout, PublicLayout } from './components/PublicLayout.tsx';
 import { Loading } from '@chuctu/shared/components/ui.tsx';
 import { useSession } from '@chuctu/shared/lib/session.tsx';
 
@@ -42,6 +42,10 @@ function RequireUser({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <Routes>
+      <Route element={<AuthLayout />}>
+        <Route path="dang-nhap" element={<Login />} />
+        <Route path="dang-ky" element={<Register />} />
+      </Route>
       <Route element={<PublicLayout />}>
         <Route index element={<Home />} />
         <Route path="gioi-thieu" element={<GioiThieu />} />
@@ -50,9 +54,6 @@ export default function App() {
         <Route path="lien-he" element={<LienHe />} />
         <Route path="tin-tuc" element={<PostList />} />
         <Route path="tin-tuc/:id" element={<PostDetail />} />
-
-        <Route path="dang-nhap" element={<Login />} />
-        <Route path="dang-ky" element={<Register />} />
 
         <Route path="dat-lich" element={<RequireUser><Booking /></RequireUser>} />
         <Route path="tai-khoan" element={<RequireUser><AccountInfo /></RequireUser>} />

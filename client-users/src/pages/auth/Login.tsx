@@ -2,19 +2,20 @@ import type { ApiError } from '@chuctu/shared/lib/api.ts';
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon } from '@chuctu/shared/components/Icon.tsx';
-import { Button, ButtonLink, ErrorAlert, TextInput } from '@chuctu/shared/components/ui.tsx';
-import { adminUrl } from '@chuctu/shared/lib/apps.ts';
 import { api } from '@chuctu/shared/lib/api.ts';
 import { useSession } from '@chuctu/shared/lib/session.tsx';
 import { useDocumentTitle } from '@chuctu/shared/lib/useAsync.ts';
-import { AuthShell } from './AuthShell.tsx';
-import { OtpStep } from './OtpStep.tsx';
+import { OtpDialog } from './OtpStep.tsx';
+import { PhoneField, Spinner, UError, phoneOk, toPhone } from '../../components/uparts.tsx';
 import type { User, OtpInfo } from '@chuctu/shared/types.ts';
 
 /** Chỉ nhận đường dẫn nội bộ để tránh chuyển hướng ra ngoài. */
 export function safeNext(value: string | null | undefined, fallback = '/') {
   return value && value.startsWith('/') && !value.startsWith('//') ? value : fallback;
 }
+
+/** "0912345678" → "0912 *** 678" để nhắc số vừa nhận mã mà không lộ cả số. */
+const masked = (phone: string) => (phone.length >= 8 ? `${phone.slice(0, 4)} *** ${phone.slice(-3)}` : phone);
 
 export default function Login() {
   useDocumentTitle('Đăng nhập');
@@ -24,17 +25,22 @@ export default function Login() {
   const next = safeNext(params.get('tiep'));
   const forBooking = next.startsWith('/dat-lich');
 
-  const [phone, setPhone] = useState('');
-  const [step, setStep] = useState<'phone' | 'code'>('phone');
+  const [digits, setDigits] = useState('');
+  const [tried, setTried] = useState(false);
   const [otp, setOtp] = useState<OtpInfo | null>(null);
   const [remember, setRemember] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
-  if (user?.role === 'USER' && step === 'phone') return <Navigate to={next} replace />;
+  if (user?.role === 'USER' && !otp) return <Navigate to={next} replace />;
+
+  const phone = toPhone(digits);
+  const localError = tried && !phoneOk(digits) ? (digits ? 'Số điện thoại gồm 9 đến 10 chữ số sau +84.' : 'Vui lòng nhập số điện thoại.') : null;
 
   const submitPhone = async (e: FormEvent) => {
     e.preventDefault();
+    setTried(true);
+    if (!phoneOk(digits)) return;
     setPending(true);
     setError(null);
     try {
@@ -45,7 +51,6 @@ export default function Login() {
         return;
       }
       setOtp(res);
-      setStep('code');
     } catch (err) {
       setError(err as ApiError);
     } finally {
@@ -67,77 +72,76 @@ export default function Login() {
     }
   };
 
+  const registerLink = `/dang-ky${next !== '/' ? `?tiep=${encodeURIComponent(next)}` : ''}`;
+
   return (
-    <AuthShell
-      title={step === 'phone' ? 'Đăng nhập' : 'Nhập mã xác nhận'}
-      subtitle={
-        step === 'phone'
-          ? forBooking
-            ? 'Cô chú đăng nhập để đặt lịch khám. Chỉ cần số điện thoại, không cần mật khẩu.'
-            : 'Chỉ cần số điện thoại, không cần nhớ mật khẩu.'
-          : 'Máy này chưa từng đăng nhập nên cần xác nhận một lần.'
-      }
-      aside={
-        <div className="card stack-sm">
-          <h3>Chưa có tài khoản?</h3>
-          <p>Tạo tài khoản một lần, lần sau đặt lịch khỏi nhập lại thông tin.</p>
-          <ButtonLink to={`/dang-ky${forBooking ? `?tiep=${encodeURIComponent(next)}` : ''}`} variant="secondary" icon="user">
-            Tạo tài khoản
-          </ButtonLink>
+    <div className="u-auth-grid">
+      <div className="u-auth-side">
+        <img className="u-auth-photo" src="/mat-tien.jpg" alt="Mặt tiền Phòng khám Chúc Từ, 57/8-10 Điện Biên Phủ" />
+      </div>
+      <form className="u-auth-form u-card-lg" onSubmit={submitPhone} noValidate>
+        <div>
+          <h1>Đăng nhập</h1>
+          <p className="u-text">
+            {forBooking
+              ? 'Cô chú đăng nhập để đặt lịch khám. Chỉ cần nhập số điện thoại đã đăng ký rồi bấm Đăng nhập.'
+              : 'Cô chú chỉ cần nhập số điện thoại đã đăng ký rồi bấm Đăng nhập.'}
+          </p>
         </div>
-      }
-    >
-      {step === 'phone' ? (
-        <form className="stack" onSubmit={submitPhone} noValidate>
-          <TextInput
-            label="Số điện thoại"
-            required
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            placeholder="Ví dụ: 0912 345 678"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            error={error?.fields?.phone}
-          />
-          {error && !error.fields?.phone && (
-            <>
-              <ErrorAlert error={error} />
-              {error.status === 404 && (
-                <ButtonLink to="/dang-ky" variant="secondary">
-                  Tạo tài khoản với số này
-                </ButtonLink>
-              )}
-            </>
-          )}
-          <Button type="submit" size="lg" block loading={pending}>
-            Đăng nhập
-          </Button>
-          <p className="small muted row" style={{ gap: 8 }}>
-            <Icon name="shield" size={20} />
-            Máy đã đăng nhập trước đây sẽ vào thẳng. Máy mới cần nhập mã 6 số gửi qua tin nhắn.
-          </p>
-          <p className="small">
-            Nhân viên phòng khám? <a href={adminUrl('dang-nhap')}>Đăng nhập khu vực nội bộ</a>
-          </p>
-        </form>
-      ) : (
-        <OtpStep
+        <PhoneField
+          label="Số điện thoại"
+          value={digits}
+          onChange={(d) => {
+            setDigits(d);
+            setError(null);
+          }}
+          error={localError || error?.fields?.phone}
+          hint="Không cần nhớ mật khẩu. Máy đã đăng nhập trước đây sẽ vào thẳng; máy mới sẽ nhận mã xác nhận qua tin nhắn (tối đa 3 mã mỗi giờ)."
+        />
+        {error && !error.fields?.phone && !otp && (
+          <div className="u-stack" style={{ gap: 12 }}>
+            <UError>{error.message}</UError>
+            {error.status === 404 && (
+              <Link to={registerLink} className="u-btn u-btn-ghost">
+                Tạo tài khoản với số này
+              </Link>
+            )}
+          </div>
+        )}
+        <button type="submit" className="u-btn u-btn-primary u-btn-lg u-btn-block" disabled={pending && !otp}>
+          {pending && !otp ? <Spinner /> : <Icon name="login" />}
+          Đăng nhập
+        </button>
+        <p className="u-text">
+          Chưa có tài khoản?{' '}
+          <Link to={registerLink} className="u-link">
+            Tạo tài khoản mới
+          </Link>
+        </p>
+      </form>
+      {otp && (
+        <OtpDialog
           phone={phone}
           purpose="NEW_DEVICE"
           otp={otp}
+          intro={
+            <>
+              Đây là máy mới nên phòng khám cần xác nhận lại. Phòng khám vừa gửi tin nhắn có mã 6 số tới số <strong className="u-ink">{masked(phone)}</strong>.
+            </>
+          }
+          submitLabel="Xác nhận và đăng nhập"
+          backLabel="Nhập lại số điện thoại"
           pending={pending}
           error={error}
           onSubmit={submitCode}
           onBack={() => {
-            setStep('phone');
+            setOtp(null);
             setError(null);
           }}
-          showRemember
           remember={remember}
           setRemember={setRemember}
         />
       )}
-    </AuthShell>
+    </div>
   );
 }

@@ -1,31 +1,35 @@
 import type { ApiError } from '@chuctu/shared/lib/api.ts';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react';
 import { Icon } from '@chuctu/shared/components/Icon.tsx';
-import { Alert, Button, ErrorAlert, TextInput } from '@chuctu/shared/components/ui.tsx';
 import { api } from '@chuctu/shared/lib/api.ts';
 import { CLINIC } from '@chuctu/shared/lib/format.ts';
 import type { OtpInfo } from '@chuctu/shared/types.ts';
+import { Spinner, UDialog, UError } from '../../components/uparts.tsx';
 
-/** Bước nhập mã 6 số gửi qua tin nhắn; có đếm ngược gửi lại mã (BR.03). */
-interface OtpStepProps {
+/** Hộp thoại nhập mã 6 số gửi qua tin nhắn; có đếm ngược gửi lại mã (BR.03). */
+interface OtpDialogProps {
   phone: string;
   purpose: 'REGISTER' | 'NEW_DEVICE';
   otp: OtpInfo | null;
+  intro: ReactNode;
+  submitLabel: string;
+  backLabel: string;
   onSubmit: (code: string) => void;
   pending: boolean;
   error: ApiError | null;
   onBack: () => void;
-  showRemember?: boolean;
   remember?: boolean;
   setRemember?: (value: boolean) => void;
 }
 
-export function OtpStep({ phone, purpose, otp, onSubmit, pending, error, onBack, showRemember, remember, setRemember }: OtpStepProps) {
+export function OtpDialog({ phone, purpose, otp, intro, submitLabel, backLabel, onSubmit, pending, error, onBack, remember, setRemember }: OtpDialogProps) {
+  const id = useId();
   const [code, setCode] = useState('');
   const [wait, setWait] = useState(otp?.resendAfterSeconds ?? 60);
   const [info, setInfo] = useState(otp);
   const [resendError, setResendError] = useState<ApiError | null>(null);
   const [resending, setResending] = useState(false);
+  const [tried, setTried] = useState(false);
 
   useEffect(() => {
     if (wait <= 0) return undefined;
@@ -52,55 +56,75 @@ export function OtpStep({ phone, purpose, otp, onSubmit, pending, error, onBack,
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    onSubmit(code);
+    setTried(true);
+    if (code.length === 6) onSubmit(code);
   };
 
+  const codeError = error?.fields?.code || (tried && code.length !== 6 ? 'Cô chú nhập đủ 6 số trong tin nhắn.' : null);
+
   return (
-    <form className="stack" onSubmit={submit} noValidate>
-      <Alert type="info" title="Đã gửi mã xác nhận">
-        Phòng khám vừa gửi tin nhắn có <strong>mã 6 số</strong> tới số <strong className="mono">{phone}</strong>. Mã dùng được trong 5 phút.
-      </Alert>
-      {info?.devCode && (
-        <Alert type="success" title="Chế độ phát triển">
-          Chưa nối dịch vụ tin nhắn, mã xác nhận là <strong className="mono">{info.devCode}</strong>.
-        </Alert>
-      )}
-      <TextInput
-        label="Mã xác nhận"
-        required
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        maxLength={6}
-        className=""
-        placeholder="______"
-        value={code}
-        onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-        error={error?.fields?.code}
-        style={{ fontSize: 30, letterSpacing: '0.4em', textAlign: 'center' }}
-      />
-      {showRemember && (
-        <label className="check">
-          <input type="checkbox" checked={remember} onChange={(e) => setRemember?.(e.target.checked)} />
-          Giữ đăng nhập trên máy này (lần sau không cần nhập mã)
-        </label>
-      )}
-      {error && !error.fields?.code && <ErrorAlert error={error} />}
-      <Button type="submit" size="lg" block loading={pending} disabled={code.length !== 6}>
-        Xác nhận
-      </Button>
-      <div className="row-between">
-        <Button variant="ghost" icon="arrowLeft" onClick={onBack}>
-          Đổi số điện thoại
-        </Button>
-        <Button variant="ghost" icon="refresh" onClick={resend} disabled={wait > 0} loading={resending}>
-          {wait > 0 ? `Gửi lại mã sau ${wait} giây` : 'Gửi lại mã'}
-        </Button>
-      </div>
-      <ErrorAlert error={resendError} />
-      <p className="small muted row" style={{ gap: 8 }}>
-        <Icon name="phone" size={20} />
-        Không nhận được tin nhắn? Cô chú gọi <a href={CLINIC.phoneHref}>{CLINIC.phone}</a> để được giúp.
-      </p>
-    </form>
+    <UDialog title="Nhập mã xác nhận" onClose={onBack}>
+      <form className="u-stack" onSubmit={submit} noValidate>
+        <p className="u-text">{intro}</p>
+        {info?.devCode && (
+          <p className="u-ok" style={{ padding: '14px 18px', fontSize: 17 }}>
+            Chế độ phát triển: chưa nối dịch vụ tin nhắn, mã là <strong className="mono">{info.devCode}</strong>.
+          </p>
+        )}
+        <div className="u-field">
+          <label className="u-label" htmlFor={id}>
+            Mã xác nhận (6 số)
+          </label>
+          <input
+            id={id}
+            className="u-input u-otp"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            placeholder="······"
+            value={code}
+            aria-invalid={!!codeError}
+            aria-describedby={`${id}-note`}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          />
+          <UError>{codeError}</UError>
+          <p className="u-hint" id={`${id}-note`}>
+            Tin nhắn thường đến trong vài giây. Điện thoại có thể tự điền mã giúp cô chú.
+          </p>
+        </div>
+        <div className="u-check" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', cursor: 'default', padding: '16px 20px' }}>
+          <span>{wait > 0 ? <>Gửi lại mã sau <strong>{wait} giây</strong></> : 'Chưa nhận được mã?'}</span>
+          <button type="button" className={`u-btn u-btn-md ${wait > 0 ? '' : 'u-btn-ghost'}`} style={{ minHeight: 52 }} disabled={wait > 0 || resending} onClick={resend}>
+            {resending && <Spinner />}
+            Gửi lại mã
+          </button>
+        </div>
+        <UError>{resendError?.message}</UError>
+        {setRemember ? (
+          <label className="u-check" style={{ background: 'transparent', padding: 0 }}>
+            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+            <span>
+              <strong>Giữ đăng nhập trên máy này.</strong> Lần sau cô chú không cần nhập mã.
+            </span>
+          </label>
+        ) : (
+          <p className="u-hint">
+            Không nhận được tin nhắn? Cô chú gọi{' '}
+            <a href={CLINIC.phoneHref} className="u-link">
+              {CLINIC.phone}
+            </a>{' '}
+            để phòng khám giúp. Mỗi số điện thoại nhận tối đa 3 mã mỗi giờ.
+          </p>
+        )}
+        {error && !error.fields?.code && <UError>{error.message}</UError>}
+        <button type="submit" className="u-btn u-btn-primary u-btn-lg u-btn-block" disabled={pending}>
+          {pending ? <Spinner /> : <Icon name="check" />}
+          {submitLabel}
+        </button>
+        <button type="button" className="u-btn u-btn-ghost u-btn-block" onClick={onBack}>
+          {backLabel}
+        </button>
+      </form>
+    </UDialog>
   );
 }
