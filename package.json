@@ -1,0 +1,25 @@
+{
+  "name": "phong-kham-chuc-tu",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Website Quản lý Tiếp nhận & Đặt lịch khám – Phòng khám Chúc Từ",
+  "workspaces": [
+    "shared",
+    "server",
+    "client/client-users",
+    "client/client-admin"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,users,admin -c green,yellow,cyan \"npm run dev -w server\" \"npm run dev -w client-users\" \"npm run dev -w client-admin\"",
+    "build": "npm run build -w client-users && npm run build -w client-admin",
+    "start": "npm run start -w server",
+    "seed": "npm run seed -w server",
+    "test": "npm test -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,45 @@
+# Chạy đồng thời database, server và client:
+#   docker compose up --build
+# Sau đó mở http://localhost:8080 (trang khách) và http://localhost:8080/noi-bo/ (tiếp tân, Admin).
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      MONGODB_URI: mongodb://mongo:27017/chuc-tu
+      # Đặt JWT_SECRET trong file .env cạnh docker-compose.yml khi chạy thật
+      JWT_SECRET: ${JWT_SECRET:-doi-chuoi-nay-khi-trien-khai}
+      CLIENT_ORIGIN: http://localhost:8080
+      # console: mã 6 số được in ra log, xem bằng: docker compose logs -f server
+      SMS_PROVIDER: console
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+
+volumes:
+  mongo-data:
