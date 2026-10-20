@@ -1,0 +1,22 @@
+# Render Blueprint: tạo dịch vụ giao diện (nginx) chạy từ image trên GHCR.
+# Image do GitHub Actions build và đẩy lên (.github/workflows/ci-cd.yml), Render chỉ kéo về và chạy.
+services:
+  - type: web
+    name: chuctu-frontend
+    runtime: image
+    image:
+      url: ghcr.io/chuctu-clinic/frontend:latest
+      # Bỏ dòng creds nếu package trên GHCR để công khai
+      creds:
+        fromRegistryCreds:
+          name: ghcr-chuctu
+    plan: free
+    region: singapore
+    healthCheckPath: /
+    envVars:
+      # nginx trong image nghe cổng 80
+      - key: PORT
+        value: "80"
+      # nginx chuyển /api sang đây. Đổi nếu dịch vụ backend có địa chỉ khác.
+      - key: API_UPSTREAM
+        value: https://chuctu-backend.onrender.com

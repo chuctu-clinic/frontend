@@ -54,6 +54,25 @@ Container dùng nginx phục vụ `client-users` ở `/`, `client-admin` ở `/n
 API_UPSTREAM=http://10.0.0.5:4000 docker compose up --build
 ```
 
+## Triển khai (CI/CD lên Render)
+
+`.github/workflows/ci-cd.yml`:
+
+| Sự kiện | Việc chạy |
+| --- | --- |
+| Pull request | `npm run build`, thử build image (không đẩy) |
+| Push lên `main` | `npm run build` → build image → đẩy lên `ghcr.io/chuctu-clinic/frontend` (tag `latest` và mã commit) → gọi Render Deploy Hook kèm đúng image vừa build |
+
+Trên Render, nginx phục vụ giao diện và chuyển `/api` sang backend (`API_UPSTREAM`, mặc định `https://chuctu-backend.onrender.com`). Trình duyệt chỉ thấy một địa chỉ nên cookie phiên hoạt động bình thường, không cần `VITE_API_URL`.
+
+Thiết lập một lần (làm backend trước, xem README repo backend):
+
+1. **Cho Render kéo image từ GHCR.** Đặt package `frontend` của tổ chức `chuctu-clinic` ở chế độ Public rồi xoá khối `creds` trong `render.yaml`, hoặc dùng chung credential `ghcr-chuctu` đã tạo cho backend.
+2. **Tạo dịch vụ.** Trên Render chọn **New → Blueprint**, trỏ vào repo này. Nếu backend có địa chỉ khác `chuctu-backend.onrender.com`, sửa `API_UPSTREAM`.
+3. **Nối GitHub với Render.** Chép URL ở **Settings → Deploy Hook** của dịch vụ `chuctu-frontend`, thêm vào secret `RENDER_DEPLOY_HOOK` của repo này trên GitHub.
+
+Sau đó kiểm tra `CLIENT_ORIGIN` của backend trùng với địa chỉ frontend (mặc định `https://chuctu-frontend.onrender.com`).
+
 ## Cấu hình lúc build
 
 Hai ứng dụng đọc các biến sau lúc build. Để trống thì gọi API cùng địa chỉ với trang (qua proxy của Vite hoặc nginx):
@@ -86,9 +105,10 @@ shared/src             gói @chuctu/shared
   styles.css           CSS nền tảng theo Design System
 Dockerfile, nginx.conf build hai ứng dụng và phục vụ bằng nginx
 docker-compose.yml
+render.yaml            Render Blueprint (dịch vụ chạy từ image GHCR)
+.github/workflows      CI/CD: build, build image, triển khai lên Render
 ```
 
 ## Việc còn lại
 
 - **Ảnh bài viết**: hiện nhập bằng đường dẫn ảnh, chưa có chức năng tải ảnh lên.
-- **Triển khai lên Render**: chưa cấu hình.
