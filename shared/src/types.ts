@@ -45,6 +45,8 @@ export interface Patient {
   isLocked: boolean;
   lockedAt: string | null;
   createdAt: string;
+  /** Chỉ có trong danh sách hồ sơ của tiếp tân: ngày khám gần nhất. */
+  lastVisit?: string | null;
 }
 
 export type AppointmentSource = 'ONLINE' | 'COUNTER';
@@ -75,6 +77,12 @@ export interface Appointment {
   } | null;
   /** Chỉ có ở API của người dùng. */
   hasResult?: boolean;
+  /** Chỉ có ở Lịch trong ngày của tiếp tân. */
+  checkInTime?: string | null;
+  enteredAt?: string | null;
+  priorityGroup?: 'PRIORITY' | 'NORMAL' | null;
+  /** Thứ tự trong hàng chờ, nếu đang chờ. */
+  queueNo?: number | null;
 }
 
 export type TreatmentKey = 'acupuncture' | 'acupressure' | 'other';
@@ -87,6 +95,8 @@ export interface RecordEdit {
 
 export interface MedicalRecord {
   id: string;
+  /** Người lập phiếu kết quả. */
+  recordedByName: string | null;
   appointmentId: string;
   patientId: string;
   visitDate: string;
@@ -206,6 +216,8 @@ export interface MiniQueue {
   inRoom: number;
   waiting: number;
   capacity: number;
+  /** Những người kế tiếp trong hàng chờ (tối đa bằng số ghế). */
+  next: { id: string; fullName: string; priority: boolean }[];
 }
 
 export interface DashboardOverview {
