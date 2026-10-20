@@ -10,10 +10,14 @@
   ],
   "scripts": {
     "dev": "concurrently -n users,admin -c yellow,cyan \"npm run dev -w client-users\" \"npm run dev -w client-admin\"",
-    "build": "npm run build -w client-users && npm run build -w client-admin"
+    "typecheck": "tsc",
+    "build": "tsc && npm run build -w client-users && npm run build -w client-admin"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "concurrently": "^9.1.0",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20"

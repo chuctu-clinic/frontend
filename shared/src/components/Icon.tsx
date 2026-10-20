@@ -1,0 +1,111 @@
+// Icon nét mảnh, bo tròn, nét đồng nhất (Design System — Using tokens).
+const PATHS = {
+  phone: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z',
+  map: 'M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+  clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 6v6l4 2',
+  user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+  users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8',
+  calendar: 'M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z',
+  ticket: 'M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z M13 5v2 M13 17v2 M13 11v2',
+  check: 'M20 6 9 17l-5-5',
+  checkCircle: 'M22 11.1V12a10 10 0 1 1-5.9-9.1 M22 4 12 14l-3-3',
+  x: 'M18 6 6 18 M6 6l12 12',
+  alert: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 8v4 M12 16h.01',
+  info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 16v-4 M12 8h.01',
+  chevronRight: 'm9 18 6-6-6-6',
+  chevronLeft: 'm15 18-6-6 6-6',
+  chevronDown: 'm6 9 6 6 6-6',
+  arrowLeft: 'M19 12H5 M12 19l-7-7 7-7',
+  arrowRight: 'M5 12h14 M12 5l7 7-7 7',
+  menu: 'M4 6h16 M4 12h16 M4 18h16',
+  logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9',
+  search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z M21 21l-4.3-4.3',
+  plus: 'M12 5v14 M5 12h14',
+  edit: 'M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z',
+  trash: 'M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2',
+  lock: 'M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z M7 11V7a5 5 0 0 1 10 0v4',
+  unlock: 'M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z M7 11V7a5 5 0 0 1 9.9-1',
+  file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  clipboard: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M9 2h6v4H9Z M9 12h6 M9 16h6',
+  heart: 'M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z',
+  leaf: 'M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z M2 21c0-3 1.9-5.4 5.1-6',
+  home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1Z',
+  list: 'M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01',
+  queue: 'M3 5h18 M3 12h18 M3 19h10',
+  eye: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+  refresh: 'M21 12a9 9 0 0 1-15 6.7L3 16 M3 12a9 9 0 0 1 15-6.7L21 8 M21 3v5h-5 M3 21v-5h5',
+  undo: 'M3 7v6h6 M21 17a9 9 0 0 0-15-6.7L3 13',
+  dashboard: 'M3 3h7v9H3Z M14 3h7v5h-7Z M14 12h7v9h-7Z M3 16h7v5H3Z',
+  news: 'M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2 M18 14h-8 M15 18h-5 M10 6h8v4h-8Z',
+  login: 'M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4 M10 17l5-5-5-5 M15 12H3',
+  shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z',
+  needle: 'M12 2v4 M12 10v12 M10 6h4v4h-4Z',
+  hand: 'M18 11V6a2 2 0 0 0-4 0v5 M14 10V4a2 2 0 0 0-4 0v6 M10 10.5V6a2 2 0 0 0-4 0v8 M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.4l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15',
+  pot: 'M4 10h16 M5 10l1.5 9a2 2 0 0 0 2 1.7h7a2 2 0 0 0 2-1.7L19 10 M8 6c0-1.5 1-2 1-3 M12 6c0-1.5 1-2 1-3 M16 6c0-1.5 1-2 1-3',
+  activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
+  // Icon theo đúng nét vẽ của prototype trang chủ
+  leafSoft: 'M11 20A7 7 0 0 1 4 13c0-5 4-9 9-10 1 4-1 6-3 8 3 0 5-1 7-3 1 5-1 12-6 12Z',
+  lockSoft: 'M7 10h10a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-5a3 3 0 0 1 3-3Z M8 10V7a4 4 0 0 1 8 0v3',
+  calendarPlus: 'M6 5h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3Z M8 3v4M16 3v4M3 11h18M12 14v4M10 16h4',
+  helpCircle: 'M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0Z M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.2-.9.8-.9 1.4M12 17h.01',
+  clockSoft: 'M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0Z M12 7v5l3 2',
+  infoSoft: 'M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0Z M12 8h.01M11 12h1v4h1',
+  pin: 'M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z M9 10a3 3 0 1 0 6 0 3 3 0 1 0-6 0Z',
+  heartSoft: 'M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 1 0-7.1 7.1l1.7 1.7L12 21.5l7.1-7.1 1.7-1.7a5 5 0 0 0 0-7.1Z',
+  usersSoft: 'M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M5.5 7a4 4 0 1 0 8 0 4 4 0 1 0-8 0Z M22 21v-2a4 4 0 0 0-3-3.9',
+  userSoft: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M8 7a4 4 0 1 0 8 0 4 4 0 1 0-8 0Z',
+  needleSoft: 'M12 2v20 M10 4a2 2 0 1 0 4 0 2 2 0 1 0-4 0Z M12 9c3 0 5-2 5-4M12 15c-3 0-5-2-5-4',
+  physio: 'M4 20c4-1 6-3 7-6M11 14c1-4 4-7 9-8 M7 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+  handSoft: 'M8 13V5a2 2 0 1 1 4 0v6M12 11V4a2 2 0 1 1 4 0v8M16 12V7a2 2 0 1 1 4 0v8a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-2a2 2 0 1 1 4 0',
+  medicine: 'M9 3h6l1 4H8Z M7 7h10l1.5 12a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2Z M10 13h4M12 11v4',
+  arrowSoft: 'M5 12h14M13 6l6 6-6 6',
+  checkSoft: 'M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0Z M8 12.5l2.5 2.5L16 9.5',
+  chat: 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z M8 11h.01 M12 11h.01 M16 11h.01',
+  bike: 'M2 17a3 3 0 1 0 6 0 3 3 0 1 0-6 0Z M16 17a3 3 0 1 0 6 0 3 3 0 1 0-6 0Z M5 17h4l3-5h4l3 5 M12 12l-2-4H7',
+  bus: 'M6 3h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z M4 11h16 M8 18v2 M16 18v2 M8 14.5h.01 M16 14.5h.01',
+  car: 'M5 17h14v-5l-2-5H7l-2 5Z M3 12h18 M7 17v2 M17 17v2 M7.5 14.5h.01 M16.5 14.5h.01',
+  sun: 'M12 3v2 M12 19v2 M3 12h2 M19 12h2 M5.6 5.6l1.4 1.4 M17 17l1.4 1.4 M5.6 18.4 7 17 M17 7l1.4-1.4 M8 12a4 4 0 1 0 8 0 4 4 0 1 0-8 0Z',
+  shirt: 'M8 3 4 6l2 4 2-1v12h8V9l2 1 2-4-4-3c-.5 1.5-2 2.5-4 2.5S8.5 4.5 8 3Z',
+  bowl: 'M3 11h18a9 9 0 0 1-18 0Z M12 3v4 M8 5v2 M16 5v2',
+  warning: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z M12 9v4 M12 17h.01',
+  cancelSoft: 'M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0Z M9 9l6 6 M15 9l-6 6',
+  external: 'M15 3h6v6 M10 14 21 3 M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6',
+  question:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3 M12 17h.01',
+} satisfies Record<string, string>;
+
+export type IconName = keyof typeof PATHS;
+
+interface IconProps {
+  name: IconName;
+  size?: number;
+  /** Có nhãn thì đọc được bằng trình đọc màn hình; không có thì chỉ để trang trí. */
+  label?: string;
+  className?: string;
+  strokeWidth?: number;
+}
+
+export function Icon({ name, size = 24, label, className, strokeWidth = 2 }: IconProps) {
+  const d = PATHS[name];
+  if (!d) return null;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : 'true'}
+      focusable="false"
+    >
+      {d.split(' M').map((seg, i) => (
+        <path key={i} d={i === 0 ? seg : `M${seg}`} />
+      ))}
+    </svg>
+  );
+}

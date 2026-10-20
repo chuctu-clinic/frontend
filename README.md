@@ -6,7 +6,7 @@ API nằm ở repo [chuctu-clinic/backend](https://github.com/chuctu-clinic/back
 
 | Phần | Công nghệ |
 | --- | --- |
-| Frontend | ReactJS 18 + Vite, React Router |
+| Frontend | ReactJS 18 + Vite + TypeScript, React Router |
 | Ứng dụng | `client-users` (khách, chạy ở `/`) và `client-admin` (tiếp tân, Admin, chạy ở `/noi-bo/`) |
 | Mã dùng chung | gói `@chuctu/shared` trong `shared/` |
 
@@ -35,8 +35,11 @@ Tài khoản mẫu (backend tự nạp khi chạy với MongoDB trong bộ nhớ
 ### Build
 
 ```bash
-npm run build     # build client-users/dist và client-admin/dist
+npm run typecheck # kiểm tra kiểu bằng tsc (chế độ strict) cho shared, client-users, client-admin
+npm run build     # kiểm tra kiểu rồi build client-users/dist và client-admin/dist
 ```
+
+Mỗi lời gọi API ghi rõ kiểu dữ liệu trả về, ví dụ `api.get<{ user: User }>('/auth/me')`. Các kiểu nằm ở `shared/src/types.ts` và phải khớp với dữ liệu backend trả về (các hàm `*View` và `toPublic()` ở repo backend).
 
 ## Chạy bằng Docker
 
@@ -60,8 +63,8 @@ API_UPSTREAM=http://10.0.0.5:4000 docker compose up --build
 
 | Sự kiện | Việc chạy |
 | --- | --- |
-| Pull request | `npm run build`, thử build image (không đẩy) |
-| Push lên `main` | `npm run build` → build image → đẩy lên `ghcr.io/chuctu-clinic/frontend` (tag `latest` và mã commit) → gọi Render Deploy Hook kèm đúng image vừa build |
+| Pull request | `npm run build` (gồm kiểm tra kiểu), thử build image (không đẩy) |
+| Push lên `main` | `npm run build` (gồm kiểm tra kiểu) → build image → đẩy lên `ghcr.io/chuctu-clinic/frontend` (tag `latest` và mã commit) → gọi Render Deploy Hook kèm đúng image vừa build |
 
 Trên Render, nginx phục vụ giao diện và chuyển `/api` sang backend (`API_UPSTREAM`, mặc định `https://chuctu-backend.onrender.com`). Trình duyệt chỉ thấy một địa chỉ nên cookie phiên hoạt động bình thường, không cần `VITE_API_URL`.
 
@@ -98,11 +101,13 @@ client-admin/src       ứng dụng tiếp tân và Admin, chạy ở /noi-bo/
   pages/staff          Lịch trong ngày, đặt hộ tại quầy, hàng đợi, hồ sơ bệnh nhân, phiếu kết quả
   pages/admin          Tổng quan, quản lý tài khoản, quản lý bài viết
 shared/src             gói @chuctu/shared
-  constants.js         vai trò, trạng thái phiếu, nội dung khám, giới tính, quan hệ.
-                       Repo backend có bản giống hệt ở src/shared/constants.js, sửa thì sửa cả hai.
+  constants.ts         vai trò, trạng thái phiếu, nội dung khám, giới tính, quan hệ.
+                       Repo backend có bản giống hệt ở src/shared/constants.ts, sửa thì sửa cả hai.
+  types.ts             kiểu dữ liệu API trả về (User, Patient, Appointment, MedicalRecord, Post, ...)
   lib/, components/    phần dùng chung cho hai ứng dụng: gọi API, phiên đăng nhập, định dạng,
                        Icon, nút, ô nhập, hộp thoại, chọn ngày giờ, phiếu kết quả
   styles.css           CSS nền tảng theo Design System
+tsconfig.json          cấu hình kiểm tra kiểu cho cả ba thư mục
 Dockerfile, nginx.conf build hai ứng dụng và phục vụ bằng nginx
 docker-compose.yml
 render.yaml            Render Blueprint (dịch vụ chạy từ image GHCR)

@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Mã dùng chung. src/constants.js: hằng số dùng chung với backend (bản ở backend: src/shared/constants.js). src/lib, src/components, src/styles.css: phần giao diện dùng chung cho client-users và client-admin",
+  "description": "Mã dùng chung. src/constants.ts: hằng số dùng chung với backend (bản ở backend: src/shared/constants.ts); src/types.ts: kiểu dữ liệu API trả về. src/lib, src/components, src/styles.css: phần giao diện dùng chung cho client-users và client-admin",
   "exports": {
     "./*": "./src/*"
   },

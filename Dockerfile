@@ -4,7 +4,7 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json tsconfig.json ./
 COPY shared/package.json shared/
 COPY client-users/package.json client-users/
 COPY client-admin/package.json client-admin/
@@ -13,7 +13,8 @@ RUN npm ci --ignore-scripts
 COPY shared shared
 COPY client-users client-users
 COPY client-admin client-admin
-RUN npm run build -w client-users && npm run build -w client-admin
+# Kiểm tra kiểu TypeScript rồi build hai ứng dụng
+RUN npm run build
 
 FROM nginx:1.27-alpine
 # Địa chỉ API mà nginx chuyển /api tới

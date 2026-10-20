@@ -1,0 +1,18 @@
+{
+  // Kiểm tra kiểu cho cả shared, client-users, client-admin: npm run typecheck. Vite tự biên dịch khi build.
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["shared/src", "client-users/src", "client-admin/src", "client-users/vite.config.ts", "client-admin/vite.config.ts"]
+}
