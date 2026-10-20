@@ -1,45 +1,116 @@
-import type { ApiError } from '@chuctu/shared/lib/api.ts';
 import { useEffect, useState } from 'react';
-import { Alert, Badge, Button, ButtonLink, Empty, ErrorAlert, Loading, Modal, PageHeader } from '@chuctu/shared/components/ui.tsx';
-import { api } from '@chuctu/shared/lib/api.ts';
-import { fmtTime, shortTime, todayVN } from '@chuctu/shared/lib/format.ts';
+import { Link } from 'react-router-dom';
+import { Icon } from '@chuctu/shared/components/Icon.tsx';
+import { api, type ApiError } from '@chuctu/shared/lib/api.ts';
+import { fmtDateLong, fmtTime, hhmm, shortTime, todayVN } from '@chuctu/shared/lib/format.ts';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.ts';
 import type { QueueEntry, QueueState, SlotMapRow } from '@chuctu/shared/types.ts';
+import { NbError, NbLoading, NbModal, NbOk } from '../../components/nb.tsx';
 
-export function SlotMap({ slotMap }: { slotMap: SlotMapRow[] }) {
-  const nowHour = new Date(Date.now() + 7 * 3600_000).getUTCHours();
+const endOf = (start: string) => `${String(Number(start.slice(0, 2)) + 1).padStart(2, '0')}${start.slice(2)}`;
+
+/** Lý do xếp nhóm của người đang chờ, giống prototype. */
+function waitNote(w: QueueEntry) {
+  if (w.source === 'COUNTER' && w.priorityGroup === 'NORMAL') return 'Đến trực tiếp';
+  if (!w.slotStart) return '';
+  const slot = shortTime(w.slotStart);
+  if (w.priorityGroup === 'PRIORITY') return `Đặt khung ${slot}`;
+  return hhmm(new Date(w.checkInTime)) < w.slotStart ? `Đến sớm, xếp trước từ ${slot}` : `Đến sau khung ${slot}`;
+}
+
+/**
+ * Sơ đồ ghế theo khung giờ: mỗi ô là một người đã check-in (UC.10.5).
+ * compact: bản thu gọn trên trang Tổng quan.
+ */
+export function SlotMap({ slotMap, waiting, compact = false }: { slotMap: SlotMapRow[]; waiting: QueueEntry[]; compact?: boolean }) {
+  const nowHM = hhmm(new Date());
+  const order = new Map(waiting.map((w, i) => [w.id, { no: i + 1, prio: w.priorityGroup === 'PRIORITY' }]));
+  const legend: [string, string, string][] = [
+    ['done', '✓', 'Đã hoàn thành'],
+    ['room', '▶', 'Trong phòng khám'],
+    ['wait', '1', compact ? 'Đang chờ' : 'Đang chờ, số là thứ tự'],
+    ['prio', '1', 'Đang chờ, nền xanh dương'],
+  ];
   return (
-    <div className="slot-map">
-      {slotMap.map((s) => {
-        const current = Number(s.start.slice(0, 2)) === nowHour;
-        return (
-          <div key={s.start} className={`slot-col ${current ? 'current' : ''}`}>
-            <p style={{ fontWeight: 700, color: 'var(--ink-900)' }}>
-              {shortTime(s.start)}
-              {current && <span className="sr-only"> (khung hiện tại)</span>}
-            </p>
-            <p className="caption">
-              Đặt {s.booked}/{s.capacity} · chưa đến {s.notArrived}
-            </p>
-            {s.checkins.length === 0 && <p className="caption">Chưa có ai check-in</p>}
-            {s.checkins.map((c) => (
-              <span key={c.id} className={`slot-dot ${c.status}`} title={`${c.fullName} · ${c.ticketCode}`}>
-                {c.status === 'IN_ROOM' ? `Ghế ${c.seatNo}` : c.status === 'WAITING' ? 'Chờ' : 'Xong'} · {c.fullName}
-              </span>
-            ))}
-          </div>
-        );
-      })}
-    </div>
+    <>
+      <div className="nb-slotmap">
+        {slotMap.map((row) => {
+          const end = endOf(row.start);
+          const current = nowHM >= row.start && nowHM < end;
+          const past = nowHM >= end;
+          const people = row.checkins.filter((c) => c.status !== 'REVERTED');
+          return (
+            <div key={row.start} className={`nb-slotrow ${compact ? 'compact' : ''} ${current ? 'current' : ''}`}>
+              <div>
+                {compact ? (
+                  shortTime(row.start)
+                ) : (
+                  <>
+                    <p className="nb-strong" style={{ fontSize: 17 }}>
+                      {shortTime(row.start)} – {shortTime(end)}
+                    </p>
+                    <p className="nb-muted" style={{ fontSize: 15 }}>
+                      {past ? 'Đã qua' : current ? 'Đang diễn ra' : 'Sắp tới'}
+                    </p>
+                  </>
+                )}
+              </div>
+              <div role="group" aria-label={`Khung ${shortTime(row.start)}, ${people.length} người đã check-in`}>
+                {people.length === 0 && (
+                  <span style={{ fontSize: 15, color: '#8C7B5E' }}>Chưa có ai check-in</span>
+                )}
+                {people.map((c) => {
+                  const w = order.get(c.id);
+                  const kind = c.status === 'COMPLETED' ? 'done' : c.status === 'IN_ROOM' ? 'room' : w?.prio ? 'prio' : 'wait';
+                  const label = c.status === 'COMPLETED' ? 'Đã hoàn thành' : c.status === 'IN_ROOM' ? `Trong phòng khám, ghế ${c.seatNo}` : `Đang chờ, thứ tự ${w?.no ?? ''}`;
+                  return (
+                    <span key={c.id} className={`nb-cell ${kind} ${compact ? 'sm' : ''}`} role="img" aria-label={`${c.fullName}: ${label}`} title={`${c.fullName} · ${label}`}>
+                      {kind === 'done' ? '✓' : kind === 'room' ? '▶' : (w?.no ?? '')}
+                    </span>
+                  );
+                })}
+              </div>
+              <div>
+                {compact ? (
+                  `${people.length} người`
+                ) : (
+                  <>
+                    <p className="nb-strong" style={{ fontSize: 17, color: '#2E5B37' }}>
+                      {people.length} người
+                    </p>
+                    {row.notArrived > 0 && (
+                      <p className="nb-muted" style={{ fontSize: 15 }}>
+                        {past ? 'vắng' : 'chưa đến'} {row.notArrived}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <ul className="nb-legend" aria-label="Chú thích">
+        {legend.map(([kind, sym, text]) => (
+          <li key={text}>
+            <span className={`nb-cell sm ${kind}`} aria-hidden="true">
+              {sym}
+            </span>
+            {text}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
-/** Hàng đợi khám: 5 ghế, hàng chờ Ưu tiên / Thường, mời vào, hoàn tác, hoàn tất (UC.10.1 – UC.10.5). */
+/** Hàng đợi khám: 5 ghế, hàng chờ Ưu tiên / Thường, hoàn tác vào khám, sơ đồ khung giờ (UC.10.1 – UC.10.5). */
 export default function Queue() {
   useDocumentTitle('Hàng đợi khám');
   const { data, loading, error, reload, setData } = useAsync(() => api.get<QueueState>('/staff/queue'), []);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<ApiError | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [undoTarget, setUndoTarget] = useState<QueueEntry | null>(null);
 
   // Tự làm mới để thấy người vừa check-in ở quầy khác
@@ -48,78 +119,106 @@ export default function Queue() {
     return () => clearInterval(t);
   }, [reload]);
 
-  const run = async (key: string, fn: () => Promise<QueueState>) => {
-    setBusy(key);
+  const run = async (fn: () => Promise<QueueState>, message?: (before: QueueState | null, after: QueueState) => string) => {
+    setBusy(true);
     setActionError(null);
     try {
-      setData(await fn());
+      const before = data;
+      const after = await fn();
+      setData(after);
+      if (message) setNotice(message(before, after));
+      return true;
     } catch (err) {
       setActionError(err as ApiError);
+      return false;
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   };
 
-  const freeSeats = data ? data.capacity - data.inRoomCount : 0;
-  const groups: [QueueEntry['priorityGroup'], string, QueueEntry[]][] = data
-    ? [
-        ['PRIORITY', 'Có phiếu đặt trước, đến đúng khung giờ', data.waiting.filter((w) => w.priorityGroup === 'PRIORITY')],
-        ['NORMAL', 'Khách đến trực tiếp hoặc đến sau khung giờ', data.waiting.filter((w) => w.priorityGroup === 'NORMAL')],
-      ]
-    : [];
+  // Người vừa được ghế trống nhận vào (so sánh trước và sau thao tác)
+  const newlySeated = (before: QueueState | null, after: QueueState) => {
+    const had = new Set((before?.seats || []).filter((s): s is QueueEntry => !('empty' in s)).map((s) => s.id));
+    const names = after.seats.filter((s): s is QueueEntry => !('empty' in s) && !had.has(s.id)).map((s) => s.patient?.fullName);
+    return names.length ? ` Ghế trống đã tự động nhận ${names.join(', ')} từ hàng chờ.` : '';
+  };
+
+  const confirmUndo = async () => {
+    if (!undoTarget) return;
+    const name = undoTarget.patient?.fullName;
+    const ok = await run(() => api.post<QueueState>(`/staff/queue/${undoTarget.id}/undo-enter`), (b, a) => `Đã đưa ${name} trở lại hàng chờ.${newlySeated(b, a)}`);
+    if (ok) setUndoTarget(null);
+  };
 
   return (
-    <div className="stack-lg">
-      <PageHeader
-        title="Hàng đợi khám"
-        subtitle={`Mỗi lượt ${data?.capacity ?? 5} người vào khám, khoảng 30 phút. Ai có phiếu đặt trước và đến đúng khung giờ được xếp lên trước.`}
-        actions={
-          <>
-            <Button variant="ghost" icon="refresh" onClick={() => reload()}>
-              Làm mới
-            </Button>
-            <ButtonLink to="/lich-trong-ngay" variant="secondary">
-              Check-in ở Lịch trong ngày
-            </ButtonLink>
-          </>
-        }
-      />
-      {loading && !data && <Loading />}
-      <ErrorAlert error={error || actionError} />
+    <>
+      <div className="nb-pagehead">
+        <div>
+          <p className="nb-eyebrow">
+            {fmtDateLong(todayVN())} · bây giờ {fmtTime(new Date())}
+          </p>
+          <h1 className="nb-h1">Hàng đợi khám</h1>
+          <p className="nb-lead">
+            Người đã check-in xếp hàng ở đây. Mỗi lượt {data?.capacity ?? 5} người vào khám, khoảng 30 phút. Ai có phiếu đặt trước và đến đúng khung giờ thì được xếp lên trước.
+          </p>
+        </div>
+        <Link to="/lich-trong-ngay" className="nb-btn nb-btn-ghost">
+          <Icon name="calendar" />
+          Check-in ở Lịch trong ngày
+        </Link>
+      </div>
+
+      {notice && <NbOk onClose={() => setNotice(null)}>{notice}</NbOk>}
+      <NbError error={error || actionError} />
+      {loading && !data && <NbLoading />}
+
       {data && (
         <>
-          <section className="stack" aria-labelledby="trong-phong">
-            <div className="row-between">
-              <h2 id="trong-phong">
-                Trong phòng khám{' '}
-                <span className="mono">
-                  {data.inRoomCount}/{data.capacity}
-                </span>{' '}
-                người
-              </h2>
-              <p className="caption">Đã hoàn thành hôm nay: {data.completedCount}</p>
+          <section className="nb-card" aria-labelledby="hd-phong" style={{ gap: 18 }}>
+            <div className="nb-stack-sm" style={{ gap: 6 }}>
+              <div className="nb-row" style={{ gap: '10px 14px' }}>
+                <h2 id="hd-phong" className="nb-h2">
+                  Trong phòng khám
+                </h2>
+                <span className="nb-pill nb-pill-green" style={{ padding: '4px 12px' }}>
+                  {data.inRoomCount}/{data.capacity} người
+                </span>
+              </div>
+              <p>
+                Bấm Ghi nhận lượt khám để điền phiếu kết quả. Lưu phiếu xong thì người đó chuyển sang Đã hoàn thành, rời hàng đợi và ghế trống để mời người kế tiếp.
+              </p>
             </div>
-            <p className="small">Bấm "Ghi nhận lượt khám" để điền phiếu kết quả. Lưu phiếu xong thì người đó rời hàng đợi và ghế trống mời người kế tiếp.</p>
-            <div className="seats">
+            <div className="nb-seats">
               {data.seats.map((s) =>
                 'empty' in s ? (
-                  <div key={s.seatNo} className="seat seat-empty">
-                    <span className="seat-no">Ghế {s.seatNo}</span>
-                    <p className="muted">Ghế trống</p>
+                  <div key={s.seatNo} className="nb-seat-empty">
+                    <span className="nb-seat-no" style={{ color: '#6B5E4E' }}>
+                      Ghế {s.seatNo}
+                    </span>
+                    <span className="nb-strong" style={{ fontSize: 17, color: '#4A3F33' }}>
+                      Ghế trống
+                    </span>
+                    <span className="nb-muted" style={{ fontSize: 15, lineHeight: '22px' }}>
+                      Mời người đầu hàng chờ vào khám
+                    </span>
                   </div>
                 ) : (
-                  <div key={s.seatNo} className="seat">
-                    <span className="seat-no">Ghế {s.seatNo}</span>
-                    <p style={{ fontWeight: 700, color: 'var(--ink-900)', fontSize: 19, lineHeight: '26px' }}>{s.patient?.fullName}</p>
-                    <p className="caption mono">{s.ticketCode}</p>
-                    <p className="caption">Vào khám lúc {fmtTime(s.enteredAt)}</p>
-                    <div className="stack-sm" style={{ marginTop: 'auto' }}>
-                      <ButtonLink to={`/phieu-kham/${s.appointmentId}/ket-qua`} size="sm" icon="clipboard">
+                  <div key={s.seatNo} className="nb-seat">
+                    <span className="nb-seat-no">Ghế {s.seatNo}</span>
+                    <div>
+                      <p className="nb-strong" style={{ fontSize: 17 }}>
+                        {s.patient?.fullName}
+                      </p>
+                      <p style={{ fontSize: 15, lineHeight: '22px' }}>{s.ticketCode}</p>
+                      <p style={{ fontSize: 15, lineHeight: '22px' }}>Vào khám lúc {fmtTime(s.enteredAt)}</p>
+                    </div>
+                    <div className="nb-seat-actions">
+                      <Link to={`/phieu-kham/${s.appointmentId}/ket-qua`} className="nb-btn nb-btn-primary" style={{ fontWeight: 700 }}>
                         Ghi nhận lượt khám
-                      </ButtonLink>
-                      <Button size="sm" variant="ghost" icon="undo" onClick={() => setUndoTarget(s)}>
+                      </Link>
+                      <button type="button" className="nb-btn nb-btn-ghost" onClick={() => setUndoTarget(s)}>
                         Hoàn tác vào khám
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ),
@@ -127,113 +226,115 @@ export default function Queue() {
             </div>
           </section>
 
-          <section className="card card-lg stack" aria-labelledby="hang-cho">
-            <div className="row-between">
-              <h2 id="hang-cho">
-                Hàng chờ <span className="mono">{data.waitingCount}</span> người
-              </h2>
-              <div className="row">
-                <label className="check">
+          <section className="nb-card" aria-labelledby="hd-cho">
+            <div className="nb-row" style={{ gap: '14px 20px', justifyContent: 'space-between' }}>
+              <div className="nb-row" style={{ gap: '10px 14px' }}>
+                <h2 id="hd-cho" className="nb-h2">
+                  Hàng chờ
+                </h2>
+                <span className="nb-pill nb-pill-sand">{data.waitingCount} người</span>
+              </div>
+              <div className="nb-row">
+                {!data.autoInvite && data.waitingCount > 0 && data.inRoomCount < data.capacity && (
+                  <button
+                    type="button"
+                    className="nb-btn nb-btn-primary"
+                    disabled={busy}
+                    onClick={() => run(() => api.post<QueueState>('/staff/queue/invite'), (b, a) => `Đã mời người kế tiếp vào khám.${newlySeated(b, a)}`)}
+                  >
+                    <Icon name="arrowRight" />
+                    Mời người kế tiếp
+                  </button>
+                )}
+                <label className="nb-switch">
                   <input
                     type="checkbox"
                     checked={data.autoInvite}
-                    disabled={busy === 'auto'}
-                    onChange={(e) => run('auto', () => api.put<QueueState>('/staff/queue/auto-invite', { enabled: e.target.checked }))}
+                    disabled={busy}
+                    onChange={(e) => run(() => api.put<QueueState>('/staff/queue/auto-invite', { enabled: e.target.checked }))}
                   />
                   Tự động vào ghế trống
                 </label>
-                {!data.autoInvite && (
-                  <Button
-                    icon="arrowRight"
-                    disabled={freeSeats === 0 || data.waitingCount === 0}
-                    loading={busy === 'invite'}
-                    onClick={() => run('invite', () => api.post<QueueState>('/staff/queue/invite'))}
-                  >
-                    Mời người đầu hàng chờ vào khám
-                  </Button>
-                )}
               </div>
             </div>
-            <p className="small">
-              Thứ tự tự xếp: người có phiếu đặt trước và đến đúng khung giờ (nền xanh dương, nhãn "Ưu tiên") đứng trên, những người còn lại đứng dưới. Trong mỗi
-              nhóm, ai check-in trước đứng trước.
+            <p>
+              Thứ tự tự xếp: người có phiếu đặt trước và đến đúng khung giờ (nền xanh dương) đứng trên, những người còn lại đứng dưới. Trong mỗi nhóm, ai check-in trước đứng trước.
+              {data.autoInvite ? ' Khi phòng khám có ghế trống, người đầu Lượt kế tiếp tự động vào khám.' : ' Đang tắt tự động: bấm Mời người kế tiếp khi có ghế trống.'}
             </p>
-            {data.waitingCount === 0 && <Empty icon="users" title="Chưa có ai đang chờ">Người được check-in ở Lịch trong ngày sẽ hiện ở đây.</Empty>}
-            {groups.map(([key, label, list]) =>
-              list.length === 0 ? null : (
-                <div key={key} className="stack-sm">
-                  <h3 style={{ fontSize: 20 }}>
-                    {key === 'PRIORITY' ? 'Ưu tiên' : 'Thường'} — {label}
-                  </h3>
-                  <ol className="stack-sm" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    {list.map((w) => (
-                      <li key={w.id} className={`queue-item ${w.priorityGroup === 'PRIORITY' ? 'priority' : ''}`}>
-                        <span className="queue-no" aria-label={`Thứ tự ${data.waiting.indexOf(w) + 1}`}>
-                          {data.waiting.indexOf(w) + 1}
-                        </span>
-                        <div>
-                          <p style={{ fontWeight: 700, color: 'var(--ink-900)' }}>{w.patient?.fullName}</p>
-                          <p className="caption">
-                            <span className="mono">{w.ticketCode}</span> · khung {w.slotStart ? shortTime(w.slotStart) : '—'} · check-in {fmtTime(w.checkInTime)} · đã chờ {w.waitedMinutes} phút
-                          </p>
-                        </div>
-                        <Badge tone={w.priorityGroup === 'PRIORITY' ? 'blue' : 'gray'} icon={w.priorityGroup === 'PRIORITY' ? 'ticket' : 'user'}>
-                          {w.priorityGroup === 'PRIORITY' ? 'Ưu tiên' : 'Thường'}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              ),
+            {data.waitingCount === 0 && (
+              <p style={{ padding: '28px 20px', background: '#fff', border: '2px dashed #D5C7AC', borderRadius: 16, textAlign: 'center' }}>
+                Chưa có ai đang chờ. Người được check-in ở Lịch trong ngày sẽ hiện ở đây.
+              </p>
             )}
+            <ol className="nb-qlist">
+              {data.waiting.map((w, i) => {
+                const prio = w.priorityGroup === 'PRIORITY';
+                return (
+                  <li key={w.id} className="nb-stack-sm">
+                    {i % data.capacity === 0 && <p className="nb-caps">{i < data.capacity ? 'Lượt kế tiếp' : 'Lượt sau'}</p>}
+                    <div className={`nb-qitem ${prio ? 'priority' : ''}`}>
+                      <span className={`nb-qno ${prio ? 'priority' : i < data.capacity ? 'next' : ''}`}>{i + 1}</span>
+                      <div>
+                        <p className="nb-strong" style={{ fontSize: 17 }}>
+                          {w.patient?.fullName}
+                        </p>
+                        <p style={{ fontSize: 15, lineHeight: '22px' }}>
+                          {w.ticketCode} · check-in {fmtTime(w.checkInTime)} · đã chờ {w.waitedMinutes} phút
+                        </p>
+                      </div>
+                      <div>
+                        <span className={`nb-pill ${prio ? 'nb-pill-blue' : 'nb-pill-plain'}`}>{prio ? 'Ưu tiên' : 'Thường'}</span>
+                        <span style={{ fontSize: 15, lineHeight: '22px' }}>{waitNote(w)}</span>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
           </section>
 
-          <section className="stack" aria-labelledby="so-do">
-            <h2 id="so-do">Sơ đồ ghế theo khung giờ hôm nay</h2>
-            <p className="small">Mỗi ô là một người đã check-in vào khung giờ đó. Khung viền vàng là khung hiện tại.</p>
-            <SlotMap slotMap={data.slotMap} />
+          <section className="nb-card" aria-labelledby="hd-khung" style={{ gap: 14 }}>
+            <div className="nb-stack-sm" style={{ gap: 4 }}>
+              <h2 id="hd-khung" className="nb-h2">
+                Sơ đồ ghế theo khung giờ hôm nay
+              </h2>
+              <p>Mỗi ô là một người đã check-in vào khung giờ đó.</p>
+            </div>
+            <SlotMap slotMap={data.slotMap} waiting={data.waiting} />
           </section>
         </>
       )}
+
       {undoTarget && (
-        <Modal
-          title="Hoàn tác vào khám?"
-          onClose={() => setUndoTarget(null)}
-          actions={
-            <>
-              <Button variant="ghost" onClick={() => setUndoTarget(null)}>
-                Quay lại
-              </Button>
-              <Button
-                icon="undo"
-                loading={busy === 'undo'}
-                onClick={async () => {
-                  await run('undo', () => api.post<QueueState>(`/staff/queue/${undoTarget.id}/undo-enter`));
-                  setUndoTarget(null);
-                }}
-              >
-                Xác nhận hoàn tác
-              </Button>
-            </>
-          }
-        >
-          <div className="stack-sm">
-            <dl className="info">
+        <NbModal title="Hoàn tác vào khám?" onClose={() => setUndoTarget(null)} width={560}>
+          <dl className="nb-infogrid">
+            <div>
               <dt>Bệnh nhân</dt>
               <dd>{undoTarget.patient?.fullName}</dd>
+            </div>
+            <div>
               <dt>Mã phiếu khám</dt>
-              <dd className="mono">{undoTarget.ticketCode}</dd>
+              <dd>{undoTarget.ticketCode}</dd>
+            </div>
+            <div>
               <dt>Vào khám lúc</dt>
-              <dd>{fmtTime(undoTarget.enteredAt)}</dd>
-            </dl>
-            <Alert type="info">
-              Phiếu trở lại <strong>hàng chờ</strong>, đúng vị trí theo giờ check-in.
-              {data?.autoInvite && ' Ghế vừa trống tự động nhận người kế tiếp; người này sẽ vào ở ghế trống sau.'}
-            </Alert>
+              <dd style={{ fontWeight: 600 }}>{fmtTime(undoTarget.enteredAt)}</dd>
+            </div>
+          </dl>
+          <p>
+            Phiếu trở lại <strong className="nb-ink">hàng chờ</strong>, đúng vị trí theo giờ check-in. Ghế vừa trống tự động nhận người kế tiếp trong hàng chờ; người này sẽ vào ở ghế trống sau.
+          </p>
+          <NbError error={actionError} />
+          <div className="nb-dialog-actions">
+            <button type="button" className="nb-btn nb-btn-primary nb-btn-lg" style={{ flex: '1 1 220px' }} disabled={busy} onClick={confirmUndo}>
+              Xác nhận hoàn tác
+            </button>
+            <button type="button" className="nb-btn nb-btn-ghost nb-btn-lg" onClick={() => setUndoTarget(null)}>
+              Quay lại
+            </button>
           </div>
-        </Modal>
+        </NbModal>
       )}
-      <p className="caption">Ngày {todayVN().split('-').reverse().join('/')}. Trang tự làm mới mỗi 15 giây.</p>
-    </div>
+    </>
   );
 }

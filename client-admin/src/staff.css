@@ -40,7 +40,7 @@
 /* ---------- Bố cục hai cột ---------- */
 .nb-body { width: 100%; box-sizing: border-box; padding: 28px 24px 56px; }
 .nb-body-in { max-width: 1320px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
-.nb-side { flex: 1 1 250px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.nb-side { flex: 1 1 270px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 .nb-main { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
 /* Trang không có cột trái: phiếu kết quả, soạn bài */
 .nb-solo { max-width: 1060px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
@@ -208,7 +208,8 @@
 .nb-tr:last-child { border-bottom: 0; }
 .nb-thead { background: #f4eadb; border-top: 1px solid #e0d3bc; border-bottom: 2px solid #8c7b5e !important; }
 .nb-th { padding: 14px 16px; font-size: 16px; font-weight: 700; color: #2a2118; }
-.nb-td { padding: 16px; min-width: 0; font-size: 16px; color: #4a3f33; overflow-wrap: anywhere; }
+.nb-td { padding: 16px; min-width: 0; font-size: 16px; color: #4a3f33; overflow-wrap: break-word; }
+.nb-nowrap { white-space: nowrap; }
 .nb-td-action { padding: 10px 16px; position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .nb-tr.priority { background: #e8f0f7; }
 .nb-tr.cancelled { background: #f7f1e6; }
@@ -222,7 +223,7 @@
 /* ---------- Menu thao tác ---------- */
 .nb-menu-wrap { position: relative; }
 .nb-menu {
-  position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; width: 290px; padding: 6px; box-sizing: border-box;
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 90; width: 290px; padding: 6px; box-sizing: border-box;
   background: #fffcf6; border: 2px solid #8c7b5e; border-radius: 16px; box-shadow: 0 14px 36px rgba(42, 33, 24, 0.28);
   display: flex; flex-direction: column; gap: 2px;
 }
@@ -312,7 +313,7 @@
 .nb-dl-flat dt { font-size: 16px; line-height: 24px; font-weight: 600; color: #6b5e4e; }
 .nb-dl-flat dd { font-size: 16px; line-height: 24px; color: #2a2118; }
 @media (max-width: 600px) { .nb-dl > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
-.nb-profile { display: flex; flex-wrap: wrap; align-items: center; gap: 20px 24px; }
+.nb-profile { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 20px 24px; }
 .nb-profile > div:nth-child(2) { flex: 999 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .nb-avatar { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; flex-shrink: 0; border-radius: 999px; background: #e4efe2; color: #2e5b37; }
 
@@ -358,7 +359,7 @@
 .nb-mini h2 svg { color: #2e5b37; }
 .nb-mini-counts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .nb-mini-counts > div { border-radius: 14px; padding: 10px 12px; }
-.nb-mini-counts p:first-child { font-size: 15px; line-height: 20px; }
+.nb-mini-counts p:first-child { font-size: 15px; line-height: 20px; white-space: nowrap; }
 .nb-mini-counts p:last-child { font-size: 22px; line-height: 30px; font-weight: 700; }
 .nb-mini-next { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .nb-mini-next li { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 2px 8px; border-radius: 12px; }

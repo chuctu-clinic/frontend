@@ -24,6 +24,8 @@ npm run dev
 
 `npm run dev` chạy 2 tiến trình: `client-users` (5173) và `client-admin` (5174). Cổng 5173 chuyển tiếp `/noi-bo` sang 5174 và `/api` sang backend ở `http://localhost:4000`, nên mở mọi thứ qua 5173 là giống khi triển khai thật: chung một địa chỉ và chung cookie phiên.
 
+Backend chạy ở địa chỉ khác thì đặt biến `API_TARGET`, ví dụ `API_TARGET=http://localhost:4100 npm run dev`.
+
 Tài khoản mẫu (backend tự nạp khi chạy với MongoDB trong bộ nhớ):
 
 | Vai trò | Đăng nhập |

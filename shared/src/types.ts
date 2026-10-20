@@ -227,5 +227,5 @@ export interface DashboardOverview {
   posts: { published: number; draft: number };
   accounts: Partial<Record<Role, number>>;
   drafts: Post[];
-  queue: Pick<QueueState, 'inRoomCount' | 'waitingCount' | 'completedCount' | 'capacity' | 'slotMap'>;
+  queue: Pick<QueueState, 'inRoomCount' | 'waitingCount' | 'completedCount' | 'capacity' | 'slotMap' | 'waiting'>;
 }

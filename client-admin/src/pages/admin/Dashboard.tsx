@@ -1,124 +1,100 @@
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon, type IconName } from '@chuctu/shared/components/Icon.tsx';
-import { ButtonLink, ErrorAlert, Loading, PageHeader } from '@chuctu/shared/components/ui.tsx';
+import { Icon } from '@chuctu/shared/components/Icon.tsx';
 import { api } from '@chuctu/shared/lib/api.ts';
-import { STATUS, fmtDate } from '@chuctu/shared/lib/format.ts';
+import { fmtDateLong, fmtDateTime } from '@chuctu/shared/lib/format.ts';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.ts';
+import type { DashboardOverview } from '@chuctu/shared/types.ts';
+import { NbError, NbLoading, NbPageHead } from '../../components/nb.tsx';
 import { SlotMap } from '../staff/Queue.tsx';
-import type { AppointmentStatus, DashboardOverview } from '@chuctu/shared/types.ts';
 
-function StatCard({ icon, value, label, to }: { icon: IconName; value: ReactNode; label: string; to: string }) {
-  return (
-    <Link to={to} className="card card-link row" style={{ flexWrap: 'nowrap', alignItems: 'center' }}>
-      <span className="icon-circle">
-        <Icon name={icon} />
-      </span>
-      <span className="stat">
-        <span className="stat-value">{value}</span>
-        <span className="stat-label">{label}</span>
-      </span>
-    </Link>
-  );
-}
-
-/** Tổng quan trong ngày (UC.2.3). */
+/** Tổng quan cho Admin: số liệu trong ngày, sơ đồ ghế, lối tắt, bài viết bản nháp (UC.2.3). */
 export default function Dashboard() {
   useDocumentTitle('Tổng quan');
   const { data, loading, error } = useAsync(() => api.get<DashboardOverview>('/admin/dashboard'), []);
 
-  if (loading) return <Loading />;
-  if (error || !data) return <ErrorAlert error={error} />;
+  if (loading) return <NbLoading />;
+  if (error || !data) return <NbError error={error} />;
 
-  const accounts = data.accounts;
+  const accounts = Object.values(data.accounts).reduce((a, b) => a + (b ?? 0), 0);
+  const tiles = [
+    { to: '/lich-trong-ngay', label: 'Lịch khám hôm nay', value: `${data.appointments.active} phiếu khám`, link: 'Xem lịch', green: true },
+    { to: '/benh-nhan', label: 'Hồ sơ bệnh nhân', value: `${data.patients.total} hồ sơ`, link: 'Tra cứu' },
+    { to: '/quan-tri/bai-viet', label: 'Bài viết', value: `${data.posts.published + data.posts.draft} bài viết`, link: 'Quản lý' },
+    { to: '/quan-tri/tai-khoan', label: 'Tài khoản hệ thống', value: `${accounts} tài khoản`, link: 'Quản lý' },
+  ];
+
   return (
-    <div className="stack-lg">
-      <PageHeader
-        title="Tổng quan hôm nay"
-        actions={
-          <>
-            <ButtonLink to="/dat-ho" icon="plus" variant="secondary">
-              Đặt hộ tại quầy
-            </ButtonLink>
-            <ButtonLink to="/quan-tri/bai-viet/moi" icon="edit">
-              Viết bài mới
-            </ButtonLink>
-          </>
-        }
-      />
-      <div className="grid-4">
-        <StatCard icon="ticket" value={data.appointments.active} label="Phiếu khám hôm nay" to="/lich-trong-ngay" />
-        <StatCard icon="users" value={data.patients.total} label="Hồ sơ bệnh nhân" to="/benh-nhan" />
-        <StatCard icon="news" value={data.posts.published} label={`Bài viết đã đăng · ${data.posts.draft} bản nháp`} to="/quan-tri/bai-viet" />
-        <StatCard
-          icon="shield"
-          value={(accounts.USER || 0) + (accounts.RECEPTIONIST || 0) + (accounts.ADMIN || 0)}
-          label={`Tài khoản · ${accounts.RECEPTIONIST || 0} tiếp tân`}
-          to="/quan-tri/tai-khoan"
-        />
+    <>
+      <NbPageHead eyebrow={fmtDateLong(data.date)} title="Tổng quan" lead="Quản trị viên có toàn quyền hệ thống, bao gồm tất cả chức năng của tiếp tân." />
+
+      <div className="nb-tiles">
+        {tiles.map((t) => (
+          <Link key={t.to} to={t.to} className={`nb-tile ${t.green ? 'nb-tile-green' : ''}`}>
+            <span>{t.label}</span>
+            <span>{t.value}</span>
+            <span>{t.link}</span>
+          </Link>
+        ))}
       </div>
 
-      <div className="grid-2">
-        <section className="card card-lg stack-sm" aria-labelledby="trang-thai">
-          <h2 id="trang-thai" style={{ fontSize: 24 }}>
-            Phiếu khám theo trạng thái
-          </h2>
-          <ul className="stack-sm" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {(Object.entries(STATUS) as [AppointmentStatus, (typeof STATUS)[AppointmentStatus]][]).map(([key, s]) => (
-              <li key={key} className="row-between">
-                <Link to={`/lich-trong-ngay?trang-thai=${key}`}>{s.label}</Link>
-                <span className="mono" style={{ fontWeight: 700, color: 'var(--ink-900)' }}>
-                  {data.appointments.byStatus[key] || 0}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className="card card-lg stack-sm" aria-labelledby="hang-doi">
-          <h2 id="hang-doi" style={{ fontSize: 24 }}>
-            Hàng đợi
-          </h2>
-          <div className="grid-3" style={{ gap: 12 }}>
-            <div className="stat">
-              <span className="stat-value">
-                {data.queue.inRoomCount}/{data.queue.capacity}
-              </span>
-              <span className="stat-label">Trong phòng</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{data.queue.waitingCount}</span>
-              <span className="stat-label">Đang chờ</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{data.queue.completedCount}</span>
-              <span className="stat-label">Đã khám xong</span>
-            </div>
+      <div className="nb-row" style={{ gap: 24, alignItems: 'flex-start' }}>
+        <section className="nb-card nb-card-lg" style={{ flex: '999 1 460px', minWidth: 0, padding: '28px 32px' }} aria-labelledby="db-ghe">
+          <div className="nb-between">
+            <h2 id="db-ghe" className="nb-h2">
+              Sơ đồ ghế theo khung giờ hôm nay
+            </h2>
+            <Link to="/hang-doi" className="nb-link">
+              Mở hàng đợi
+            </Link>
           </div>
-          <ButtonLink to="/hang-doi" variant="secondary" style={{ alignSelf: 'flex-start' }}>
-            Mở hàng đợi
-          </ButtonLink>
+          <SlotMap slotMap={data.queue.slotMap} waiting={data.queue.waiting} compact />
+        </section>
+
+        <section className="nb-card-gold" style={{ flex: '1 1 300px', borderRadius: 28, padding: 32 }} aria-labelledby="db-tat">
+          <h2 id="db-tat" className="nb-h2">
+            Lối tắt
+          </h2>
+          <Link to="/quan-tri/bai-viet/moi" className="nb-btn nb-btn-primary">
+            <Icon name="plus" />
+            Viết bài mới
+          </Link>
+          <Link to="/quan-tri/tai-khoan?them=1" className="nb-btn nb-btn-ghost">
+            Thêm tài khoản
+          </Link>
         </section>
       </div>
 
-      <section className="stack" aria-labelledby="so-do">
-        <h2 id="so-do">Sơ đồ ghế theo khung giờ</h2>
-        <SlotMap slotMap={data.queue.slotMap} />
-      </section>
-
-      <section className="card card-lg stack-sm" aria-labelledby="ban-nhap">
-        <h2 id="ban-nhap" style={{ fontSize: 24 }}>
-          Bài viết bản nháp
-        </h2>
-        {data.drafts.length === 0 && <p className="muted">Không có bản nháp nào.</p>}
-        <ul className="stack-sm" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      <section className="nb-card nb-card-lg" style={{ padding: '28px 32px' }} aria-labelledby="db-nhap">
+        <div className="nb-between">
+          <h2 id="db-nhap" className="nb-h2">
+            Bài viết bản nháp
+          </h2>
+          <Link to="/quan-tri/bai-viet" className="nb-link">
+            Quản lý bài viết
+          </Link>
+        </div>
+        {data.drafts.length === 0 && <p>Không có bài viết nào đang ở bản nháp.</p>}
+        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column' }}>
           {data.drafts.map((p) => (
-            <li key={p.id} className="row-between">
-              <Link to={`/quan-tri/bai-viet/${p.id}`}>{p.title || '(Chưa có tiêu đề)'}</Link>
-              <span className="caption">Sửa lần cuối {fmtDate(p.updatedAt)}</span>
+            <li key={p.id} className="nb-row" style={{ gap: '8px 16px', padding: '14px 0', borderTop: '1px solid #E0D3BC' }}>
+              <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+                <p className="nb-strong" style={{ fontSize: 17 }}>
+                  {p.title}
+                </p>
+                <p>
+                  {p.categoryLabel} · lưu lần cuối {fmtDateTime(p.updatedAt)}
+                </p>
+              </div>
+              <span className="nb-pill nb-pill-gold" style={{ padding: '4px 12px' }}>
+                Bản nháp
+              </span>
+              <Link to={`/quan-tri/bai-viet/${p.id}`} className="nb-btn nb-btn-ghost" style={{ padding: '0 20px' }}>
+                Sửa và công khai
+              </Link>
             </li>
           ))}
         </ul>
       </section>
-    </div>
+    </>
   );
 }

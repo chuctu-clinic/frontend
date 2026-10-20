@@ -96,3 +96,9 @@ export const relationshipLabel = (r: Relationship | null | undefined) => (r ? RE
 
 /** Nhãn giới tính; chưa khai thì undefined. */
 export const genderLabel = (g: Gender | null | undefined) => (g ? GENDERS[g] : undefined);
+
+/** Giờ:phút theo giờ Việt Nam, dạng "09:05", để so sánh với khung giờ. */
+export function hhmm(date: Date) {
+  const vn = new Date(date.getTime() + 7 * 3600_000);
+  return `${pad(vn.getUTCHours())}:${pad(vn.getUTCMinutes())}`;
+}

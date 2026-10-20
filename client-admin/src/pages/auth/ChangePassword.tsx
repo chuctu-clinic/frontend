@@ -1,33 +1,34 @@
-import type { ApiError } from '@chuctu/shared/lib/api.ts';
 import { useState, type FormEvent } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { Button, ErrorAlert, TextInput, type InputEvent } from '@chuctu/shared/components/ui.tsx';
-import { api } from '@chuctu/shared/lib/api.ts';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Icon } from '@chuctu/shared/components/Icon.tsx';
+import { api, type ApiError } from '@chuctu/shared/lib/api.ts';
 import { isStaff, useSession } from '@chuctu/shared/lib/session.tsx';
 import { useDocumentTitle } from '@chuctu/shared/lib/useAsync.ts';
-import { StaffShell, homeFor } from './StaffLogin.tsx';
 import type { User } from '@chuctu/shared/types.ts';
+import { NbError, NbField } from '../../components/nb.tsx';
+import { PasswordInput, StaffShell, homeFor } from './StaffLogin.tsx';
 
+/** Đổi mật khẩu; tài khoản dùng mật khẩu tạm phải đổi trước khi làm việc (BR.33). */
 export default function ChangePassword() {
   useDocumentTitle('Đổi mật khẩu');
   const { user, setUser, loading } = useSession();
   const navigate = useNavigate();
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
+  const [fields, setFields] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
-  const [mismatch, setMismatch] = useState(false);
 
   if (loading) return null;
   if (!isStaff(user)) return <Navigate to="/dang-nhap" replace />;
 
-  const set = (k: keyof typeof form) => (e: InputEvent) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (form.newPassword !== form.confirm) {
-      setMismatch(true);
-      return;
-    }
-    setMismatch(false);
+    const fe: Record<string, string> = {};
+    if (!form.currentPassword) fe.currentPassword = 'Vui lòng nhập mật khẩu hiện tại.';
+    if (form.newPassword.length < 8) fe.newPassword = 'Mật khẩu mới cần ít nhất 8 ký tự.';
+    if (form.newPassword !== form.confirm) fe.confirm = 'Hai mật khẩu chưa giống nhau.';
+    setFields(fe);
+    if (Object.keys(fe).length) return;
     setPending(true);
     setError(null);
     try {
@@ -35,7 +36,9 @@ export default function ChangePassword() {
       setUser(res.user);
       navigate(homeFor(res.user), { replace: true });
     } catch (err) {
-      setError(err as ApiError);
+      const apiErr = err as ApiError;
+      setFields(apiErr.fields);
+      setError(apiErr);
     } finally {
       setPending(false);
     }
@@ -44,24 +47,29 @@ export default function ChangePassword() {
   return (
     <StaffShell
       title="Đổi mật khẩu"
-      subtitle={user.mustChangePassword ? 'Tài khoản đang dùng mật khẩu tạm do quản trị viên cấp. Cô chú đặt mật khẩu mới để bắt đầu làm việc.' : null}
+      icon="lock"
+      intro={user.mustChangePassword ? 'Tài khoản đang dùng mật khẩu tạm do quản trị viên cấp. Cô chú đặt mật khẩu mới để bắt đầu làm việc.' : 'Đặt mật khẩu mới cho tài khoản của cô chú.'}
     >
-      <form className="stack" onSubmit={submit} noValidate>
-        <TextInput label="Mật khẩu hiện tại" required type="password" autoComplete="current-password" value={form.currentPassword} onChange={set('currentPassword')} error={error?.fields?.currentPassword} />
-        <TextInput label="Mật khẩu mới" required type="password" autoComplete="new-password" hint="Tối thiểu 8 ký tự." value={form.newPassword} onChange={set('newPassword')} error={error?.fields?.newPassword} />
-        <TextInput
-          label="Nhập lại mật khẩu mới"
-          required
-          type="password"
-          autoComplete="new-password"
-          value={form.confirm}
-          onChange={set('confirm')}
-          error={mismatch ? 'Hai mật khẩu chưa giống nhau.' : null}
-        />
-        {error && !Object.keys(error.fields || {}).length && <ErrorAlert error={error} />}
-        <Button type="submit" size="lg" block loading={pending}>
+      <form className="nb-stack" style={{ gap: 24 }} onSubmit={submit} noValidate>
+        <NbField label="Mật khẩu hiện tại" error={fields.currentPassword}>
+          {(a) => <PasswordInput autoComplete="current-password" value={form.currentPassword} onChange={(v) => setForm({ ...form, currentPassword: v })} {...a} />}
+        </NbField>
+        <NbField label="Mật khẩu mới" hint="Tối thiểu 8 ký tự." error={fields.newPassword}>
+          {(a) => <PasswordInput autoComplete="new-password" value={form.newPassword} onChange={(v) => setForm({ ...form, newPassword: v })} {...a} />}
+        </NbField>
+        <NbField label="Nhập lại mật khẩu mới" error={fields.confirm}>
+          {(a) => <PasswordInput autoComplete="new-password" value={form.confirm} onChange={(v) => setForm({ ...form, confirm: v })} {...a} />}
+        </NbField>
+        <NbError error={error && !Object.keys(error.fields).length ? error : null} />
+        <button type="submit" className="nb-btn nb-btn-primary" disabled={pending}>
+          <Icon name="check" />
           Lưu mật khẩu mới
-        </Button>
+        </button>
+        {!user.mustChangePassword && (
+          <Link to={homeFor(user)} className="nb-link" style={{ justifyContent: 'center' }}>
+            Quay lại khu nội bộ
+          </Link>
+        )}
       </form>
     </StaffShell>
   );

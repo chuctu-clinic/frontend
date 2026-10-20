@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 // CSS nền tảng nạp trước để CSS riêng của từng trang ghi đè được
 import '@chuctu/shared/styles.css';
+import './staff.css';
 import { SessionProvider } from '@chuctu/shared/lib/session.tsx';
 import App from './App.tsx';
 

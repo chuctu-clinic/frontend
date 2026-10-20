@@ -11,7 +11,7 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     proxy: {
-      '/api': 'http://localhost:4000',
+      '/api': process.env.API_TARGET || 'http://localhost:4000',
     },
   },
 });
