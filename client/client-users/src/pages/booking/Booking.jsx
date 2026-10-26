@@ -7,6 +7,7 @@ import { CLINIC, GENDERS, RELATIONSHIPS, addDays, fmtDate, shortTime, weekday } 
 import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
 import { Dialog } from '../../components/Dialog.jsx';
+import { Picker } from '../auth/Picker.jsx';
 import { ProfileDeleteDialog, ProfileDetailDialog, ProfileFormDialog } from '../account/ProfileDialogs.jsx';
 import { PatientStep } from './PatientStep.jsx';
 import '../account/account.css';
@@ -443,13 +444,7 @@ export default function Booking() {
           <label htmlFor="dl-noidung" className="a-label">
             Khám về việc gì? <span className="a-req">*</span>
           </label>
-          <select id="dl-noidung" className="a-input b-service" value={serviceType} onChange={(e) => setServiceType(e.target.value)}>
-            {meta.serviceTypes.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+          <Picker id="dl-noidung" className="b-service" items={meta.serviceTypes} value={serviceType} onChange={setServiceType} />
           <FieldErr>{errors.serviceType}</FieldErr>
         </div>
 

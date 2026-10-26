@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '@chuctu/shared/components/Icon.jsx';
 import { addDays, fmtDate, todayVN, weekday } from '@chuctu/shared/lib/format.js';
+import { phoneDigits, phoneInputError, toPhone } from '@chuctu/shared/phone.js';
 
 // Thành phần dùng chung cho các trang nội bộ, theo prototype "TiepTan-*".
 
@@ -47,7 +48,7 @@ export function FieldError({ id, children }) {
   );
 }
 
-/** Ô số điện thoại: tiền tố +84 cố định, nhập 9 đến 10 số. */
+/** Ô số điện thoại: tiền tố +84 cố định; kiểm tra bằng phoneError (cùng quy tắc với trang người dùng và server). */
 export function PhoneField({ id, label = 'Số điện thoại', value, onChange, error, required = true }) {
   return (
     <div className="t-field">
@@ -62,11 +63,11 @@ export function PhoneField({ id, label = 'Số điện thoại', value, onChange
           id={id}
           type="tel"
           inputMode="numeric"
-          maxLength={10}
+          maxLength={12}
           placeholder="912345678"
           autoComplete="off"
           value={value}
-          onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 10))}
+          onChange={(e) => onChange(phoneDigits(e.target.value))}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? `${id}-loi` : undefined}
         />
@@ -77,10 +78,10 @@ export function PhoneField({ id, label = 'Số điện thoại', value, onChange
 }
 
 /** "912345678" → "0912345678" */
-export const normalizePhone = (raw) => {
-  const digits = String(raw || '').replace(/\D/g, '');
-  return digits.length === 9 ? `0${digits}` : digits;
-};
+export const normalizePhone = (raw) => toPhone(phoneDigits(raw));
+
+/** Lỗi của ô số điện thoại; null nếu hợp lệ. */
+export const phoneError = phoneInputError;
 
 /**
  * Hộp thoại: thanh tiêu đề màu (xanh; vàng khi hoàn tác; đỏ khi huỷ), Esc để đóng, Tab không chạy ra ngoài.

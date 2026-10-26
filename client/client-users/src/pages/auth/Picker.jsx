@@ -20,7 +20,7 @@ const GAP = 8;
  * items = [{ value, label, group?, display? }]; display là chữ hiện trên ô sau khi chọn (mặc định là label). Các mục cùng group đứng liền nhau và có tiêu đề nhóm.
  * onChange nhận thẳng giá trị đã chọn.
  */
-export function Picker({ id, value, onChange, items, disabled, searchable = items.length > 20, busy, ...aria }) {
+export function Picker({ id, value, onChange, items, disabled, searchable = items.length > 20, busy, className = '', ...aria }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState(null);
   const [query, setQuery] = useState('');
@@ -93,11 +93,14 @@ export function Picker({ id, value, onChange, items, disabled, searchable = item
       PageUp: () => setActive((i) => Math.max(0, i - 8)),
       Enter: () => pick(shown[active]),
       Escape: () => hide(),
-      Tab: () => hide(false),
+      Tab: () => hide(),
     };
     if (!searchable) Object.assign(keys, { Home: () => setActive(0), End: () => setActive(last), ' ': keys.Enter });
     if (!keys[e.key]) return;
-    if (e.key !== 'Tab') e.preventDefault();
+    // Danh sách gắn vào <body> nhưng sự kiện vẫn nổi lên theo cây React: chặn lại để Esc không đóng luôn hộp thoại chứa ô,
+    // và Tab quay về ô chọn thay vì nhảy ra ngoài hộp thoại
+    e.preventDefault();
+    e.stopPropagation();
     keys[e.key]();
   };
 
@@ -115,7 +118,7 @@ export function Picker({ id, value, onChange, items, disabled, searchable = item
         ref={btnRef}
         id={id}
         type="button"
-        className="a-input a-pick-btn"
+        className={`a-input a-pick-btn ${className}`}
         role="combobox"
         aria-haspopup="listbox"
         aria-expanded={open}

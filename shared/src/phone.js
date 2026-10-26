@@ -26,3 +26,20 @@ export function phoneProblem(raw, { required = true } = {}) {
   if (!/^[35789]/.test(rest)) return `Đầu số 0${rest[0]} không phải đầu số di động. Số di động bắt đầu bằng 03, 05, 07, 08 hoặc 09.`;
   return null;
 }
+
+/**
+ * Chữ số trong ô có sẵn tiền tố +84. Dán cả "+84912345678" thì bỏ phần 84.
+ * Cho gõ dư vài số để báo "thừa chữ số" thay vì lặng lẽ cắt bớt.
+ */
+export function phoneDigits(v) {
+  const raw = String(v ?? '');
+  let d = raw.replace(/\D/g, '');
+  if (/^\s*\+84/.test(raw) || (d.startsWith('84') && d.length === 11)) d = d.slice(2);
+  return d.slice(0, 12);
+}
+
+/** Chữ số trong ô → số gửi lên server: 9 số sau +84 thì thêm số 0 ở đầu. */
+export const toPhone = (digits) => (digits.length === 9 ? `0${digits}` : digits);
+
+/** Lỗi của ô số điện thoại (có tiền tố +84), cùng quy tắc với server. */
+export const phoneInputError = (digits, { required = true } = {}) => phoneProblem(toPhone(digits), { required });

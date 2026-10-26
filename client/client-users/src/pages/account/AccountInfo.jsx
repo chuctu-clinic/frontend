@@ -8,6 +8,7 @@ import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
 import { FieldError } from '../auth/AuthShell.jsx';
 import { AddressFields, DobField, dobError, joinAddress, joinDob, splitAddress, splitDob } from '../auth/fields.jsx';
+import { Picker } from '../auth/Picker.jsx';
 import './account.css';
 
 // Theo màn "Tài khoản · Thông tin" của prototype (TaiKhoan-ThongTin.dc.html)
@@ -42,9 +43,11 @@ export default function AccountInfo() {
   const validate = (f) => {
     const e = {};
     if (f.fullName.trim().length < 2) e.fullName = 'Vui lòng nhập họ và tên.';
-    const d = dobError(f.dob, { required: false });
+    const d = dobError(f.dob);
     if (d) e.dob = d;
-    if (f.address.ward.trim() && !f.address.province) e.province = 'Vui lòng chọn tỉnh / thành phố.';
+    if (!f.gender) e.gender = 'Vui lòng chọn giới tính.';
+    if (!f.address.province) e.province = 'Vui lòng chọn tỉnh / thành phố.';
+    if (!f.address.ward.trim()) e.ward = 'Vui lòng chọn phường / xã.';
     return e;
   };
   const fe = { ...(error?.fields || {}), ...(tried && form ? validate(form) : {}) };
@@ -54,14 +57,18 @@ export default function AccountInfo() {
     e.preventDefault();
     setTried(true);
     setError(null);
-    if (Object.keys(validate(form)).length) return;
+    if (Object.keys(validate(form)).length) {
+      // Đưa con trỏ tới ô lỗi đầu tiên
+      setTimeout(() => document.querySelector('.k-card [aria-invalid="true"]')?.focus());
+      return;
+    }
     setPending(true);
     try {
       const res = await api.patch('/me', {
         fullName: form.fullName.trim(),
-        dob: joinDob(form.dob) || null,
-        gender: form.gender || null,
-        address: joinAddress(form.address) || null,
+        dob: joinDob(form.dob),
+        gender: form.gender,
+        address: joinAddress(form.address),
       });
       setData(res);
       setUser(res.user);
@@ -164,24 +171,24 @@ export default function AccountInfo() {
                 </p>
               </div>
 
-              <DobField id="tk-ns" value={form.dob} onChange={(v) => setValue('dob', v)} error={fe.dob} />
+              <DobField id="tk-ns" required value={form.dob} onChange={(v) => setValue('dob', v)} error={fe.dob} />
 
               <div className="a-field">
                 <label htmlFor="tk-gioitinh" className="a-label">
-                  Giới tính
+                  Giới tính <span className="a-req" aria-hidden="true">*</span>
                 </label>
-                <select id="tk-gioitinh" className="a-input" value={form.gender} onChange={(e) => setValue('gender', e.target.value)}>
-                  <option value="">Chưa chọn</option>
-                  {Object.entries(GENDERS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <Picker
+                  id="tk-gioitinh"
+                  items={Object.entries(GENDERS).map(([value, label]) => ({ value, label }))}
+                  value={form.gender}
+                  onChange={(v) => setValue('gender', v)}
+                  aria-invalid={fe.gender ? 'true' : 'false'}
+                  aria-describedby={fe.gender ? 'tk-gioitinh-loi' : undefined}
+                />
                 <FieldError id="tk-gioitinh-loi">{fe.gender}</FieldError>
               </div>
 
-              <AddressFields id="tk" value={form.address} onChange={(v) => setValue('address', v)} errors={fe} />
+              <AddressFields id="tk" required value={form.address} onChange={(v) => setValue('address', v)} errors={fe} />
 
               {error && !Object.keys(error.fields || {}).length && <ErrorAlert error={error} />}
 

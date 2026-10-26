@@ -5,6 +5,7 @@ import { ErrorAlert, Loading } from '@chuctu/shared/components/ui.jsx';
 import { api } from '@chuctu/shared/lib/api.js';
 import { CLINIC, GENDERS, RELATIONSHIPS, todayVN } from '@chuctu/shared/lib/format.js';
 import { FieldError, PhoneField, phoneError, toPhone } from '../auth/AuthShell.jsx';
+import { Picker } from '../auth/Picker.jsx';
 import { ProfileChip, ProfileLines } from '../account/Profiles.jsx';
 
 // Bước 2 theo các màn "Đặt lịch 2" của prototype: hai thẻ "Đặt cho mình" / "Đặt cho người thân",
@@ -126,7 +127,6 @@ function SelfCreate({ user, onBack, onCreated }) {
             id="nk-email"
             className="a-input"
             type="email"
-            placeholder="Không bắt buộc"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             aria-invalid={error?.fields?.email ? 'true' : 'false'}
@@ -217,7 +217,7 @@ function RelativeCreate({ user, max, onBack, onCreated }) {
             <label htmlFor="nk-ten" className="a-label">
               Họ và tên <span className="a-req">*</span>
             </label>
-            <input id="nk-ten" className="a-input" type="text" placeholder="Ví dụ: Trần Văn Bảy" value={form.fullName} onChange={set('fullName')} aria-invalid={inv('fullName')} />
+            <input id="nk-ten" className="a-input" type="text" value={form.fullName} onChange={set('fullName')} aria-invalid={inv('fullName')} />
             <FieldError id="nk-ten-loi">{fe.fullName}</FieldError>
           </div>
           <div style={{ flex: '1 1 220px', minWidth: 0 }}>
@@ -229,14 +229,14 @@ function RelativeCreate({ user, max, onBack, onCreated }) {
             <label htmlFor="nk-nam" className="a-label">
               Năm sinh <span className="a-req">*</span>
             </label>
-            <select id="nk-nam" className="a-input" value={form.birthYear} onChange={set('birthYear')} aria-invalid={inv('birthYear')}>
-              <option value="">— Chọn năm —</option>
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+            <Picker
+              id="nk-nam"
+              items={years.map((y) => ({ value: String(y), label: String(y) }))}
+              searchable={false}
+              value={String(form.birthYear)}
+              onChange={(v) => setForm((f) => ({ ...f, birthYear: v }))}
+              aria-invalid={inv('birthYear')}
+            />
             <FieldError id="nk-nam-loi">{fe.birthYear}</FieldError>
           </div>
           <div role="radiogroup" aria-labelledby="nk-gt" className={`a-field ${fe.gender ? 'a-radios-invalid' : ''}`} style={{ flex: '999 1 240px' }}>
@@ -279,7 +279,6 @@ function RelativeCreate({ user, max, onBack, onCreated }) {
                 type="text"
                 inputMode="numeric"
                 maxLength={12}
-                placeholder="Không bắt buộc"
                 value={form.nationalId}
                 onChange={(e) => setForm((f) => ({ ...f, nationalId: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
                 aria-invalid={inv('nationalId')}
@@ -290,7 +289,7 @@ function RelativeCreate({ user, max, onBack, onCreated }) {
               <label htmlFor="nk-email" className="a-label">
                 Email nhận phiếu khám
               </label>
-              <input id="nk-email" className="a-input" type="email" placeholder="Không bắt buộc" value={form.email} onChange={set('email')} aria-invalid={inv('email')} />
+              <input id="nk-email" className="a-input" type="email" value={form.email} onChange={set('email')} aria-invalid={inv('email')} />
               <FieldError id="nk-email-loi">{fe.email}</FieldError>
             </div>
           </div>
@@ -310,16 +309,15 @@ function RelativeCreate({ user, max, onBack, onCreated }) {
           <label htmlFor="nk-quanhe" className="a-label">
             Quan hệ với người khám <span className="a-req">*</span>
           </label>
-          <select id="nk-quanhe" className="a-input" value={form.relationship} onChange={set('relationship')} aria-invalid={inv('relationship')}>
-            <option value="">— Chọn —</option>
-            {Object.entries(RELATIONSHIPS)
+          <Picker
+            id="nk-quanhe"
+            items={Object.entries(RELATIONSHIPS)
               .filter(([v]) => v !== 'BAN_THAN')
-              .map(([v, label]) => (
-                <option key={v} value={v}>
-                  {label}
-                </option>
-              ))}
-          </select>
+              .map(([value, label]) => ({ value, label }))}
+            value={form.relationship}
+            onChange={(v) => setForm((f) => ({ ...f, relationship: v }))}
+            aria-invalid={inv('relationship')}
+          />
           <FieldError id="nk-quanhe-loi">{fe.relationship}</FieldError>
         </div>
       </div>

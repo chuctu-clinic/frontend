@@ -6,7 +6,7 @@ import { api, qs } from '@chuctu/shared/lib/api.js';
 import { ROLE_LABELS, fmtDate } from '@chuctu/shared/lib/format.js';
 import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
-import { FieldError, Notice, Pager, PhoneField, PlainDialog, normalizePhone, useDismiss } from '../../components/t-ui.jsx';
+import { FieldError, Notice, Pager, PhoneField, PlainDialog, normalizePhone, phoneError, useDismiss } from '../../components/t-ui.jsx';
 import './admin.css';
 
 const PER_PAGE = 10;
@@ -32,7 +32,7 @@ function AccountDialog({ account, onClose, onSaved }) {
   const needsPassword = isAdd && STAFF.includes(form.role);
   const errs = {
     fullName: form.fullName.trim() ? null : 'Vui lòng nhập họ và tên.',
-    phone: !form.phone ? 'Vui lòng nhập số điện thoại.' : /^\d{9,10}$/.test(form.phone) ? null : 'Số điện thoại gồm 9 đến 10 chữ số sau +84.',
+    phone: phoneError(form.phone),
     tempPassword: !needsPassword || form.tempPassword.length >= 8 ? null : form.tempPassword ? 'Mật khẩu tạm cần ít nhất 8 ký tự.' : 'Vui lòng nhập mật khẩu tạm.',
   };
   const fe = { ...(tried ? errs : {}), ...(error?.fields || {}) };

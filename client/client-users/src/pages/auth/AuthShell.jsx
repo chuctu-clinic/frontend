@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Brand } from '@chuctu/shared/components/Brand.jsx';
 import { Icon } from '@chuctu/shared/components/Icon.jsx';
 import { CLINIC } from '@chuctu/shared/lib/format.js';
-import { phoneProblem } from '@chuctu/shared/phone.js';
+import { phoneDigits, phoneInputError, toPhone } from '@chuctu/shared/phone.js';
 import './auth.css';
 
 /**
@@ -66,21 +66,8 @@ export function FieldError({ id, children }) {
   );
 }
 
-/**
- * Chỉ giữ chữ số. Dán cả "+84912345678" thì bỏ phần 84 vì ô đã có sẵn +84.
- * Cho gõ dư vài số để báo "thừa chữ số" thay vì lặng lẽ cắt bớt.
- */
-export function phoneDigits(v) {
-  let d = v.replace(/\D/g, '');
-  if (/^\s*\+84/.test(v) || (d.startsWith('84') && d.length === 11)) d = d.slice(2);
-  return d.slice(0, 12);
-}
-
-/** 9 số sau +84 thì thêm số 0 ở đầu để Backend nhận dạng 0xxxxxxxxx. */
-export const toPhone = (digits) => (digits.length === 9 ? `0${digits}` : digits);
-
-/** Kiểm tra nhanh phía giao diện theo cùng quy tắc với Backend; Backend vẫn kiểm tra lại. */
-export const phoneError = (digits, { required = true } = {}) => phoneProblem(toPhone(digits), { required });
+// Xử lý ô số điện thoại dùng chung với khu nội bộ và cùng quy tắc với Backend (shared/src/phone.js)
+export { phoneDigits, toPhone, phoneInputError as phoneError };
 
 /** Ô số điện thoại có tiền tố +84 cố định. */
 export function PhoneField({ id, label, required, value, onChange, error, note, autoFocus }) {

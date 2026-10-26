@@ -7,6 +7,7 @@ import { fmtDate, shortTime, weekday } from '@chuctu/shared/lib/format.js';
 import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
 import { Dialog } from '../../components/Dialog.jsx';
+import { Picker } from '../auth/Picker.jsx';
 import { BookingCrumbs, BookingFrame } from '../booking/Booking.jsx';
 import { Ticket } from './Ticket.jsx';
 import './account.css';
@@ -77,14 +78,13 @@ function CancelDialog({ appt, onClose, onCancelled }) {
         <label htmlFor="ly-do-huy" className="a-label">
           Lý do huỷ <span style={{ fontWeight: 400, color: 'var(--ink-500)' }}>(không bắt buộc)</span>
         </label>
-        <select id="ly-do-huy" className="a-input" value={reason} onChange={(e) => setReason(e.target.value)} aria-describedby="ly-do-huy-note">
-          <option value="">— Chọn lý do —</option>
-          {CANCEL_REASONS.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
+        <Picker
+          id="ly-do-huy"
+          items={[{ value: '', label: 'Không nêu lý do', display: '' }, ...CANCEL_REASONS.map((r) => ({ value: r, label: r }))]}
+          value={reason}
+          onChange={setReason}
+          aria-describedby="ly-do-huy-note"
+        />
         <p id="ly-do-huy-note" className="a-hint">
           Phòng khám chỉ dùng thông tin này để sắp lịch tốt hơn cho lần sau.
         </p>

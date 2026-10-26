@@ -6,6 +6,7 @@ import { GENDERS, RELATIONSHIPS, fmtDate } from '@chuctu/shared/lib/format.js';
 import { Dialog } from '../../components/Dialog.jsx';
 import { FieldError, PhoneField, phoneDigits, phoneError, toPhone } from '../auth/AuthShell.jsx';
 import { DobField, dobError, joinDob, splitDob } from '../auth/fields.jsx';
+import { Picker } from '../auth/Picker.jsx';
 
 // Hộp thoại hồ sơ khám theo prototype "Hồ sơ khám bệnh": thêm / sửa, xem chi tiết, xác nhận xoá.
 // Dùng ở trang Hồ sơ khám bệnh và bước chọn người đi khám khi đặt lịch.
@@ -39,7 +40,7 @@ function TextField({ id, label, required, error, ...props }) {
   );
 }
 
-function SelectField({ id, label, required, error, options, placeholder, ...props }) {
+function SelectField({ id, label, required, error, options, value, onChange, disabled }) {
   return (
     <div className="a-field">
       <label htmlFor={id} className="a-label">
@@ -53,14 +54,15 @@ function SelectField({ id, label, required, error, options, placeholder, ...prop
           </>
         )}
       </label>
-      <select id={id} className="a-input" aria-invalid={error ? 'true' : 'false'} aria-describedby={error ? `${id}-loi` : undefined} {...props}>
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map(([value, text]) => (
-          <option key={value} value={value}>
-            {text}
-          </option>
-        ))}
-      </select>
+      <Picker
+        id={id}
+        items={options.map(([v, text]) => ({ value: v, label: text }))}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        aria-invalid={error ? 'true' : 'false'}
+        aria-describedby={error ? `${id}-loi` : undefined}
+      />
       <FieldError id={`${id}-loi`}>{error}</FieldError>
     </div>
   );
@@ -149,7 +151,7 @@ export function ProfileFormDialog({ profile, onClose, onSaved }) {
           ? 'Cô chú sửa các thông tin cần thiết rồi bấm Lưu thay đổi.'
           : 'Lập hồ sơ cho người thân để lần sau đặt lịch khỏi nhập lại. Các ô không có dấu * thì cô chú không cần điền, phòng khám sẽ hỏi thêm khi đến khám.'}
       </p>
-      <TextField id="hs-ten" label="Họ và tên" required placeholder="Ví dụ: Trần Văn Bảy" value={form.fullName} onChange={set('fullName')} error={fe.fullName} />
+      <TextField id="hs-ten" label="Họ và tên" required value={form.fullName} onChange={set('fullName')} error={fe.fullName} />
       <PhoneField id="hs-sdt" label="Số điện thoại" value={form.phone} onChange={(v) => setValue('phone', v)} error={fe.phone} />
       <DobField id="hs-ns" required value={form.dob} onChange={(v) => setValue('dob', v)} error={fe.dob} />
       <div className="a-row" style={{ gap: 14 }}>
@@ -157,20 +159,18 @@ export function ProfileFormDialog({ profile, onClose, onSaved }) {
           id="hs-gt"
           label="Giới tính"
           required
-          placeholder="Chọn giới tính"
           options={Object.entries(GENDERS)}
           value={form.gender}
-          onChange={set('gender')}
+          onChange={(v) => setValue('gender', v)}
           error={fe.gender}
         />
         <SelectField
           id="hs-qh"
           label="Quan hệ với cô chú"
           required
-          placeholder="Chọn quan hệ"
           options={relOptions}
           value={form.relationship}
-          onChange={set('relationship')}
+          onChange={(v) => setValue('relationship', v)}
           disabled={isSelf}
           error={fe.relationship}
         />
@@ -180,16 +180,14 @@ export function ProfileFormDialog({ profile, onClose, onSaved }) {
         label="Số căn cước công dân"
         inputMode="numeric"
         maxLength={12}
-        placeholder="Không bắt buộc"
         value={form.nationalId}
         onChange={(e) => setValue('nationalId', e.target.value.replace(/\D/g, '').slice(0, 12))}
         error={fe.nationalId}
       />
-      <TextField id="hs-email" label="Email" type="email" placeholder="Không bắt buộc" value={form.email} onChange={set('email')} error={fe.email} />
+      <TextField id="hs-email" label="Email" type="email" value={form.email} onChange={set('email')} error={fe.email} />
       <TextField
         id="hs-diachi"
         label="Địa chỉ"
-        placeholder="Số nhà, đường, phường / xã, tỉnh / thành phố"
         value={form.address}
         onChange={set('address')}
         error={fe.address}

@@ -6,7 +6,7 @@ import { api } from '@chuctu/shared/lib/api.js';
 import { GENDERS, ageFrom, fmtDate, shortTime, todayVN } from '@chuctu/shared/lib/format.js';
 import { isAdmin, useSession } from '@chuctu/shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
-import { FieldError, Notice, PhoneField, TDialog, normalizePhone } from '../../components/t-ui.jsx';
+import { FieldError, Notice, PhoneField, TDialog, normalizePhone, phoneError } from '../../components/t-ui.jsx';
 import { EditRecordDialog, HistoryTable, ResultDialog } from './RecordParts.jsx';
 
 /** Sửa thông tin hồ sơ: mã bệnh nhân không đổi (UC.9.5). */
@@ -26,7 +26,7 @@ function EditPatientDialog({ patient, onClose, onSaved }) {
   const errs = {
     fullName: form.fullName.trim().length >= 2 ? null : 'Vui lòng nhập họ và tên (ít nhất 2 ký tự).',
     birthYear: /^(19|20)\d{2}$/.test(form.birthYear) && year <= Number(todayVN().slice(0, 4)) ? null : 'Nhập năm sinh gồm 4 chữ số, ví dụ 1952.',
-    phone: /^\d{9,10}$/.test(form.phone) ? null : 'Số điện thoại gồm 9 đến 10 số.',
+    phone: phoneError(form.phone),
   };
   const fe = { ...(tried ? errs : {}), ...(error?.fields || {}) };
 

@@ -5,7 +5,7 @@ import { api, qs } from '@chuctu/shared/lib/api.js';
 import { addDays, fmtDate, fmtTime, shortTime, todayVN, weekday } from '@chuctu/shared/lib/format.js';
 import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { useAsync } from '@chuctu/shared/lib/useAsync.js';
-import { FieldError, PhoneField, Summary, TDialog, normalizePhone } from '../../components/t-ui.jsx';
+import { FieldError, PhoneField, Summary, TDialog, normalizePhone, phoneError } from '../../components/t-ui.jsx';
 
 // Hộp thoại của Lịch trong ngày (UC.7.3 – UC.7.7), theo prototype "TiepTan-LichTrongNgay".
 
@@ -354,7 +354,7 @@ export function validateNewPatient({ fullName, birthYear, phone }) {
   return {
     fullName: fullName.trim().length >= 2 ? null : 'Vui lòng nhập họ và tên bệnh nhân.',
     birthYear: /^(19|20)\d{2}$/.test(birthYear) && year <= thisYear ? null : 'Nhập năm sinh gồm 4 chữ số, ví dụ 1952.',
-    phone: /^\d{9,10}$/.test(phone) ? null : 'Nhập số điện thoại 9 đến 10 số, ví dụ 912345678.',
+    phone: phoneError(phone),
   };
 }
 
