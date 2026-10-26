@@ -7,6 +7,11 @@ export default defineConfig({
   base: '/noi-bo/',
   plugins: [react()],
   resolve: { dedupe: ['react', 'react-dom', 'react-router-dom'] },
+  // Trình soạn bài chỉ được tải khi mở trang soạn (React.lazy). Khai báo sẵn để Vite đóng gói ngay khi khởi động,
+  // không phải phát hiện giữa chừng (khi đó trang tải lỗi "Outdated Optimize Dep" cho tới khi tải lại).
+  optimizeDeps: {
+    include: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-image', '@tiptap/extension-table', '@tiptap/extensions', 'mammoth'],
+  },
   server: {
     port: 5174,
     strictPort: true,

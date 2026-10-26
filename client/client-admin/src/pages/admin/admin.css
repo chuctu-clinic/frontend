@@ -61,27 +61,62 @@
 .a-status-chip.green { background: var(--green-100); color: var(--green-700); border-color: var(--green-700); }
 .a-status-chip.gold { background: var(--gold-100); color: var(--gold-700); border-color: var(--gold-500); }
 
+/* Khung soạn bài (RichEditor.jsx, Tiptap) */
 .ed-wrap { background: var(--t-white); border: 2px solid var(--line-strong); border-radius: 12px; overflow: hidden; }
 .ed-wrap:focus-within { border-color: var(--green-700); }
 .ed-wrap[data-invalid='true'],
 .ed-wrap[data-invalid='true']:focus-within { border-color: var(--alert-700); }
+.ed-loading { min-height: 440px; }
+.a-desc-input { min-height: 96px; padding: 12px 16px; resize: vertical; line-height: 28px; }
+.a-desc-note { display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; }
+.a-desc-note span:first-child { flex: 1 1 280px; min-width: 0; }
+.a-desc-note span:last-child { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ed-failed { min-height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; font-weight: 600; color: var(--alert-700); }
 .ed-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 8px; background: var(--surface-200); border-bottom: 1px solid #cdbd9f; }
 .ed-toolbar select { min-height: 44px; padding: 0 12px; background: var(--t-white); border: 1px solid #cdbd9f; border-radius: 10px; font: inherit; font-size: 16px; font-weight: 600; color: var(--ink-900); }
 .ed-tb { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: transparent; border: 0; border-radius: 10px; color: var(--ink-900); cursor: pointer; }
-.ed-tb:hover { background: var(--green-100); color: var(--green-700); }
+.ed-tb:hover:not(:disabled) { background: var(--green-100); color: var(--green-700); }
+.ed-tb.is-on { background: var(--green-100); color: var(--green-700); box-shadow: inset 0 0 0 1px var(--green-700); }
+.ed-tb:disabled { opacity: 0.35; cursor: default; }
 .ed-sep { width: 1px; height: 28px; background: #cdbd9f; margin: 0 6px; }
+/* Hàng trên khung soạn: nhãn "Nội dung" bên trái, nút nhập từ Word bên phải (xuống dòng khi hẹp) */
+.ed-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.ed-word { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 18px; background: var(--surface-card); border: 2px solid var(--line-strong); border-radius: 999px; font: inherit; font-size: 16px; font-weight: 600; color: var(--green-700); cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; }
+.ed-word:hover:not(:disabled) { background: var(--green-100); border-color: var(--green-700); }
+.ed-word:disabled { opacity: 0.7; cursor: progress; }
+.ed-word .spinner { width: 20px; height: 20px; }
+.ed-toolbar-table { gap: 6px; background: var(--green-100); }
+.ed-toolbar-title { font-size: 15px; font-weight: 700; color: var(--green-700); margin: 0 4px; }
+.ed-chip { min-height: 36px; padding: 0 12px; background: var(--t-white); border: 1px solid #cdbd9f; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 600; color: var(--ink-900); cursor: pointer; }
+.ed-chip:hover { border-color: var(--green-700); color: var(--green-700); }
+.ed-chip-danger { color: var(--alert-700); }
+.ed-chip-danger:hover { border-color: var(--alert-700); color: var(--alert-700); }
+
+/* Nội dung bài khi soạn: giống trang hiển thị bài */
 .ed { min-height: 380px; padding: 20px 24px; font-size: 17px; line-height: 30px; color: var(--ink-900); }
-.t-app .ed:focus { outline: 3px solid var(--focus-ring); outline-offset: -3px; }
-.ed:empty::before { content: attr(data-ph); color: var(--ink-500); }
+.ed:focus { outline: none; }
+.t-app .ed:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -3px; }
 .ed p { margin: 0 0 14px; }
 .ed h2 { margin: 22px 0 10px; font-family: var(--font-serif); font-size: 26px; line-height: 36px; font-weight: 700; color: var(--ink-900); }
 .ed h3 { margin: 18px 0 8px; font-family: var(--font-serif); font-size: 21px; line-height: 30px; font-weight: 700; color: var(--ink-900); }
 .ed ul,
 .ed ol { margin: 0 0 14px; padding-left: 28px; }
 .ed li { margin-bottom: 6px; }
+.ed li p { margin: 0; }
 .ed blockquote { margin: 0 0 14px; padding: 14px 20px; background: var(--gold-100); border-left: 4px solid var(--gold-500); border-radius: 8px; font-family: var(--font-serif); }
+.ed blockquote p:last-child { margin-bottom: 0; }
 .ed a { color: var(--green-700); text-decoration: underline; }
 .ed img { max-width: 100%; height: auto; border-radius: 12px; display: block; margin: 12px 0; }
+.ed img.ProseMirror-selectednode { outline: 3px solid var(--green-700); outline-offset: 2px; }
+.ed table { width: 100%; border-collapse: collapse; margin: 12px 0; table-layout: fixed; }
+.ed td,
+.ed th { border: 1px solid #cdbd9f; padding: 8px 12px; vertical-align: top; position: relative; }
+.ed th { background: var(--surface-200); font-weight: 700; text-align: left; }
+.ed td p,
+.ed th p { margin: 0; }
+.ed .selectedCell::after { content: ''; position: absolute; inset: 0; background: rgba(46, 91, 55, 0.12); pointer-events: none; }
+/* Dòng gợi ý khi khung còn trống (Placeholder của Tiptap) */
+.ed p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; height: 0; color: var(--ink-500); pointer-events: none; }
 
 .a-thumb-box { position: relative; }
 .a-thumb-box img { width: 100%; height: 180px; object-fit: cover; border-radius: 16px; display: block; }
@@ -121,6 +156,7 @@
 .pv-crumb span + span::before { content: '›'; padding: 0 8px; }
 .pv-cat { align-self: flex-start; background: var(--green-100); color: var(--green-700); font-weight: 600; padding: 7px 16px; border-radius: 999px; }
 .pv-title { font-family: var(--font-serif); font-size: 42px; line-height: 54px; font-weight: 700; color: var(--ink-900); }
+.pv-desc { max-width: 62ch; font-size: 21px; line-height: 34px; color: var(--ink-700); }
 .pv-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; font-size: 17px; color: var(--ink-500); }
 .pv-meta span { display: inline-flex; align-items: center; gap: 8px; }
 .pv-article { padding: 48px 24px 72px; }
@@ -136,6 +172,15 @@
 .pv-body blockquote { padding: 28px 32px; background: var(--gold-100); border-radius: 20px; font-family: var(--font-serif); font-size: 22px; line-height: 36px; color: var(--ink-900); }
 .pv-body blockquote p { margin: 0; }
 .pv-body a { color: var(--green-700); text-decoration: underline; }
+.pv-body figure { margin: 0; }
+.pv-body figure.table { overflow-x: auto; }
+.pv-body table { width: 100%; border-collapse: collapse; font-size: 17px; line-height: 28px; }
+.pv-body td,
+.pv-body th { border: 1px solid var(--line-strong); padding: 10px 14px; text-align: left; vertical-align: top; }
+.pv-body th { background: var(--surface-200); color: var(--ink-900); }
+.pv-body li p,
+.pv-body td p,
+.pv-body th p { margin: 0; }
 .pv-body img { max-width: 100%; height: auto; border-radius: 20px; display: block; }
 .pv-cta { margin-top: 12px; background: var(--green-100); border-radius: 28px; padding: 32px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; }
 .pv-cta h2 { margin-bottom: 8px; font-family: var(--font-serif); font-size: 26px; line-height: 36px; font-weight: 700; color: var(--ink-900); }
@@ -151,5 +196,6 @@
 @media (max-width: 900px) {
   .pv-foot-cards { grid-template-columns: minmax(0, 1fr); }
   .pv-title { font-size: 32px; line-height: 42px; }
+  .pv-desc { font-size: 19px; line-height: 31px; }
   .pv-cover { height: 260px; }
 }

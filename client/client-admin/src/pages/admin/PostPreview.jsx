@@ -7,7 +7,7 @@ import { CLINIC, fmtDate } from '@chuctu/shared/lib/format.js';
 import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
 import { checkPost, clearDraft, readDraft, toPayload } from './PostEditor.jsx';
-import { toEditorHtml } from './RichEditor.jsx';
+import { toEditorHtml } from './postHtml.js';
 import '../../components/staff.css';
 import './admin.css';
 
@@ -32,7 +32,7 @@ export default function PostPreview() {
   useEffect(() => {
     const draft = location.state?.from === 'editor' ? readDraft(id) : null;
     if (draft) {
-      setPost(draft);
+      setPost({ summary: '', ...draft });
       setFromEditor(true);
       return;
     }
@@ -154,6 +154,7 @@ export default function PostPreview() {
             </p>
             <span className="pv-cat">{categoryLabel}</span>
             <h1 className="pv-title">{post.title || 'Chưa có tiêu đề'}</h1>
+            {post.summary?.trim() && <p className="pv-desc">{post.summary}</p>}
             <div className="pv-meta">
               <span>
                 <Icon name="user" size={20} strokeWidth={1.75} />

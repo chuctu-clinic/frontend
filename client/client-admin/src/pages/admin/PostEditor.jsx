@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Component, Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '@chuctu/shared/components/Icon.jsx';
 import { ErrorAlert, Loading } from '@chuctu/shared/components/ui.jsx';
@@ -7,10 +7,33 @@ import { fmtDate, todayVN } from '@chuctu/shared/lib/format.js';
 import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
 import { FieldError, Notice } from '../../components/t-ui.jsx';
-import { RichEditor, hasContent, summaryFrom, toEditorHtml, uploadImage } from './RichEditor.jsx';
+import { hasContent, toEditorHtml, uploadImage } from './postHtml.js';
 import './admin.css';
 
+// Trình soạn thảo khá nặng nên chỉ tải khi mở trang soạn bài
+const RichEditor = lazy(() => import('./RichEditor.jsx').then((m) => ({ default: m.RichEditor })));
+
+/** Tải trình soạn thảo lỗi (mất mạng, vừa cập nhật phiên bản…): báo lỗi ngay tại khung thay vì làm trắng cả trang. */
+class EditorBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="ed-wrap ed-failed" role="alert">
+        <p>Không tải được khung soạn bài. Vui lòng tải lại trang.</p>
+        <button type="button" className="ed-word" onClick={() => window.location.reload()}>
+          Tải lại trang
+        </button>
+      </div>
+    );
+  }
+}
+
 const DEFAULT_AUTHOR = 'Phòng khám Chúc Từ';
+const SUMMARY_MAX = 300;
 
 /** Bản nháp đang sửa, giữ tạm khi mở trang Xem thử rồi quay lại. */
 export const draftKey = (id) => `ct-post-draft:${id || 'new'}`;
@@ -43,17 +66,17 @@ export function toPayload(form, status) {
     authorName: form.authorName.trim(),
     thumbnailUrl: form.thumbnailUrl || null,
     content: form.content,
-    // Trang thông tin cố định dùng tóm tắt làm đoạn giới thiệu đã soạn sẵn, nên giữ nguyên
-    summary: form.slug ? undefined : summaryFrom(form.content),
+    summary: form.summary.trim(),
     publishedAt: publishedIso(form.date, form.publishedAt),
     status,
   };
 }
 
-/** Bắt buộc khi công khai: tiêu đề, nội dung, tác giả, ngày đăng, ảnh thu nhỏ. Lưu nháp chỉ cần tiêu đề. */
+/** Bắt buộc khi công khai: tiêu đề, mô tả, nội dung, tác giả, ngày đăng, ảnh thu nhỏ. Lưu nháp chỉ cần tiêu đề. */
 export function checkPost(form, full) {
   const errs = { title: !form.title.trim() };
   if (full) {
+    errs.summary = !form.summary.trim();
     errs.content = !hasContent(form.content);
     errs.authorName = !form.authorName.trim();
     errs.date = !form.date;
@@ -67,6 +90,7 @@ function fromPost(p) {
     id: p.id,
     slug: p.slug,
     title: p.title,
+    summary: p.summary || '',
     category: p.category,
     authorName: p.authorName || DEFAULT_AUTHOR,
     thumbnailUrl: p.thumbnailUrl || '',
@@ -77,7 +101,7 @@ function fromPost(p) {
   };
 }
 
-const IDS = { title: 'bv-tieude', content: 'bv-noidung', authorName: 'bv-tacgia', date: 'bv-thoigian', thumbnail: 'bv-anh-btn' };
+const IDS = { title: 'bv-tieude', summary: 'bv-mota', content: 'bv-noidung', authorName: 'bv-tacgia', date: 'bv-thoigian', thumbnail: 'bv-anh-btn' };
 
 /** Soạn và sửa bài viết (UC.5.1, UC.5.2, UC.5.5), theo prototype "Admin-SoanBaiViet", "Admin-SuaBaiViet". */
 export default function PostEditor() {
@@ -105,11 +129,12 @@ export default function PostEditor() {
     const draft = readDraft(id);
     clearDraft(id);
     if (draft) {
-      setForm(draft);
+      // Bản nháp lưu từ trước khi có ô Mô tả
+      setForm({ summary: '', ...draft });
       return;
     }
     if (isNew) {
-      setForm({ title: '', category: 'TIN_TUC', authorName: DEFAULT_AUTHOR, thumbnailUrl: '', content: '', status: 'DRAFT', date: todayVN(), publishedAt: null });
+      setForm({ title: '', summary: '', category: 'TIN_TUC', authorName: DEFAULT_AUTHOR, thumbnailUrl: '', content: '', status: 'DRAFT', date: todayVN(), publishedAt: null });
       return;
     }
     api
@@ -121,6 +146,11 @@ export default function PostEditor() {
   if (!form) return error ? <ErrorAlert error={error} /> : <Loading />;
 
   const fixedPage = Boolean(form.slug);
+  const contentLabel = (
+    <span id="bv-nd-lb" className="t-label">
+      Nội dung <span className="t-req">*</span>
+    </span>
+  );
   const set = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
     if (errs[k]) setErrs((e) => ({ ...e, [k]: false }));
@@ -232,21 +262,58 @@ export default function PostEditor() {
             <FieldError id="bv-tieude-loi">{errs.title && 'Vui lòng nhập tiêu đề.'}</FieldError>
           </div>
           <div className="t-field">
-            <span id="bv-nd-lb" className="t-label">
-              Nội dung <span className="t-req">*</span>
-            </span>
-            <RichEditor
-              key={editorKey}
-              id="bv-noidung"
-              labelledBy="bv-nd-lb"
-              describedBy="bv-noidung-loi"
-              initialHtml={form.content}
-              invalid={errs.content}
-              onChange={(html) => set('content', html)}
-              onError={setError}
+            <label htmlFor="bv-mota" className="t-label">
+              Mô tả <span className="t-req">*</span>
+            </label>
+            <textarea
+              id="bv-mota"
+              className="t-input a-desc-input"
+              rows={3}
+              maxLength={SUMMARY_MAX}
+              value={form.summary}
+              onChange={(e) => set('summary', e.target.value)}
+              aria-invalid={errs.summary ? 'true' : 'false'}
+              aria-describedby="bv-mota-loi bv-mota-note"
             />
+            <FieldError id="bv-mota-loi">{errs.summary && 'Vui lòng nhập mô tả.'}</FieldError>
+            <p id="bv-mota-note" className="t-muted a-desc-note">
+              <span>Hai, ba câu nói bài này về việc gì. Hiện dưới tiêu đề ở trang bài viết và trên thẻ bài ở trang chủ, trang tin tức.</span>
+              <span aria-live="polite">
+                {form.summary.length}/{SUMMARY_MAX}
+              </span>
+            </p>
+          </div>
+          <div className="t-field">
+            <EditorBoundary>
+              <Suspense
+                fallback={
+                  <>
+                    <div className="ed-head">{contentLabel}</div>
+                    <div className="ed-wrap ed-loading">
+                      <Loading />
+                    </div>
+                  </>
+                }
+              >
+                <RichEditor
+                  label={contentLabel}
+                  key={editorKey}
+                  id="bv-noidung"
+                  labelledBy="bv-nd-lb"
+                  describedBy="bv-noidung-loi"
+                  initialHtml={form.content}
+                  invalid={errs.content}
+                  onChange={(html) => set('content', html)}
+                  onError={setError}
+                  onNotice={(m) => {
+                    setError(null);
+                    setNotice(m);
+                  }}
+                />
+              </Suspense>
+            </EditorBoundary>
             <FieldError id="bv-noidung-loi">{errs.content && 'Vui lòng nhập nội dung bài viết.'}</FieldError>
-            <p className="t-muted">Bài phải có đủ tiêu đề, danh mục, tác giả, thời gian, ảnh thu nhỏ và nội dung trước khi công khai.</p>
+            <p className="t-muted">Bài phải có đủ tiêu đề, mô tả, danh mục, tác giả, thời gian, ảnh thu nhỏ và nội dung trước khi công khai.</p>
           </div>
         </form>
 

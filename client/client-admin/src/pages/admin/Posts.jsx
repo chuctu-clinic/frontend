@@ -179,7 +179,8 @@ export default function Posts() {
             }}
           >
             <option value="">Tất cả</option>
-            {(meta?.postCategories || []).map((c) => (
+            {/* Chỉ 4 danh mục bài viết như bên website; trang thông tin cố định không quản lý ở đây */}
+            {(meta?.postCategories || []).filter((c) => c.value !== 'TRANG').map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
               </option>
@@ -242,7 +243,7 @@ export default function Posts() {
                       </div>
                     </div>
                     <div role="cell" className="t-td">
-                      <span className={`a-cat ${GOLD_CATEGORIES.includes(p.category) ? 'gold' : p.category === 'TRANG' ? 'sand' : ''}`}>{p.categoryLabel}</span>
+                      <span className={`a-cat ${GOLD_CATEGORIES.includes(p.category) ? 'gold' : ''}`}>{p.categoryLabel}</span>
                     </div>
                     <div role="cell" className="t-td t-text">
                       {p.authorName}
