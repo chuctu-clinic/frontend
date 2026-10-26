@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { PublicLayout } from './components/PublicLayout.jsx';
 import { Loading } from '@chuctu/shared/components/ui.jsx';
@@ -37,7 +38,29 @@ function RequireUser({ children }) {
   return children;
 }
 
+/**
+ * Bấm liên kết tới đúng trang đang xem (logo, menu, chân trang…) thì lướt lên đầu trang.
+ * Đổi sang trang khác đã tự lên đầu ở PublicLayout; liên kết có #mục vẫn cuộn tới mục đó như cũ.
+ */
+function useScrollTopOnSamePageLink() {
+  useEffect(() => {
+    const onClick = (e) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = e.target.closest?.('a[href]');
+      if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+      const url = new URL(a.href, window.location.href);
+      const here = window.location;
+      if (url.origin !== here.origin || url.hash || url.pathname !== here.pathname || url.search !== here.search) return;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, left: 0, behavior: reduce ? 'auto' : 'smooth' });
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, []);
+}
+
 export default function App() {
+  useScrollTopOnSamePageLink();
   return (
     <Routes>
       {/* Đăng nhập và tạo tài khoản có đầu trang, chân trang rút gọn riêng (AuthShell) */}
