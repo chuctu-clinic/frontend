@@ -33,14 +33,10 @@ export default function TicketResult() {
 
       <section className="k-main">
         <div className="k-wrap">
-          <nav aria-label="Quay lại" className="r-actions">
+          <nav aria-label="Quay lại" style={{ display: 'flex' }}>
             <Link to={record ? `/lich-su-kham?ho-so=${record.patientId}` : '/lich-su-kham'} className="r-back">
               <Icon name="arrowLeft" size={22} strokeWidth={1.75} />
               Lịch sử khám
-            </Link>
-            <Link to={`/phieu-kham/${id}`} className="r-back">
-              <Icon name="ticket" size={22} strokeWidth={1.75} />
-              Phiếu khám
             </Link>
           </nav>
           {loading && <Loading />}

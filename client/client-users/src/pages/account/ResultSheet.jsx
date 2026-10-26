@@ -1,5 +1,6 @@
 import { Icon } from '@chuctu/shared/components/Icon.jsx';
 import { CLINIC, fmtDate, weekday } from '@chuctu/shared/lib/format.js';
+import { HISTORY_ITEMS, parseHistory } from '@chuctu/shared/medicalHistory.js';
 
 // Phiếu kết quả khám theo màn "Phiếu khám · Kết quả khám" của prototype (KetQuaKham.dc.html)
 
@@ -24,6 +25,7 @@ function NoteRow({ label, value }) {
 export function ResultSheet({ record }) {
   const p = record.patient;
   const notes = record.treatmentNotes || {};
+  const history = parseHistory(record.medicalHistory);
   return (
     <article className="r-sheet" aria-label={`Kết quả khám ngày ${fmtDate(record.visitDate)}`}>
       <div className="r-sheet-top">
@@ -96,7 +98,27 @@ export function ResultSheet({ record }) {
 
         <section aria-labelledby="kq-ts">
           <h4 id="kq-ts">Tiền sử bệnh</h4>
-          <p className={`r-history ${record.medicalHistory ? '' : 'r-muted'}`}>{record.medicalHistory || 'Không ghi nhận.'}</p>
+          <ul className="r-ts">
+            {HISTORY_ITEMS.map((it, i) => {
+              const line = history.lines[i];
+              const detail = line && line.includes(':') ? line.slice(line.indexOf(':') + 1).trim() : '';
+              return (
+                <li key={it.label}>
+                  <span aria-hidden="true" className={`r-box ${line ? 'on' : ''}`}>
+                    {line && <Icon name="check" size={22} strokeWidth={3} />}
+                  </span>
+                  <span>
+                    <span className="r-ts-name">
+                      {i + 1}. {it.label}
+                      <span className="sr-only">{line ? ': có' : ': không'}</span>
+                    </span>
+                    {detail && <span className="r-ts-detail">{detail}</span>}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {history.extra.length > 0 && <p className="r-history">{history.extra.join('\n')}</p>}
         </section>
 
         <section aria-label="Lưu ý" className="r-warn">

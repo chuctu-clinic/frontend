@@ -108,8 +108,15 @@
 .r-note-row dt { flex: 0 0 120px; font-size: 19px; line-height: 31px; font-weight: 700; color: var(--ink-900); }
 .r-note-row dd { flex: 1 1 320px; margin: 0; font-size: 19px; line-height: 31px; font-weight: 400; color: var(--ink-700); white-space: pre-line; }
 .r-note-row dd.r-muted { color: var(--ink-500); font-style: italic; }
+/* Tiền sử bệnh: 8 mục có ô đánh dấu, 2 cột (điền theo cột) như phiếu giấy */
+.r-ts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); grid-auto-flow: column; gap: 0 40px; }
+.r-ts li { display: flex; gap: 16px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+.r-box { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; margin-top: 1px; flex-shrink: 0; background: var(--surface-card); border: 2px solid var(--line-strong); border-radius: 8px; color: #fff; }
+.r-box.on { background: #2e5b37; border-color: #2e5b37; }
+.r-ts li > span:last-child { flex: 1 1 auto; min-width: 0; }
+.r-ts-name { display: block; font-size: 19px; line-height: 30px; color: var(--ink-900); }
+.r-ts-detail { display: block; font-size: 17px; line-height: 27px; color: var(--ink-700); }
 .r-history { padding-top: 14px; font-size: 19px; line-height: 31px; color: var(--ink-900); white-space: pre-line; }
-.r-history.r-muted { color: var(--ink-500); font-style: italic; }
 .r-warn { background: var(--gold-100); border-radius: 16px; padding: 18px 20px; display: flex; gap: 12px; align-items: flex-start; }
 .r-warn > svg { flex-shrink: 0; margin-top: 3px; color: var(--gold-700); }
 .r-warn p { margin-bottom: 6px !important; font-size: 17px; line-height: 27px; font-weight: 700; color: var(--gold-700); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -128,6 +135,11 @@
   .site-header, .topbar, .site-footer, .k-crumbs, .k-titleband, .r-back, .r-actions { display: none !important; }
   .k-main { padding: 0; }
   .r-sheet { border: 0; }
+  /* In giữ màu dải tiêu đề và ô đã đánh dấu */
+  .r-sheet-top, .r-box.on, .r-warn { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@media (max-width: 600px) {
+  .r-ts { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
 }
 @media (max-width: 700px) {
   .r-ticket { padding: 20px; }
