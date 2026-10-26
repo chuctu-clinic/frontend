@@ -74,7 +74,9 @@ export default function HuongDan() {
               n={1}
               title="Tạo tài khoản — chỉ làm một lần"
               action={
-                !loggedIn && (
+                loggedIn ? (
+                  <span className="i-step-done">Cô chú đã làm xong bước này</span>
+                ) : (
                   <Link to="/dang-ky" className="h-btn h-btn-ghost i-step-btn">
                     Mở trang tạo tài khoản
                   </Link>
@@ -97,7 +99,7 @@ export default function HuongDan() {
               title="Đặt lịch khám"
               action={
                 <Link to="/dat-lich" className="h-btn h-btn-primary i-step-btn">
-                  {loggedIn ? 'Đặt lịch khám' : 'Đăng nhập để đặt lịch'}
+                  {loggedIn ? 'Mở trang đặt lịch' : 'Đăng nhập để đặt lịch'}
                 </Link>
               }
             >

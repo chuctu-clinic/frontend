@@ -1,6 +1,4 @@
-/* Chuyển động cho trang khách: nhẹ, ngắn, không gây chóng mặt cho người cao tuổi.
-   Chỉ client-users nạp file này; khu nội bộ giữ nguyên.
-   Máy bật "giảm chuyển động" thì tắt hết dịch chuyển, chỉ giữ đổi màu rất nhanh. */
+
 
 :root {
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -38,7 +36,6 @@ a {
     transform var(--dur-fast) var(--ease-out);
 }
 
-/* Nhấn xuống thì nút lún nhẹ, cho biết đã bấm */
 .btn:active:not(:disabled),
 .h-btn:active,
 .btn-login:active,

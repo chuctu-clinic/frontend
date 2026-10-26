@@ -1,111 +1,254 @@
 import { useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Icon } from '@chuctu/shared/components/Icon.jsx';
-import { Alert, Button, ButtonLink, ErrorAlert, Loading, Modal, PageHeader, TextArea } from '@chuctu/shared/components/ui.jsx';
+import { ErrorAlert, Loading } from '@chuctu/shared/components/ui.jsx';
 import { api } from '@chuctu/shared/lib/api.js';
-import { CLINIC } from '@chuctu/shared/lib/format.js';
+import { fmtDate, shortTime, weekday } from '@chuctu/shared/lib/format.js';
+import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
-import { BookingStepper } from '../booking/Booking.jsx';
-import { AccountShell } from './AccountShell.jsx';
+import { Dialog } from '../../components/Dialog.jsx';
+import { BookingCrumbs, BookingFrame } from '../booking/Booking.jsx';
 import { Ticket } from './Ticket.jsx';
+import './account.css';
+import '../booking/booking.css';
 
-/** Chi tiết phiếu, huỷ phiếu (UC.6.6) và đặt lại phiếu đã huỷ (UC.6.7). */
+// Theo màn "Đặt lịch 4 · Phiếu khám" của prototype (VeKham.dc.html)
+
+const CANCEL_REASONS = ['Bận việc đột xuất', 'Sức khoẻ không đi được', 'Đã khám ở nơi khác', 'Muốn đổi sang ngày giờ khác', 'Lý do khác'];
+
+function CancelDialog({ appt, onClose, onCancelled }) {
+  const [reason, setReason] = useState('');
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState(null);
+  const cancel = async () => {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await api.post(`/me/appointments/${appt.id}/cancel`, { reason: reason || null });
+      onCancelled(res.appointment);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setPending(false);
+    }
+  };
+  return (
+    <Dialog
+      title="Cô chú muốn huỷ buổi khám này?"
+      tone="red"
+      width={640}
+      alert
+      onClose={onClose}
+      actions={
+        <>
+          <button type="button" className="a-btn-ghost a-grow" onClick={onClose} style={{ minHeight: 60, fontSize: 19, fontWeight: 700 }}>
+            Không, giữ lịch khám
+          </button>
+          <button type="button" className="a-btn-danger" onClick={cancel} disabled={pending} aria-busy={pending || undefined} style={{ minHeight: 60, flexBasis: 240 }}>
+            {pending ? <span className="spinner" aria-hidden="true" /> : <Icon name="x" size={22} />}
+            Đồng ý huỷ khám
+          </button>
+        </>
+      }
+    >
+      <p className="a-lead">Huỷ rồi thì phiếu khám này không dùng được nữa. Cô chú vẫn có thể đặt lại buổi khác sau.</p>
+      <div className="t-cancel-sum">
+        <p>
+          <Icon name="calendar" size={22} strokeWidth={1.75} />
+          <span>
+            <strong>
+              {weekday(appt.slotDate)}, {fmtDate(appt.slotDate)}
+            </strong>{' '}
+            · giờ khám dự kiến {shortTime(appt.slotStart)}
+          </span>
+        </p>
+        <p>
+          <Icon name="user" size={22} strokeWidth={1.75} />
+          {appt.patient?.fullName} · {appt.serviceLabel}
+        </p>
+        <p>
+          <Icon name="ticket" size={22} strokeWidth={1.75} />
+          <span>
+            Mã phiếu khám <strong>{appt.ticketCode}</strong>
+          </span>
+        </p>
+      </div>
+      <div className="a-field">
+        <label htmlFor="ly-do-huy" className="a-label">
+          Lý do huỷ <span style={{ fontWeight: 400, color: 'var(--ink-500)' }}>(không bắt buộc)</span>
+        </label>
+        <select id="ly-do-huy" className="a-input" value={reason} onChange={(e) => setReason(e.target.value)} aria-describedby="ly-do-huy-note">
+          <option value="">— Chọn lý do —</option>
+          {CANCEL_REASONS.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+        <p id="ly-do-huy-note" className="a-hint">
+          Phòng khám chỉ dùng thông tin này để sắp lịch tốt hơn cho lần sau.
+        </p>
+      </div>
+      <ErrorAlert error={error} />
+    </Dialog>
+  );
+}
+
+/** Phiếu khám vừa đặt (bước 4) hoặc mở lại từ danh sách; huỷ phiếu (UC.6.6), đặt lại phiếu đã huỷ (UC.6.7). */
 export default function TicketDetail() {
   const { id } = useParams();
   const [params] = useSearchParams();
   const justBooked = params.get('moi') === '1';
   useDocumentTitle(justBooked ? 'Đặt lịch thành công' : 'Chi tiết phiếu khám');
+  const { meta } = useSession();
   const { data, loading, error, setData } = useAsync(() => api.get(`/me/appointments/${id}`), [id]);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [reason, setReason] = useState('');
-  const [pending, setPending] = useState(false);
-  const [cancelError, setCancelError] = useState(null);
-  const [cancelled, setCancelled] = useState(false);
 
   const appt = data?.appointment;
+  const booked = appt?.status === 'BOOKED';
+  const cancelled = appt?.status === 'CANCELLED';
 
-  const doCancel = async () => {
-    setPending(true);
-    setCancelError(null);
-    try {
-      const res = await api.post(`/me/appointments/${id}/cancel`, { reason });
-      setData({ appointment: { ...res.appointment, hasResult: false } });
-      setCancelOpen(false);
-      setCancelled(true);
-    } catch (err) {
-      setCancelError(err);
-    } finally {
-      setPending(false);
-    }
-  };
+  const completed = appt?.status === 'COMPLETED';
 
   return (
-    <AccountShell crumbs={[{ to: '/phieu-kham', label: 'Phiếu khám bệnh' }, { label: appt?.ticketCode || 'Chi tiết' }]}>
-      {justBooked && <BookingStepper current={4} />}
-      <PageHeader title={justBooked ? 'Đặt lịch thành công' : 'Chi tiết phiếu khám'} />
-      {loading && <Loading />}
-      <ErrorAlert error={error} />
-      {appt && (
-        <>
-          {justBooked && appt.status === 'BOOKED' && (
-            <Alert type="success" title="Cô chú đã có phiếu khám">
-              Ngày đi khám, cô chú đưa <strong>mã phiếu khám</strong> cho tiếp tân để check-in. Giờ trên phiếu là giờ dự kiến; thứ tự vào khám do hàng
-              đợi tại phòng khám sắp xếp.
-            </Alert>
-          )}
-          {cancelled && <Alert type="success" title="Đã huỷ phiếu khám">Phiếu này không còn giá trị. Cô chú có thể đặt lại khi cần.</Alert>}
-          <Ticket appt={appt} />
-          <div className="row">
-            {appt.hasResult && (
-              <ButtonLink to={`/phieu-kham/${appt.id}/ket-qua`} icon="clipboard">
-                Xem kết quả khám
-              </ButtonLink>
-            )}
-            {appt.status === 'BOOKED' && (
-              <Button variant="danger" icon="x" onClick={() => setCancelOpen(true)}>
-                Huỷ phiếu khám
-              </Button>
-            )}
-            {appt.status === 'CANCELLED' && (
-              <ButtonLink to={`/dat-lich?dat-lai=${appt.id}`} icon="refresh">
-                Đặt lại
-              </ButtonLink>
-            )}
-            <Button variant="ghost" icon="file" onClick={() => window.print()}>
-              In phiếu khám
-            </Button>
-          </div>
-          <p className="small muted row" style={{ gap: 8 }}>
-            <Icon name="phone" size={20} />
-            Muốn đổi giờ khám? Cô chú huỷ phiếu rồi đặt lại, hoặc gọi {CLINIC.phone} để tiếp tân đổi giúp.
-          </p>
-        </>
+    <div className="k-page a-vars">
+      {justBooked ? (
+        <BookingCrumbs current="Phiếu khám" />
+      ) : (
+        <div className="k-crumbs">
+          <nav aria-label="Đường dẫn">
+            <Link to="/">Trang chủ</Link>
+            <span aria-hidden="true">›</span>
+            <Link to="/phieu-kham">Phiếu khám bệnh</Link>
+            <span aria-hidden="true">›</span>
+            <span aria-current="page">Chi tiết phiếu khám</span>
+          </nav>
+        </div>
       )}
-      {cancelOpen && (
-        <Modal
-          title="Huỷ phiếu khám này?"
+      <section className="k-main k-main-tight">
+        <div className="t-wrap">
+          <BookingFrame
+            step={justBooked ? 4 : 0}
+            title={justBooked ? 'Phiếu khám' : 'Chi tiết phiếu khám'}
+            backTo="/phieu-kham"
+            backLabel="Quay lại danh sách phiếu khám"
+            className="b-panel-solo"
+          >
+            <div className="b-body b-body-tight" style={{ gap: 24 }}>
+              {loading && <Loading />}
+              <ErrorAlert error={error} />
+              {appt && (
+                <>
+                  {booked && justBooked && (
+                    <div className="t-banner">
+                      <span className="t-banner-dot">
+                        <Icon name="check" size={26} />
+                      </span>
+                      <div>
+                        <h2>Đặt lịch thành công — cô chú đã có phiếu khám</h2>
+                        <p>Ngày khám, cô chú đưa phiếu khám này cho tiếp tân để check-in là xong. Không cần in, mở trên điện thoại cũng được.</p>
+                      </div>
+                    </div>
+                  )}
+                  {completed && (
+                    <div className="t-banner">
+                      <span className="t-banner-dot">
+                        <Icon name="checkCircle" size={26} />
+                      </span>
+                      <div>
+                        <h2>Buổi khám đã hoàn thành</h2>
+                        <p>
+                          {appt.hasResult
+                            ? 'Cô chú xem kết quả buổi khám này ở trang kết quả.'
+                            : 'Phòng khám đang hoàn tất kết quả khám, cô chú quay lại xem sau nhé.'}
+                        </p>
+                        {appt.hasResult && (
+                          <Link to={`/phieu-kham/${appt.id}/ket-qua`} className="a-btn-primary">
+                            <Icon name="clipboard" strokeWidth={1.75} />
+                            Xem kết quả khám
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {cancelled && (
+                    <div className="t-banner t-banner-off">
+                      <span className="t-banner-dot">
+                        <Icon name="x" size={26} />
+                      </span>
+                      <div>
+                        <h2>Buổi khám đã được huỷ</h2>
+                        <p>Phiếu khám này không còn giá trị. Cô chú có thể đặt lại một buổi khám khác bất cứ lúc nào.</p>
+                        <Link to={`/dat-lich?dat-lai=${appt.id}`} className="a-btn-primary">
+                          <Icon name="calendarPlus" strokeWidth={1.75} />
+                          Đặt lịch khám mới
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  <Ticket appt={appt} meta={meta} />
+
+                  {booked && (
+                    <div className="t-actions">
+                      <button type="button" className="a-btn-primary" onClick={() => window.print()}>
+                        <Icon name="file" strokeWidth={1.75} />
+                        In phiếu khám
+                      </button>
+                      <Link to="/lien-he" className="a-btn-ghost">
+                        <Icon name="pin" strokeWidth={1.75} />
+                        Xem đường đi
+                      </Link>
+                      <button type="button" className="a-btn-danger-ghost" onClick={() => setCancelOpen(true)}>
+                        <Icon name="x" strokeWidth={1.75} />
+                        Huỷ khám
+                      </button>
+                    </div>
+                  )}
+
+                  {booked && (
+                    <div className="t-tips">
+                      <span className="t-tips-dot">
+                        <Icon name="infoSoft" size={26} strokeWidth={1.75} />
+                      </span>
+                      <div>
+                        <h2>Khi đến phòng khám</h2>
+                        <ul>
+                          <li>
+                            <Icon name="check" />
+                            Cô chú đưa mã phiếu khám cho tiếp tân để check-in.
+                          </li>
+                          <li>
+                            <Icon name="check" />
+                            Mang theo giấy tờ tuỳ thân và hồ sơ bệnh cũ nếu có.
+                          </li>
+                          <li>
+                            <Icon name="check" />
+                            <span>
+                              Không đến được thì bấm <strong>Huỷ khám</strong>.
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </BookingFrame>
+        </div>
+      </section>
+
+      {cancelOpen && appt && (
+        <CancelDialog
+          appt={appt}
           onClose={() => setCancelOpen(false)}
-          actions={
-            <>
-              <Button variant="ghost" onClick={() => setCancelOpen(false)}>
-                Không huỷ
-              </Button>
-              <Button variant="danger-solid" icon="x" loading={pending} onClick={doCancel}>
-                Huỷ phiếu khám
-              </Button>
-            </>
-          }
-        >
-          <div className="stack">
-            <p>
-              Phiếu <strong className="mono">{appt.ticketCode}</strong> sẽ <strong>không còn giá trị</strong> và chỗ của cô chú được nhường cho người khác.
-              Cô chú vẫn đặt lại được sau.
-            </p>
-            <TextArea label="Lý do huỷ" hint="Không bắt buộc." value={reason} onChange={(e) => setReason(e.target.value)} rows={3} />
-            <ErrorAlert error={cancelError} />
-          </div>
-        </Modal>
+          onCancelled={(a) => {
+            setData({ appointment: { ...appt, ...a, patient: { ...appt.patient, ...a.patient }, hasResult: false } });
+            setCancelOpen(false);
+          }}
+        />
       )}
-    </AccountShell>
+    </div>
   );
 }

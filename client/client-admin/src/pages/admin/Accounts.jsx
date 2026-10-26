@@ -1,299 +1,513 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Badge, Button, Empty, ErrorAlert, Loading, Modal, PageHeader, Pagination, SelectInput, TextInput } from '@chuctu/shared/components/ui.jsx';
+import { Icon } from '@chuctu/shared/components/Icon.jsx';
+import { ErrorAlert, Loading } from '@chuctu/shared/components/ui.jsx';
 import { api, qs } from '@chuctu/shared/lib/api.js';
-import { ROLE_LABELS, fmtDate, fmtDateTime } from '@chuctu/shared/lib/format.js';
+import { ROLE_LABELS, fmtDate } from '@chuctu/shared/lib/format.js';
 import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
+import { FieldError, Notice, Pager, PhoneField, PlainDialog, normalizePhone, useDismiss } from '../../components/t-ui.jsx';
+import './admin.css';
 
-const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
-const isInternal = (role) => role === 'RECEPTIONIST' || role === 'ADMIN';
+const PER_PAGE = 10;
+const ROLE_ORDER = ['USER', 'RECEPTIONIST', 'ADMIN'];
+const STAFF = ['RECEPTIONIST', 'ADMIN'];
 
-function AccountForm({ account, onClose, onSaved }) {
-  const isNew = !account;
+/** "0919770245" → "0919 770 245" */
+const fmtPhone = (p) => String(p || '').replace(/^(\d{4})(\d{3})(\d+)$/, '$1 $2 $3');
+
+/** Thêm hoặc sửa tài khoản (UC.8.1, UC.8.2). */
+function AccountDialog({ account, onClose, onSaved }) {
+  const titleId = useId();
+  const isAdd = !account;
   const [form, setForm] = useState({
     fullName: account?.fullName || '',
-    phone: account?.phone || '',
-    email: account?.email || '',
-    role: account?.role || 'RECEPTIONIST',
+    phone: String(account?.phone || '').replace(/^0/, ''),
+    role: 'USER',
     tempPassword: '',
   });
+  const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const fe = error?.fields || {};
+  const needsPassword = isAdd && STAFF.includes(form.role);
+  const errs = {
+    fullName: form.fullName.trim() ? null : 'Vui lòng nhập họ và tên.',
+    phone: !form.phone ? 'Vui lòng nhập số điện thoại.' : /^\d{9,10}$/.test(form.phone) ? null : 'Số điện thoại gồm 9 đến 10 chữ số sau +84.',
+    tempPassword: !needsPassword || form.tempPassword.length >= 8 ? null : form.tempPassword ? 'Mật khẩu tạm cần ít nhất 8 ký tự.' : 'Vui lòng nhập mật khẩu tạm.',
+  };
+  const fe = { ...(tried ? errs : {}), ...(error?.fields || {}) };
 
   const submit = async () => {
-    setPending(true);
+    setTried(true);
     setError(null);
+    if (Object.values(errs).some(Boolean)) return;
+    setPending(true);
     try {
-      const res = isNew
-        ? await api.post('/admin/accounts', { ...form, tempPassword: isInternal(form.role) ? form.tempPassword : undefined })
-        : await api.patch(`/admin/accounts/${account.id}`, { fullName: form.fullName, phone: form.phone, email: form.email });
-      onSaved(res.account, isNew ? 'Đã thêm tài khoản.' : 'Đã lưu thông tin tài khoản.');
+      const body = { fullName: form.fullName.trim(), phone: normalizePhone(form.phone) };
+      const res = isAdd
+        ? await api.post('/admin/accounts', { ...body, role: form.role, tempPassword: needsPassword ? form.tempPassword : undefined })
+        : await api.patch(`/admin/accounts/${account.id}`, body);
+      onSaved(res.account, isAdd);
     } catch (err) {
       setError(err);
-    } finally {
       setPending(false);
     }
   };
 
   return (
-    <Modal
-      title={isNew ? 'Thêm tài khoản' : 'Sửa thông tin tài khoản'}
-      onClose={onClose}
-      actions={
-        <>
-          <Button variant="ghost" onClick={onClose}>
-            Huỷ
-          </Button>
-          <Button icon="check" loading={pending} onClick={submit}>
-            {isNew ? 'Thêm tài khoản' : 'Lưu'}
-          </Button>
-        </>
-      }
-    >
-      <div className="stack">
-        <TextInput label="Họ và tên" required value={form.fullName} onChange={set('fullName')} error={fe.fullName} />
-        <TextInput label="Số điện thoại" required type="tel" value={form.phone} onChange={set('phone')} error={fe.phone} />
-        <TextInput label="Email" type="email" hint="Tài khoản nội bộ đăng nhập được bằng email." value={form.email} onChange={set('email')} error={fe.email} />
-        {isNew && <SelectInput label="Vai trò" required options={ROLE_OPTIONS} value={form.role} onChange={set('role')} error={fe.role} />}
-        {isNew && isInternal(form.role) && (
-          <TextInput
-            label="Mật khẩu tạm"
-            required
-            type="text"
-            autoComplete="off"
-            hint="Tối thiểu 8 ký tự. Người dùng phải đổi mật khẩu ở lần đăng nhập đầu tiên."
-            value={form.tempPassword}
-            onChange={set('tempPassword')}
-            error={fe.tempPassword}
-          />
-        )}
-        {error && !Object.keys(fe).length && <ErrorAlert error={error} />}
+    <PlainDialog labelledBy={titleId} onClose={onClose} onSubmit={submit}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h2 id={titleId} className="t-h2">
+          {isAdd ? 'Thêm tài khoản' : 'Sửa thông tin tài khoản'}
+        </h2>
+        <p className="t-text">{isAdd ? 'Điền thông tin của người dùng mới.' : 'Chỉ sửa họ tên và số điện thoại. Muốn đổi vai trò, chọn ở cột Vai trò trong danh sách.'}</p>
       </div>
-    </Modal>
-  );
-}
-
-function RoleModal({ account, onClose, onSaved }) {
-  const [role, setRole] = useState(account.role);
-  const [tempPassword, setTempPassword] = useState('');
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState(null);
-  const needsPassword = isInternal(role) && account.role === 'USER';
-
-  const submit = async () => {
-    setPending(true);
-    setError(null);
-    try {
-      const res = await api.put(`/admin/accounts/${account.id}/role`, { role, tempPassword: tempPassword || undefined });
-      onSaved(res.account, `Đã đổi vai trò thành ${ROLE_LABELS[role]}.`);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <Modal
-      title={`Phân quyền: ${account.fullName}`}
-      onClose={onClose}
-      actions={
+      <div className="t-field">
+        <label htmlFor="tk-f-ten" className="t-label">
+          Họ và tên <span className="t-req">*</span>
+        </label>
+        <input
+          id="tk-f-ten"
+          className="t-input"
+          autoComplete="off"
+          value={form.fullName}
+          onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+          aria-invalid={fe.fullName ? 'true' : 'false'}
+          aria-describedby="tk-f-ten-loi"
+        />
+        <FieldError id="tk-f-ten-loi">{fe.fullName}</FieldError>
+      </div>
+      <PhoneField id="tk-f-sdt" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} error={fe.phone} />
+      {isAdd && (
         <>
-          <Button variant="ghost" onClick={onClose}>
-            Huỷ
-          </Button>
-          <Button icon="check" loading={pending} disabled={role === account.role} onClick={submit}>
-            Lưu vai trò
-          </Button>
-        </>
-      }
-    >
-      <div className="stack">
-        <fieldset className="stack-sm">
-          <legend className="field-label">Vai trò</legend>
-          {ROLE_OPTIONS.map((o) => (
-            <label key={o.value} className="check">
-              <input type="radio" name="role" checked={role === o.value} onChange={() => setRole(o.value)} />
-              {o.label}
+          <div className="t-field">
+            <label htmlFor="tk-f-vaitro" className="t-label">
+              Vai trò
             </label>
-          ))}
-        </fieldset>
-        {needsPassword && (
-          <TextInput
-            label="Mật khẩu tạm cho tài khoản nội bộ"
-            required
-            hint="Tối thiểu 8 ký tự."
-            value={tempPassword}
-            onChange={(e) => setTempPassword(e.target.value)}
-            error={error?.fields?.tempPassword}
-          />
-        )}
-        <Alert type="info">Quyền mới áp dụng ngay ở thao tác kế tiếp của tài khoản này.</Alert>
-        {error && !error.fields?.tempPassword && <ErrorAlert error={error} />}
+            <select id="tk-f-vaitro" className="t-select" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
+              {ROLE_ORDER.map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABELS[r]}
+                </option>
+              ))}
+            </select>
+          </div>
+          {needsPassword ? (
+            <div className="t-field">
+              <label htmlFor="tk-f-mk" className="t-label">
+                Mật khẩu tạm <span className="t-req">*</span>
+              </label>
+              <input
+                id="tk-f-mk"
+                className="t-input"
+                autoComplete="off"
+                value={form.tempPassword}
+                onChange={(e) => setForm((f) => ({ ...f, tempPassword: e.target.value }))}
+                aria-invalid={fe.tempPassword ? 'true' : 'false'}
+                aria-describedby="tk-f-mk-ghichu tk-f-mk-loi"
+              />
+              <p id="tk-f-mk-ghichu" className="t-muted">
+                Ít nhất 8 ký tự. Người dùng phải đổi mật khẩu sau lần đăng nhập đầu.
+              </p>
+              <FieldError id="tk-f-mk-loi">{fe.tempPassword}</FieldError>
+            </div>
+          ) : (
+            <p className="t-muted">Người dùng đăng nhập bằng số điện thoại và mã xác nhận gửi qua tin nhắn, không cần mật khẩu.</p>
+          )}
+        </>
+      )}
+      {error && !error.fields && <ErrorAlert error={error} />}
+      <div className="a-modal-actions">
+        <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 28px' }} onClick={onClose}>
+          Huỷ
+        </button>
+        <button type="submit" className="t-btn t-btn-primary" style={{ padding: '0 28px' }} disabled={pending}>
+          {isAdd ? 'Thêm tài khoản' : 'Lưu thay đổi'}
+        </button>
       </div>
-    </Modal>
+    </PlainDialog>
   );
 }
 
-/** Quản lý tài khoản: tìm, lọc, thêm, sửa, khoá/mở, phân quyền (UC.8.1 – UC.8.5). */
+/** Lên vai trò nội bộ mà tài khoản chưa có mật khẩu thì phải đặt mật khẩu tạm (BR.32). */
+function RolePasswordDialog({ account, role, onClose, onDone }) {
+  const titleId = useId();
+  const [pw, setPw] = useState('');
+  const [tried, setTried] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState(null);
+  const err = pw.length >= 8 ? null : pw ? 'Mật khẩu tạm cần ít nhất 8 ký tự.' : 'Vui lòng nhập mật khẩu tạm.';
+  const submit = async () => {
+    setTried(true);
+    if (err) return;
+    setPending(true);
+    try {
+      const res = await api.put(`/admin/accounts/${account.id}/role`, { role, tempPassword: pw });
+      onDone(res.account);
+    } catch (e) {
+      setError(e);
+      setPending(false);
+    }
+  };
+  return (
+    <PlainDialog labelledBy={titleId} onClose={onClose} onSubmit={submit}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h2 id={titleId} className="t-h2">
+          Đặt mật khẩu tạm
+        </h2>
+        <p className="t-text">
+          Tài khoản <strong className="t-strong">{account.fullName}</strong> chưa có mật khẩu. Vai trò {ROLE_LABELS[role]} đăng nhập khu nội bộ bằng mật khẩu, nên cần đặt mật khẩu
+          tạm trước khi đổi.
+        </p>
+      </div>
+      <div className="t-field">
+        <label htmlFor="vt-mk" className="t-label">
+          Mật khẩu tạm <span className="t-req">*</span>
+        </label>
+        <input id="vt-mk" className="t-input" autoComplete="off" value={pw} onChange={(e) => setPw(e.target.value)} aria-invalid={tried && err ? 'true' : 'false'} />
+        <p className="t-muted">Ít nhất 8 ký tự. Người dùng phải đổi mật khẩu sau lần đăng nhập đầu.</p>
+        <FieldError>{tried ? err : null}</FieldError>
+      </div>
+      <ErrorAlert error={error} />
+      <div className="a-modal-actions">
+        <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 28px' }} onClick={onClose}>
+          Huỷ
+        </button>
+        <button type="submit" className="t-btn t-btn-primary" style={{ padding: '0 28px' }} disabled={pending}>
+          Đổi vai trò
+        </button>
+      </div>
+    </PlainDialog>
+  );
+}
+
+function RowMenu({ a, self, open, up, onToggle, onEdit, onLock, onUnlock }) {
+  const ref = useDismiss(open, onToggle);
+  return (
+    <div className="t-menu-wrap" ref={ref}>
+      <button type="button" className="t-btn t-btn-ghost t-btn-icon" aria-haspopup="menu" aria-expanded={open} aria-label={`Thao tác cho ${a.fullName}`} onClick={onToggle}>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="5" cy="12" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="19" cy="12" r="2" />
+        </svg>
+      </button>
+      {open && (
+        <div role="menu" aria-label={`Thao tác cho ${a.fullName}`} className={`t-menu ${up ? 'up' : 'down'}`} style={{ width: 200 }}>
+          {a.isActive && (
+            <button type="button" role="menuitem" className="t-menu-item" onClick={onEdit}>
+              <Icon name="edit" size={22} />
+              Sửa
+            </button>
+          )}
+          {a.isActive && !self && (
+            <button type="button" role="menuitem" className="t-menu-item danger" onClick={onLock}>
+              <Icon name="lock" size={22} />
+              Khoá
+            </button>
+          )}
+          {!a.isActive && (
+            <button type="button" role="menuitem" className="t-menu-item green" onClick={onUnlock}>
+              <Icon name="unlock" size={22} />
+              Mở khoá
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Quản lý tài khoản: tìm, thêm, sửa, đổi vai trò, khoá và mở khoá (UC.8.1 – UC.8.5). */
 export default function Accounts() {
   useDocumentTitle('Quản lý tài khoản');
-  const { user: me } = useSession();
+  const { user } = useSession();
   const [params, setParams] = useSearchParams();
-  const role = params.get('vai-tro') || '';
-  const page = Number(params.get('trang') || 1);
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
-  const [modal, setModal] = useState(null);
+  const [role, setRole] = useState('');
+  const [page, setPage] = useState(1);
+  const [menu, setMenu] = useState(null);
+  const [dialog, setDialog] = useState(null);
   const [notice, setNotice] = useState(null);
   const [error, setError] = useState(null);
-  const [busy, setBusy] = useState(null);
+  const lockTitle = useId();
+  const roleTitle = useId();
 
   useEffect(() => {
-    const t = setTimeout(() => setQuery(q.trim()), 300);
+    const t = setTimeout(() => {
+      setQuery(q.trim());
+      setPage(1);
+    }, 300);
     return () => clearTimeout(t);
   }, [q]);
 
-  const { data, loading, reload } = useAsync(() => api.get(`/admin/accounts${qs({ q: query, role, page })}`), [query, role, page]);
-  const set = (next) => {
-    const merged = { 'vai-tro': role, trang: page, ...next };
-    setParams(Object.fromEntries(Object.entries(merged).filter(([, v]) => v && v !== 1)));
+  // Lối tắt "Thêm tài khoản" ở trang Tổng quan
+  useEffect(() => {
+    if (!params.get('them')) return;
+    setDialog({ type: 'form' });
+    setParams({}, { replace: true });
+  }, [params, setParams]);
+
+  const { data, loading, reload } = useAsync(() => api.get(`/admin/accounts${qs({ q: query, role, page, limit: PER_PAGE })}`), [query, role, page]);
+  const all = data ? Object.values(data.roleCounts).reduce((x, y) => x + y, 0) : 0;
+  const filtered = Boolean(query || role);
+
+  const changeRole = async (a, next) => {
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await api.put(`/admin/accounts/${a.id}/role`, { role: next });
+      setDialog({ type: 'roleOk', account: res.account });
+      reload({ silent: true });
+    } catch (err) {
+      if (err.code === 'PASSWORD_REQUIRED') setDialog({ type: 'rolePw', account: a, role: next });
+      else setError(err);
+      reload({ silent: true });
+    }
   };
 
-  const saved = (_, message) => {
-    setModal(null);
-    setNotice(message);
-    reload({ silent: true });
-  };
-
-  const toggleLock = async (a) => {
-    setBusy(a.id);
+  const setActive = async (a, active) => {
+    setMenu(null);
     setError(null);
     try {
-      await api.post(`/admin/accounts/${a.id}/${a.isActive ? 'lock' : 'unlock'}`);
-      setNotice(a.isActive ? `Đã khoá tài khoản ${a.fullName}. Các phiếu khám đã đặt vẫn giữ nguyên.` : `Đã mở khoá tài khoản ${a.fullName}.`);
-      setModal(null);
+      await api.post(`/admin/accounts/${a.id}/${active ? 'unlock' : 'lock'}`);
+      setDialog(null);
+      setNotice(
+        active
+          ? `Đã mở khoá tài khoản ${a.fullName}. Người dùng đăng nhập lại được ngay.`
+          : `Đã khoá tài khoản ${a.fullName}. Tài khoản này không đăng nhập được cho tới khi được mở khoá.`,
+      );
       reload({ silent: true });
     } catch (err) {
       setError(err);
-    } finally {
-      setBusy(null);
+      setDialog(null);
     }
   };
 
   return (
-    <div className="stack">
-      <PageHeader title="Quản lý tài khoản" actions={<Button icon="plus" onClick={() => setModal({ type: 'form' })}>Thêm tài khoản</Button>} />
-      <div className="row" style={{ alignItems: 'flex-end' }}>
-        <div className="field" style={{ flex: '1 1 320px' }}>
-          <label className="field-label" htmlFor="tim-tk">
-            Tìm theo tên, số điện thoại hoặc email
+    <>
+      <div className="t-pagehead" style={{ alignItems: 'center', gap: 20 }}>
+        <h1 className="t-h1" style={{ marginBottom: 0 }}>
+          Quản lý tài khoản
+        </h1>
+        <button type="button" className="t-btn t-btn-primary" style={{ padding: '0 26px' }} onClick={() => setDialog({ type: 'form' })}>
+          <Icon name="userPlus" strokeWidth={1.75} />
+          Thêm tài khoản
+        </button>
+      </div>
+
+      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      <ErrorAlert error={error} />
+
+      <div className="t-card" style={{ padding: 20, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end' }}>
+        <div className="t-field" style={{ flex: '999 1 300px' }}>
+          <label htmlFor="tk-tim" className="t-label">
+            Tìm theo tên hoặc số điện thoại
           </label>
-          <input id="tim-tk" type="search" className="input" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input id="tk-tim" type="search" className="t-input" placeholder="Nhập để lọc danh sách" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <div className="tabs" role="group" aria-label="Lọc theo vai trò">
-          <button type="button" className="tab" aria-pressed={!role} onClick={() => set({ 'vai-tro': '', trang: 1 })}>
-            Tất cả
-          </button>
-          {ROLE_OPTIONS.map((o) => (
-            <button key={o.value} type="button" className="tab" aria-pressed={role === o.value} onClick={() => set({ 'vai-tro': o.value, trang: 1 })}>
-              {o.label}
-              {data && <span className="count">({data.roleCounts[o.value]})</span>}
-            </button>
-          ))}
+        <div className="t-field" style={{ flex: '1 1 200px' }}>
+          <label htmlFor="tk-vaitro" className="t-label">
+            Vai trò
+          </label>
+          <select
+            id="tk-vaitro"
+            className="t-select"
+            value={role}
+            onChange={(e) => {
+              setRole(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">Tất cả</option>
+            {ROLE_ORDER.map((r) => (
+              <option key={r} value={r}>
+                {ROLE_LABELS[r]}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
-      {notice && <Alert type="success">{notice}</Alert>}
-      <ErrorAlert error={error} />
-      {loading && <Loading />}
-      {data && data.items.length === 0 && <Empty icon="users" title="Không có tài khoản phù hợp" />}
-      {data && data.items.length > 0 && (
-        <div className="table-wrap">
-          <table className="table table-responsive">
-            <thead>
-              <tr>
-                <th scope="col">Họ và tên</th>
-                <th scope="col">Số điện thoại / email</th>
-                <th scope="col">Vai trò</th>
-                <th scope="col">Trạng thái</th>
-                <th scope="col">Đăng nhập gần nhất</th>
-                <th scope="col">
-                  <span className="sr-only">Thao tác</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((a) => (
-                <tr key={a.id}>
-                  <td data-label="Họ tên">
-                    <strong>{a.fullName}</strong>
-                    <span className="caption" style={{ display: 'block' }}>
-                      Tạo {fmtDate(a.createdAt)}
-                    </span>
-                  </td>
-                  <td data-label="Liên hệ">
-                    <span className="mono">{a.phone}</span>
-                    {a.email && <span className="caption" style={{ display: 'block' }}>{a.email}</span>}
-                  </td>
-                  <td data-label="Vai trò">
-                    <Badge tone={a.role === 'ADMIN' ? 'gold' : a.role === 'RECEPTIONIST' ? 'blue' : 'gray'}>{ROLE_LABELS[a.role]}</Badge>
-                  </td>
-                  <td data-label="Trạng thái">
-                    {a.isActive ? <Badge tone="green" icon="check">Hoạt động</Badge> : <Badge tone="red" icon="lock">Đã khoá</Badge>}
-                  </td>
-                  <td data-label="Đăng nhập">{a.lastLoginAt ? fmtDateTime(a.lastLoginAt) : '—'}</td>
-                  <td data-label="">
-                    <div className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
-                      <Button size="sm" variant="ghost" icon="edit" onClick={() => setModal({ type: 'form', account: a })}>
-                        Sửa
-                      </Button>
-                      {a.id !== me.id && (
-                        <>
-                          <Button size="sm" variant="secondary" onClick={() => setModal({ type: 'role', account: a })}>
-                            Phân quyền
-                          </Button>
-                          <Button size="sm" variant={a.isActive ? 'danger' : 'secondary'} icon={a.isActive ? 'lock' : 'unlock'} onClick={() => setModal({ type: 'lock', account: a })}>
-                            {a.isActive ? 'Khoá' : 'Mở khoá'}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {data && <Pagination page={page} total={data.total} limit={data.limit} onPage={(p) => set({ trang: p })} />}
 
-      {modal?.type === 'form' && <AccountForm account={modal.account} onClose={() => setModal(null)} onSaved={saved} />}
-      {modal?.type === 'role' && <RoleModal account={modal.account} onClose={() => setModal(null)} onSaved={saved} />}
-      {modal?.type === 'lock' && (
-        <Modal
-          title={modal.account.isActive ? `Khoá tài khoản ${modal.account.fullName}?` : `Mở khoá ${modal.account.fullName}?`}
-          onClose={() => setModal(null)}
-          actions={
-            <>
-              <Button variant="ghost" onClick={() => setModal(null)}>
-                Quay lại
-              </Button>
-              <Button variant={modal.account.isActive ? 'danger-solid' : 'primary'} loading={busy === modal.account.id} onClick={() => toggleLock(modal.account)}>
-                {modal.account.isActive ? 'Khoá tài khoản' : 'Mở khoá'}
-              </Button>
-            </>
-          }
-        >
-          <p>
-            {modal.account.isActive
-              ? 'Tài khoản sẽ không đăng nhập được nữa và bị đăng xuất ngay trên mọi thiết bị. Các phiếu khám đã đặt vẫn giữ nguyên.'
-              : 'Tài khoản sẽ đăng nhập lại được bình thường.'}
+      <div className="t-card">
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: '6px 20px', padding: '20px 24px 14px' }}>
+          <p className="t-label">
+            Tài khoản hệ thống — {data ? (filtered ? `${data.total} trên ${all} tài khoản` : `${all} tài khoản`) : '…'}
           </p>
-        </Modal>
+          {data && (
+            <p className="t-muted">
+              {data.roleCounts.ADMIN} Quản trị viên · {data.roleCounts.RECEPTIONIST} Tiếp tân · {data.roleCounts.USER} Người dùng
+            </p>
+          )}
+        </div>
+        {loading && !data && <Loading />}
+        {data && data.items.length > 0 && (
+          <div className="t-scroll">
+            <div role="table" aria-label="Danh sách tài khoản hệ thống" className="t-table a-accounts">
+              <div role="row" className="t-tr t-thead" style={{ borderTop: '1px solid var(--line-soft)' }}>
+                {['Họ và tên', 'Số điện thoại', 'Vai trò', 'Trạng thái', 'Tạo lúc', 'Thao tác'].map((h) => (
+                  <div key={h} role="columnheader" className="t-th">
+                    {h}
+                  </div>
+                ))}
+              </div>
+              <div role="rowgroup" className="t-tbody">
+                {data.items.map((a, i) => {
+                  const self = a.id === user.id;
+                  return (
+                    <div key={a.id} role="row" className={`t-tr ${a.isActive ? '' : 'a-tr-locked'}`} style={menu === a.id ? { position: 'relative', zIndex: 30 } : undefined}>
+                      <div role="cell" className="t-td">
+                        <span className="t-td-name">{a.fullName}</span>
+                        {self && <span className="t-td-sub">Tài khoản đang đăng nhập</span>}
+                      </div>
+                      <div role="cell" className="t-td t-text">
+                        {fmtPhone(a.phone)}
+                      </div>
+                      <div role="cell" className="t-td">
+                        {self ? (
+                          <span style={{ display: 'flex', alignItems: 'center', minHeight: 44, padding: '0 14px', fontWeight: 600, color: 'var(--ink-900)' }}>
+                            {ROLE_LABELS[a.role]}
+                          </span>
+                        ) : (
+                          <select className="t-select a-role-select" aria-label={`Vai trò của ${a.fullName}`} value={a.role} onChange={(e) => changeRole(a, e.target.value)}>
+                            {ROLE_ORDER.map((r) => (
+                              <option key={r} value={r}>
+                                {ROLE_LABELS[r]}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                      <div role="cell" className="t-td">
+                        {a.isActive ? (
+                          <span className="t-chip t-chip-green">
+                            <Icon name="checkCircle" size={18} strokeWidth={2.25} />
+                            Đang hoạt động
+                          </span>
+                        ) : (
+                          <span className="t-chip" style={{ background: 'var(--alert-100)', color: 'var(--alert-700)' }}>
+                            <Icon name="lock" size={18} strokeWidth={2.25} />
+                            Đã khoá
+                          </span>
+                        )}
+                      </div>
+                      <div role="cell" className="t-td t-text">
+                        {fmtDate(a.createdAt)}
+                      </div>
+                      <div role="cell" className="t-td" style={{ padding: '14px 12px 14px 16px' }}>
+                        <RowMenu
+                          a={a}
+                          self={self}
+                          open={menu === a.id}
+                          up={data.items.length >= 4 && i >= data.items.length - 2}
+                          onToggle={() => setMenu((m) => (m === a.id ? null : a.id))}
+                          onEdit={() => {
+                            setMenu(null);
+                            setDialog({ type: 'form', account: a });
+                          }}
+                          onLock={() => {
+                            setMenu(null);
+                            setDialog({ type: 'lock', account: a });
+                          }}
+                          onUnlock={() => setActive(a, true)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+        {data && data.items.length === 0 && (
+          <div className="t-empty">
+            <p>Không tìm thấy tài khoản nào</p>
+            <p className="t-text">
+              Kiểm tra lại tên, số điện thoại hoặc chọn vai trò <strong>Tất cả</strong>.
+            </p>
+          </div>
+        )}
+        {data && <Pager page={page} total={data.total} perPage={PER_PAGE} unit="tài khoản" onPage={setPage} />}
+      </div>
+
+      {dialog?.type === 'form' && (
+        <AccountDialog
+          account={dialog.account}
+          onClose={() => setDialog(null)}
+          onSaved={(acc, isAdd) => {
+            setDialog(null);
+            setNotice(
+              isAdd
+                ? `Đã thêm tài khoản ${acc.fullName} với vai trò ${ROLE_LABELS[acc.role]}. ${
+                    STAFF.includes(acc.role) ? 'Tài khoản đăng nhập được ngay bằng số điện thoại và mật khẩu tạm.' : 'Người dùng đăng nhập bằng số điện thoại và mã xác nhận.'
+                  }`
+                : `Đã lưu thông tin tài khoản ${acc.fullName}.`,
+            );
+            reload({ silent: true });
+          }}
+        />
       )}
-    </div>
+      {dialog?.type === 'rolePw' && (
+        <RolePasswordDialog
+          account={dialog.account}
+          role={dialog.role}
+          onClose={() => setDialog(null)}
+          onDone={(acc) => {
+            setDialog({ type: 'roleOk', account: acc });
+            reload({ silent: true });
+          }}
+        />
+      )}
+      {dialog?.type === 'roleOk' && (
+        <PlainDialog labelledBy={roleTitle} alert onClose={() => setDialog(null)}>
+          <div className="a-modal-head">
+            <span className="a-modal-icon">
+              <Icon name="shield" size={30} strokeWidth={1.75} />
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <h2 id={roleTitle} className="t-h2" style={{ marginBottom: 10 }}>
+                Đã đổi vai trò thành công
+              </h2>
+              <p className="t-text">
+                Tài khoản <strong className="t-strong">{dialog.account.fullName}</strong> nay có vai trò <strong className="t-strong">{ROLE_LABELS[dialog.account.role]}</strong>.
+              </p>
+            </div>
+          </div>
+          <div className="a-modal-actions">
+            <button type="button" className="t-btn t-btn-primary" style={{ padding: '0 32px' }} onClick={() => setDialog(null)}>
+              Đóng
+            </button>
+          </div>
+        </PlainDialog>
+      )}
+      {dialog?.type === 'lock' && (
+        <PlainDialog labelledBy={lockTitle} width={600} onClose={() => setDialog(null)}>
+          <div className="a-modal-head">
+            <span className="a-modal-icon red">
+              <Icon name="lock" size={30} strokeWidth={1.75} />
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <h2 id={lockTitle} className="t-h2" style={{ marginBottom: 10 }}>
+                Khoá tài khoản {dialog.account.fullName}?
+              </h2>
+              <p className="t-text">
+                Tài khoản sẽ <strong style={{ color: 'var(--alert-700)' }}>không đăng nhập được</strong> cho đến khi được mở khoá. Các phiếu khám đã đặt vẫn giữ nguyên. Quản trị
+                viên có thể mở khoá lại bất cứ lúc nào.
+              </p>
+            </div>
+          </div>
+          <div className="a-modal-actions">
+            <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 28px' }} onClick={() => setDialog(null)}>
+              Quay lại
+            </button>
+            <button type="button" className="t-btn t-btn-danger" style={{ padding: '0 28px' }} onClick={() => setActive(dialog.account, false)}>
+              <Icon name="lock" />
+              Khoá tài khoản
+            </button>
+          </div>
+        </PlainDialog>
+      )}
+    </>
   );
 }

@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "dev": "concurrently -n api,users,admin -c green,yellow,cyan \"npm run dev -w server\" \"npm run dev -w client-users\" \"npm run dev -w client-admin\"",
+    "dev:demo": "concurrently -n api,users,admin -c green,yellow,cyan \"npm run dev:demo -w server\" \"npm run dev -w client-users\" \"npm run dev -w client-admin\"",
     "build": "npm run build -w client-users && npm run build -w client-admin",
     "start": "npm run start -w server",
     "seed": "npm run seed -w server",

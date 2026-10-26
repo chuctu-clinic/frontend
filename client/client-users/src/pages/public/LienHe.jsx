@@ -1,5 +1,6 @@
 import { Icon } from '@chuctu/shared/components/Icon.jsx';
 import { CLINIC } from '@chuctu/shared/lib/format.js';
+import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { GreenCta, PageHero, SectionHead, usePageMeta } from './infoParts.jsx';
 
 // Theo màn "Khách · Liên hệ" của prototype (LienHe.dc.html)
@@ -14,7 +15,7 @@ const FACTS = [
 
 const TRANSPORT = [
   ['bike', 'Đi xe máy', 'Gửi xe ngay trong sân phòng khám, nhân viên trông giúp và không thu phí.'],
-  ['bus', 'Đi xe buýt', 'Các tuyến chạy dọc Điện Biên Phủ, xuống trạm gần số 57 rồi đi bộ chừng 3 phút vào hẻm.'],
+  ['bus', 'Đi xe buýt', 'Tuyến 10, 150, 159: xuống trạm Cầu Điện Biên Phủ, đi bộ thêm khoảng 100 m.'],
   ['car', 'Đi taxi hoặc xe công nghệ', `Đọc cho tài xế: “Phòng khám Chúc Từ, ${CLINIC.address}”.`],
 ];
 
@@ -25,6 +26,8 @@ const FAQ = [
 ];
 
 export default function LienHe() {
+  const { user } = useSession();
+  const loggedIn = user?.role === 'USER';
   const meta = usePageMeta('lien-he', {
     crumb: 'Liên hệ',
     title: 'Liên hệ phòng khám',
@@ -203,7 +206,10 @@ export default function LienHe() {
         </div>
       </section>
 
-      <GreenCta title="Muốn giữ chỗ trước cho đỡ phải chờ?" text="Cô chú đăng nhập rồi đặt lịch, có ngay phiếu khám kèm giờ khám dự kiến." />
+      <GreenCta
+        title="Muốn giữ chỗ trước cho đỡ phải chờ?"
+        text={loggedIn ? 'Cô chú đặt lịch là có ngay phiếu khám kèm giờ khám dự kiến.' : 'Cô chú đăng nhập rồi đặt lịch, có ngay phiếu khám kèm giờ khám dự kiến.'}
+      />
     </div>
   );
 }

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '@chuctu/shared/lib/api.js';
-import { fmtDateLong, todayVN } from '@chuctu/shared/lib/format.js';
+import { fmtTime } from '@chuctu/shared/lib/format.js';
 import { isAdmin, useSession } from '@chuctu/shared/lib/session.jsx';
 import { Icon } from '@chuctu/shared/components/Icon.jsx';
-import { Brand } from '@chuctu/shared/components/Brand.jsx';
+import './staff.css';
 
 const STAFF_NAV = [
   { to: '/lich-trong-ngay', label: 'Lịch trong ngày', icon: 'calendar' },
@@ -14,18 +14,28 @@ const STAFF_NAV = [
 const ADMIN_NAV = [
   { to: '/quan-tri', label: 'Tổng quan', icon: 'dashboard', end: true },
   ...STAFF_NAV,
-  { to: '/quan-tri/tai-khoan', label: 'Tài khoản', icon: 'shield' },
-  { to: '/quan-tri/bai-viet', label: 'Bài viết', icon: 'news' },
+  { to: '/quan-tri/bai-viet', label: 'Quản lý bài viết', icon: 'news' },
+  { to: '/quan-tri/tai-khoan', label: 'Quản lý tài khoản', icon: 'userPlus' },
 ];
+
+// Trang lập phiếu kết quả và trang soạn bài rộng hết khung, không có cột menu (theo prototype)
+const WIDE = ['/phieu-kham/:appointmentId/ket-qua', '/quan-tri/bai-viet/moi', '/quan-tri/bai-viet/:id'];
+const EXTRA_WIDE = ['/quan-tri/bai-viet/moi', '/quan-tri/bai-viet/:id'];
+// Các trang có hàng đợi thu gọn dưới menu
+const WITH_MINI = ['/lich-trong-ngay', '/benh-nhan', '/benh-nhan/:id'];
 
 export function StaffLayout() {
   const { user, logout } = useSession();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const nav = isAdmin(user) ? ADMIN_NAV : STAFF_NAV;
+  const admin = isAdmin(user);
+  const nav = admin ? ADMIN_NAV : STAFF_NAV;
+  const wide = WIDE.some((p) => matchPath(p, pathname));
+  const mini = WITH_MINI.some((p) => matchPath(p, pathname));
+  const extraWide = EXTRA_WIDE.some((p) => matchPath(p, pathname));
 
-  useEffect(() => setMenuOpen(false), [location.pathname]);
+  useEffect(() => setMenuOpen(false), [pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -33,62 +43,72 @@ export function StaffLayout() {
   };
 
   return (
-    <>
+    <div className="t-app t-vars">
       <a className="skip-link" href="#noi-dung">
         Bỏ qua, tới nội dung chính
       </a>
-      <header className="staff-header">
-        <div className="container">
-          <Brand tag={isAdmin(user) ? 'Quản trị viên' : 'Tiếp tân'} to={isAdmin(user) ? '/quan-tri' : '/lich-trong-ngay'} />
-          <button
-            type="button"
-            className="btn btn-sm btn-on-dark menu-toggle"
-            aria-expanded={menuOpen}
-            aria-controls="staff-nav"
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            <Icon name={menuOpen ? 'x' : 'menu'} />
-            Menu
-          </button>
-          <nav id="staff-nav" className={`staff-nav ${menuOpen ? 'open' : ''}`} aria-label="Chức năng nội bộ">
-            {nav.map((n) => (
-              <NavLink key={n.to} to={n.to} end={n.end}>
-                <Icon name={n.icon} size={20} />
-                {n.label}
-              </NavLink>
-            ))}
-          </nav>
-          <div className="staff-user">
-            <span className="row" style={{ gap: 8 }}>
-              <Icon name="user" size={20} />
-              {user.fullName}
-            </span>
-            <button type="button" className="btn btn-sm btn-on-dark" onClick={handleLogout}>
-              <Icon name="logout" size={20} />
+      <header className="t-header">
+        <div className="t-header-row">
+          <Link to={admin ? '/quan-tri' : '/lich-trong-ngay'} className="t-logo" aria-label="Khu nội bộ Phòng khám Chúc Từ">
+            <img src={`${import.meta.env.BASE_URL}logo-192.png`} alt="" />
+            <span>Chúc Từ</span>
+          </Link>
+          <span className={`t-role ${admin ? 't-role-admin' : ''}`}>
+            <Icon name={admin ? 'shield' : 'user'} size={20} strokeWidth={1.75} />
+            {admin ? 'Quản trị viên' : 'Tiếp tân'}
+          </span>
+          {!wide && (
+            <button type="button" className="t-burger" aria-expanded={menuOpen} aria-controls="t-side" onClick={() => setMenuOpen((v) => !v)}>
+              <Icon name={menuOpen ? 'x' : 'menu'} />
+              <span className="t-burger-label">Menu</span>
+            </button>
+          )}
+          <div className="t-user">
+            <span className="t-user-name">{user.fullName}</span>
+            <button type="button" className="t-btn-dark" onClick={handleLogout}>
               Đăng xuất
             </button>
           </div>
         </div>
       </header>
-      <main id="noi-dung" className="container staff-main page">
-        <p className="caption" style={{ marginBottom: 8 }}>
-          {fmtDateLong(todayVN())}
-        </p>
-        <Outlet />
-      </main>
-    </>
+      <section className="t-page">
+        {wide ? (
+          <main id="noi-dung" className="t-shell-narrow" style={extraWide ? { maxWidth: 1160 } : undefined}>
+            <Outlet />
+          </main>
+        ) : (
+          <div className="t-shell">
+            <div className="t-aside">
+              <nav id="t-side" className={`t-side ${menuOpen ? 'open' : ''}`} aria-label={admin ? 'Chức năng quản trị' : 'Chức năng tiếp tân'}>
+                {nav.map((n) => (
+                  <NavLink key={n.to} to={n.to} end={n.end}>
+                    <Icon name={n.icon} strokeWidth={1.75} />
+                    {n.label}
+                  </NavLink>
+                ))}
+              </nav>
+              {mini && <MiniQueue />}
+            </div>
+            <main id="noi-dung" className="t-main">
+              <Outlet />
+            </main>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
 
-/** Hàng đợi thu gọn: số người trong phòng và đang chờ (UC.10.5). */
+/** Hàng đợi thu gọn: số người trong phòng, đang chờ và 5 người kế tiếp (UC.10.5). */
 export function MiniQueue() {
   const [data, setData] = useState(null);
+  const { pathname } = useLocation();
   useEffect(() => {
     let alive = true;
     const load = () =>
       api
         .get('/staff/queue/mini')
-        .then((d) => alive && setData(d))
+        .then((d) => alive && setData({ ...d, at: new Date() }))
         .catch(() => {});
     load();
     const t = setInterval(load, 20_000);
@@ -96,26 +116,66 @@ export function MiniQueue() {
       alive = false;
       clearInterval(t);
     };
-  }, []);
+    // Tải lại khi đổi trang để thấy ngay người vừa check-in
+  }, [pathname]);
   if (!data) return null;
   return (
-    <aside className="card stack-sm" aria-label="Hàng đợi thu gọn">
-      <h3 style={{ fontSize: 20 }}>Hàng đợi hôm nay</h3>
-      <div className="grid-2" style={{ gap: 12 }}>
-        <div className="stat">
-          <span className="stat-value">
+    <section className="t-mini" aria-labelledby="t-mini-title">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <h2 id="t-mini-title" className="t-mini-title">
+          <Icon name="queue" size={22} strokeWidth={1.75} />
+          Hàng đợi
+        </h2>
+        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-500)', whiteSpace: 'nowrap' }}>lúc {fmtTime(data.at).replace(/^0/, '')}</span>
+      </div>
+      <div className="t-mini-stats">
+        <p className="t-mini-stat green">
+          Trong phòng
+          <strong>
             {data.inRoom}/{data.capacity}
-          </span>
-          <span className="stat-label">Trong phòng khám</span>
+          </strong>
+        </p>
+        <p className="t-mini-stat">
+          Đang chờ
+          <strong>{data.waiting}</strong>
+        </p>
+      </div>
+      {data.next?.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p className="t-eyebrow">{data.next.length} người kế tiếp</p>
+          <ol className="t-mini-list">
+            {data.next.map((k, i) => (
+              <li key={k.id} className={k.priorityGroup === 'PRIORITY' ? 'prio' : ''}>
+                <span className="t-mini-no">{i + 1}</span>
+                <span>{k.fullName}</span>
+              </li>
+            ))}
+          </ol>
         </div>
-        <div className="stat">
-          <span className="stat-value">{data.waiting}</span>
-          <span className="stat-label">Đang chờ</span>
+      )}
+      <div className="t-mini-legend" role="group" aria-label="Chú thích màu nền">
+        <p className="t-eyebrow">Chú thích</p>
+        <div>
+          <span className="t-swatch prio" aria-hidden="true" />
+          <span>
+            <strong className="t-strong">Ưu tiên</strong>
+            <br />
+            Đặt trước, đến đúng khung giờ
+          </span>
+        </div>
+        <div>
+          <span className="t-swatch" aria-hidden="true" />
+          <span>
+            <strong className="t-strong">Thường</strong>
+            <br />
+            Các trường hợp còn lại
+          </span>
         </div>
       </div>
-      <NavLink to="/hang-doi" className="btn btn-secondary btn-sm">
+      <Link to="/hang-doi" className="t-btn t-btn-ghost" style={{ borderColor: 'var(--green-600)', fontWeight: 700 }}>
         Mở hàng đợi
-      </NavLink>
-    </aside>
+        <Icon name="arrowRight" size={20} />
+      </Link>
+    </section>
   );
 }

@@ -8,8 +8,9 @@ import './home.css';
 
 // Bố cục theo màn "Khách · Trang chủ" của prototype (Main.dc.html)
 
+const LOGIN_STEP = ['Đăng nhập', 'Chưa có tài khoản thì tạo một lần, lần sau khỏi nhập lại thông tin.'];
+const LOGGED_IN_STEP = ['Đã đăng nhập', 'Cô chú đang đăng nhập rồi, không cần làm lại bước này.'];
 const STEPS = [
-  ['Đăng nhập', 'Chưa có tài khoản thì tạo một lần, lần sau khỏi nhập lại thông tin.'],
   ['Đặt lịch', 'Chọn ngày giờ, người đi khám rồi bấm đặt lịch.'],
   ['Nhận phiếu khám', 'Có ngay phiếu khám kèm mã phiếu khám và giờ khám dự kiến, xem trong mục Phiếu khám bệnh.'],
   ['Đến khám', 'Đưa phiếu khám cho tiếp tân để check-in. Không đến được thì cô chú huỷ phiếu khám ngay trên trang.'],
@@ -138,7 +139,7 @@ export default function Home() {
             </p>
           </div>
           <ol className="h-grid-4">
-            {STEPS.map(([title, text], i) => (
+            {[loggedIn ? LOGGED_IN_STEP : LOGIN_STEP, ...STEPS].map(([title, text], i) => (
               <li key={title} className="h-card h-step">
                 <span className="h-num" aria-hidden="true">
                   {i + 1}
@@ -186,9 +187,6 @@ export default function Home() {
               <strong>Kê toa thuốc y học cổ truyền và phục hồi chức năng.</strong> Tuỳ tình trạng, bác sĩ kê thuốc nam, thuốc bắc hoặc thuốc đã bào chế sẵn. Cô
               chú nhận thuốc tại chỗ, cũng không mất tiền.
             </p>
-            <Link to="/dich-vu" className="h-link">
-              Xem trang Dịch vụ
-            </Link>
           </div>
         </div>
       </section>
@@ -261,7 +259,9 @@ export default function Home() {
         <div className="h-wrap h-cta-row">
           <div style={{ flex: '1 1 420px', minWidth: 0 }}>
             <h2>Cô chú muốn đặt lịch khám?</h2>
-            <p>Đăng nhập rồi đặt lịch, chỉ mất vài phút. Nếu thấy khó, cô chú cứ gọi điện cho phòng khám.</p>
+            <p>
+              {loggedIn ? 'Đặt lịch chỉ mất vài phút.' : 'Đăng nhập rồi đặt lịch, chỉ mất vài phút.'} Nếu thấy khó, cô chú cứ gọi điện cho phòng khám.
+            </p>
           </div>
           <div className="h-actions">
             <Link to={bookTo} className="h-btn h-btn-light">

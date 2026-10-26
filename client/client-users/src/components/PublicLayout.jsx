@@ -17,11 +17,12 @@ const NAV = [
 
 export const ACCOUNT_LINKS = [
   { to: '/tai-khoan', label: 'Thông tin tài khoản', icon: 'user' },
-  { to: '/tai-khoan/ho-so', label: 'Hồ sơ khám bệnh', icon: 'users' },
-  { to: '/phieu-kham', label: 'Phiếu khám bệnh', icon: 'ticket' },
-  { to: '/lich-su-kham', label: 'Lịch sử khám', icon: 'clipboard' },
+  { to: '/tai-khoan/ho-so', label: 'Hồ sơ khám bệnh', icon: 'clipboard' },
+  { to: '/phieu-kham', label: 'Phiếu khám bệnh', icon: 'calendar' },
+  { to: '/lich-su-kham', label: 'Lịch sử khám', icon: 'file' },
 ];
 
+/** Nút tên người dùng và menu tài khoản, theo prototype "Người dùng · Trang chủ". */
 function UserMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -41,21 +42,24 @@ function UserMenu({ user, onLogout }) {
 
   return (
     <div className="user-menu" ref={ref}>
-      <button type="button" className="btn btn-secondary" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((v) => !v)}>
-        <Icon name="user" />
-        <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.fullName}</span>
-        <Icon name="chevronDown" size={20} />
+      <button type="button" className="user-btn" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((v) => !v)}>
+        <span className="user-avatar">
+          <Icon name="user" size={22} strokeWidth={1.75} />
+        </span>
+        <span className="user-name">{user.fullName}</span>
+        <Icon name="chevronDown" size={20} strokeWidth={2.25} />
       </button>
       {open && (
         <div className="user-menu-list" onClick={() => setOpen(false)}>
           {ACCOUNT_LINKS.map((l) => (
             <Link key={l.to} to={l.to}>
-              <Icon name={l.icon} />
+              <Icon name={l.icon} size={26} strokeWidth={1.75} />
               {l.label}
             </Link>
           ))}
-          <button type="button" onClick={onLogout}>
-            <Icon name="logout" />
+          <span className="user-menu-sep" aria-hidden="true" />
+          <button type="button" className="user-menu-logout" onClick={onLogout}>
+            <Icon name="logout" size={26} strokeWidth={1.75} />
             Đăng xuất
           </button>
         </div>
@@ -66,6 +70,7 @@ function UserMenu({ user, onLogout }) {
 
 export function PublicLayout() {
   const { user, logout } = useSession();
+  const loggedIn = user?.role === 'USER';
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -102,7 +107,7 @@ export function PublicLayout() {
           </span>
         </div>
       </div>
-      <header className="site-header">
+      <header className={`site-header ${loggedIn ? 'site-header-user' : ''}`}>
         <div className="container">
           <Brand />
           <button
@@ -123,7 +128,7 @@ export function PublicLayout() {
             ))}
           </nav>
           <div className="header-actions">
-            {user && user.role === 'USER' ? (
+            {loggedIn ? (
               <UserMenu user={user} onLogout={handleLogout} />
             ) : isStaff(user) ? (
               <a href={adminUrl(user.role === 'ADMIN' ? 'quan-tri' : 'lich-trong-ngay')} className="btn btn-secondary">
@@ -145,23 +150,98 @@ export function PublicLayout() {
           <Outlet />
         </div>
       </main>
-      <Footer user={user} />
+      {loggedIn ? <UserFooter onLogout={handleLogout} /> : <Footer />}
     </>
   );
 }
 
+function FooterBottom() {
+  return (
+    <div className="f-bottom">
+      <div className="f-bottom-row">
+        <p>
+          © {new Date().getFullYear()} {CLINIC.name}.
+        </p>
+        <p>Thông tin trên trang chỉ mang tính tham khảo, không thay thế chẩn đoán của thầy thuốc.</p>
+      </div>
+    </div>
+  );
+}
+
+/** Chân trang khi đã đăng nhập, theo prototype "Người dùng": thương hiệu, tài khoản, giúp đỡ, thông tin phòng khám. */
+function UserFooter({ onLogout }) {
+  return (
+    <footer className="site-footer">
+      <div className="f-links f-links-user">
+        <div className="f-links-row">
+          <div className="f-brand">
+            <Brand tag="Y học cổ truyền · Từ thiện" />
+            <p>Khám và điều trị không thu phí cho bà con. Cần gì cô chú cứ gọi, có người trực nghe máy.</p>
+          </div>
+          <nav className="f-col" aria-label="Tài khoản của tôi">
+            <h3>Tài khoản của tôi</h3>
+            {ACCOUNT_LINKS.map((l) => (
+              <Link key={l.to} to={l.to}>
+                {l.label}
+              </Link>
+            ))}
+            <Link to="/dat-lich" className="f-strong">
+              Đặt lịch khám mới
+            </Link>
+          </nav>
+          <nav className="f-col" aria-label="Cần giúp đỡ">
+            <h3>Cần giúp đỡ</h3>
+            <Link to="/huong-dan">Hướng dẫn đặt lịch</Link>
+            <Link to="/huong-dan">Câu hỏi thường gặp</Link>
+            <Link to="/lien-he">Liên hệ phòng khám</Link>
+            <button type="button" className="f-logout" onClick={onLogout}>
+              Đăng xuất
+            </button>
+          </nav>
+          <div className="f-clinic">
+            <h3>Phòng khám</h3>
+            <div className="f-clinic-item">
+              <span className="f-dot">
+                <Icon name="pin" size={22} strokeWidth={1.75} />
+              </span>
+              <p>{CLINIC.address}</p>
+            </div>
+            <div className="f-clinic-item">
+              <span className="f-dot">
+                <Icon name="clockSoft" size={22} strokeWidth={1.75} />
+              </span>
+              <p>
+                Mỗi ngày kể cả Chủ Nhật:
+                <br />
+                <strong>{CLINIC.hours}</strong>
+              </p>
+            </div>
+            <div className="f-clinic-item" style={{ alignItems: 'center' }}>
+              <span className="f-dot">
+                <Icon name="phone" size={22} strokeWidth={1.75} />
+              </span>
+              <a href={CLINIC.phoneHref} className="f-phone">
+                {CLINIC.phone}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <FooterBottom />
+    </footer>
+  );
+}
+
 /** Chân trang theo prototype: 3 thẻ liên hệ, thương hiệu + liên kết, dòng bản quyền. */
-function Footer({ user }) {
+function Footer() {
   const cols = [
     ['Nội dung', NAV],
     [
       'Tài khoản',
-      user?.role === 'USER'
-        ? ACCOUNT_LINKS
-        : [
-            { to: '/dang-nhap', label: 'Đăng nhập' },
-            { to: '/dang-ky', label: 'Tạo tài khoản' },
-          ],
+      [
+        { to: '/dang-nhap', label: 'Đăng nhập' },
+        { to: '/dang-ky', label: 'Tạo tài khoản' },
+      ],
     ],
     [
       'Cần giúp đỡ',
@@ -236,14 +316,7 @@ function Footer({ user }) {
           ))}
         </div>
       </div>
-      <div className="f-bottom">
-        <div className="f-bottom-row">
-          <p>
-            © {new Date().getFullYear()} {CLINIC.name}.
-          </p>
-          <p>Thông tin trên trang chỉ mang tính tham khảo, không thay thế chẩn đoán của thầy thuốc.</p>
-        </div>
-      </div>
+      <FooterBottom />
     </footer>
   );
 }

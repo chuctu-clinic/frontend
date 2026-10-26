@@ -17,7 +17,6 @@ import Register from './pages/auth/Register.jsx';
 
 import AccountInfo from './pages/account/AccountInfo.jsx';
 import Profiles from './pages/account/Profiles.jsx';
-import ProfileForm from './pages/account/ProfileForm.jsx';
 import MyTickets from './pages/account/MyTickets.jsx';
 import TicketDetail from './pages/account/TicketDetail.jsx';
 import TicketResult from './pages/account/TicketResult.jsx';
@@ -41,6 +40,10 @@ function RequireUser({ children }) {
 export default function App() {
   return (
     <Routes>
+      {/* Đăng nhập và tạo tài khoản có đầu trang, chân trang rút gọn riêng (AuthShell) */}
+      <Route path="dang-nhap" element={<Login />} />
+      <Route path="dang-ky" element={<Register />} />
+
       <Route element={<PublicLayout />}>
         <Route index element={<Home />} />
         <Route path="gioi-thieu" element={<GioiThieu />} />
@@ -50,14 +53,11 @@ export default function App() {
         <Route path="tin-tuc" element={<PostList />} />
         <Route path="tin-tuc/:id" element={<PostDetail />} />
 
-        <Route path="dang-nhap" element={<Login />} />
-        <Route path="dang-ky" element={<Register />} />
-
         <Route path="dat-lich" element={<RequireUser><Booking /></RequireUser>} />
         <Route path="tai-khoan" element={<RequireUser><AccountInfo /></RequireUser>} />
         <Route path="tai-khoan/ho-so" element={<RequireUser><Profiles /></RequireUser>} />
-        <Route path="tai-khoan/ho-so/moi" element={<RequireUser><ProfileForm /></RequireUser>} />
-        <Route path="tai-khoan/ho-so/:id" element={<RequireUser><ProfileForm /></RequireUser>} />
+        {/* /tai-khoan/ho-so/moi và /tai-khoan/ho-so/:id mở sẵn hộp thoại thêm / sửa hồ sơ */}
+        <Route path="tai-khoan/ho-so/:id" element={<RequireUser><Profiles /></RequireUser>} />
         <Route path="phieu-kham" element={<RequireUser><MyTickets /></RequireUser>} />
         <Route path="phieu-kham/:id" element={<RequireUser><TicketDetail /></RequireUser>} />
         <Route path="phieu-kham/:id/ket-qua" element={<RequireUser><TicketResult /></RequireUser>} />

@@ -1,6 +1,14 @@
 // API Client: tập trung mọi lời gọi REST tới Backend.
 const BASE = import.meta.env.VITE_API_URL || '';
 
+// Mỗi ứng dụng cho server biết mình là ai ("users" hoặc "staff"), để trang người dùng và
+// khu nội bộ giữ hai phiên đăng nhập riêng, không làm nhau thoát.
+let APP = null;
+export function setApiApp(app) {
+  APP = app;
+}
+export const appHeaders = () => (APP ? { 'X-App': APP } : {});
+
 export class ApiError extends Error {
   constructor(status, body) {
     super(body?.error?.message || 'Có lỗi xảy ra, cô chú vui lòng thử lại.');
@@ -17,7 +25,7 @@ async function request(method, path, body) {
     res = await fetch(`${BASE}/api${path}`, {
       method,
       credentials: 'include',
-      headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+      headers: { ...appHeaders(), ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {

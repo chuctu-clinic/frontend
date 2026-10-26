@@ -1,44 +1,105 @@
 import { useEffect, useState } from 'react';
-import { Alert, Badge, Button, ButtonLink, Empty, ErrorAlert, Loading, Modal, PageHeader } from '@chuctu/shared/components/ui.jsx';
+import { Link } from 'react-router-dom';
+import { Icon } from '@chuctu/shared/components/Icon.jsx';
+import { ErrorAlert, Loading } from '@chuctu/shared/components/ui.jsx';
 import { api } from '@chuctu/shared/lib/api.js';
-import { fmtTime, shortTime, todayVN } from '@chuctu/shared/lib/format.js';
+import { fmtTime, shortTime, slotLabel, todayVN } from '@chuctu/shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '@chuctu/shared/lib/useAsync.js';
+import { Notice, Summary, TDialog } from '../../components/t-ui.jsx';
+import { longDay, nowMinutesVN } from './ApptActions.jsx';
 
-export function SlotMap({ slotMap }) {
-  const nowHour = new Date(Date.now() + 7 * 3600_000).getUTCHours();
+const clock = (value) => fmtTime(value).replace(/^0/, '');
+const minutesOf = (hhmm) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+};
+
+/** Ghi chú bên phải mỗi người trong hàng chờ. */
+function waitNote(w) {
+  if (w.priorityGroup === 'PRIORITY') return `Đặt khung ${shortTime(w.slotStart)}`;
+  if (w.source === 'COUNTER') return 'Đến trực tiếp';
+  return minutesOf(clock(w.checkInTime)) < minutesOf(w.slotStart) ? `Đến sớm trước khung ${shortTime(w.slotStart)}` : `Đến sau khung ${shortTime(w.slotStart)}`;
+}
+
+/** Sơ đồ ghế theo khung giờ: mỗi ô là một người đã check-in vào khung đó (UC.10.5). */
+export function SlotMap({ slotMap, waiting = [] }) {
+  const now = nowMinutesVN();
+  const order = new Map(waiting.map((w, i) => [w.ticketCode, { no: i + 1, prio: w.priorityGroup === 'PRIORITY' }]));
+  const rank = { COMPLETED: 0, IN_ROOM: 1, WAITING: 2 };
   return (
-    <div className="slot-map">
-      {slotMap.map((s) => {
-        const current = Number(s.start.slice(0, 2)) === nowHour;
-        return (
-          <div key={s.start} className={`slot-col ${current ? 'current' : ''}`}>
-            <p style={{ fontWeight: 700, color: 'var(--ink-900)' }}>
-              {shortTime(s.start)}
-              {current && <span className="sr-only"> (khung hiện tại)</span>}
-            </p>
-            <p className="caption">
-              Đặt {s.booked}/{s.capacity} · chưa đến {s.notArrived}
-            </p>
-            {s.checkins.length === 0 && <p className="caption">Chưa có ai check-in</p>}
-            {s.checkins.map((c) => (
-              <span key={c.id} className={`slot-dot ${c.status}`} title={`${c.fullName} · ${c.ticketCode}`}>
-                {c.status === 'IN_ROOM' ? `Ghế ${c.seatNo}` : c.status === 'WAITING' ? 'Chờ' : 'Xong'} · {c.fullName}
-              </span>
-            ))}
-          </div>
-        );
-      })}
-    </div>
+    <>
+      <div className="t-slots">
+        {slotMap.map((s) => {
+          const start = minutesOf(s.start);
+          const past = start + 60 <= now;
+          const running = start <= now && now < start + 60;
+          const people = [...s.checkins].sort((a, b) => rank[a.status] - rank[b.status] || (order.get(a.ticketCode)?.no ?? 0) - (order.get(b.ticketCode)?.no ?? 0));
+          return (
+            <div key={s.start} className={`t-slot ${running ? 'now' : ''}`}>
+              <div className="t-slot-label">
+                <p>{slotLabel(s.start)}</p>
+                <p>{past ? 'Đã qua' : running ? 'Đang diễn ra' : 'Sắp tới'}</p>
+              </div>
+              <div role="group" aria-label={`Khung ${shortTime(s.start)}, ${people.length} người đã check-in`} className="t-slot-boxes">
+                {people.length === 0 && <span style={{ fontSize: 15, lineHeight: '22px', color: 'var(--line-strong)' }}>Chưa có ai check-in</span>}
+                {people.map((c) => {
+                  const o = order.get(c.ticketCode);
+                  const kind = c.status === 'COMPLETED' ? 'done' : c.status === 'IN_ROOM' ? 'in' : o?.prio ? 'prio' : 'wait';
+                  const label = { done: 'đã hoàn thành', in: 'đang trong phòng khám', wait: 'đang chờ', prio: 'đang chờ (nền xanh dương)' }[kind];
+                  const aria = `${c.fullName || 'Bệnh nhân'}, ${label}${o ? `, thứ tự ${o.no}` : ''}`;
+                  return (
+                    <span key={c.id} role="img" aria-label={aria} title={aria} className={`t-box ${kind}`}>
+                      {kind === 'done' ? '✓' : kind === 'in' ? '▶' : o?.no}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="t-slot-count">
+                <p>{people.length} người</p>
+                {s.notArrived > 0 && <p>{past ? `vắng ${s.notArrived}` : `chưa đến ${s.notArrived}`}</p>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <ul aria-label="Chú thích" className="t-key">
+        <li>
+          <span aria-hidden="true" className="t-box sm done">
+            ✓
+          </span>
+          Đã hoàn thành
+        </li>
+        <li>
+          <span aria-hidden="true" className="t-box sm in">
+            ▶
+          </span>
+          Trong phòng khám
+        </li>
+        <li>
+          <span aria-hidden="true" className="t-box sm wait">
+            1
+          </span>
+          Đang chờ, số là thứ tự
+        </li>
+        <li>
+          <span aria-hidden="true" className="t-box sm prio">
+            1
+          </span>
+          Đang chờ, nền xanh dương
+        </li>
+      </ul>
+    </>
   );
 }
 
-/** Hàng đợi khám: 5 ghế, hàng chờ Ưu tiên / Thường, mời vào, hoàn tác, hoàn tất (UC.10.1 – UC.10.5). */
+/** Hàng đợi khám: 5 ghế, hàng chờ Ưu tiên / Thường, hoàn tác vào khám (UC.10.1 – UC.10.5). */
 export default function Queue() {
   useDocumentTitle('Hàng đợi khám');
   const { data, loading, error, reload, setData } = useAsync(() => api.get('/staff/queue'), []);
-  const [busy, setBusy] = useState(null);
+  const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [undoTarget, setUndoTarget] = useState(null);
+  const [notice, setNotice] = useState(null);
 
   // Tự làm mới để thấy người vừa check-in ở quầy khác
   useEffect(() => {
@@ -46,78 +107,108 @@ export default function Queue() {
     return () => clearInterval(t);
   }, [reload]);
 
-  const run = async (key, fn) => {
-    setBusy(key);
+  /** Tên những người vừa được ghế trống tự nhận. */
+  const newlySeated = (before, after) => {
+    const had = new Set(before.seats.filter((s) => !s.empty).map((s) => s.id));
+    return after.seats.filter((s) => !s.empty && !had.has(s.id)).map((s) => s.patient?.fullName);
+  };
+
+  const undo = async () => {
+    setBusy(true);
     setActionError(null);
     try {
-      setData(await fn());
+      const next = await api.post(`/staff/queue/${undoTarget.id}/undo-enter`);
+      const seated = newlySeated(data, next).filter((n) => n !== undoTarget.patient?.fullName);
+      setData(next);
+      setNotice(
+        <>
+          Đã hoàn tác vào khám của <span className="t-notice-name">{undoTarget.patient?.fullName}</span>. Phiếu trở lại hàng chờ, đúng vị trí theo giờ check-in.
+          {seated.length > 0 && ` Ghế trống đã tự động nhận ${seated.join(', ')} từ hàng chờ.`}
+        </>,
+      );
+      setUndoTarget(null);
     } catch (err) {
       setActionError(err);
     } finally {
-      setBusy(null);
+      setBusy(false);
+    }
+  };
+
+  const invite = async () => {
+    setBusy(true);
+    setActionError(null);
+    try {
+      setData(await api.post('/staff/queue/invite'));
+    } catch (err) {
+      setActionError(err);
+    } finally {
+      setBusy(false);
     }
   };
 
   const freeSeats = data ? data.capacity - data.inRoomCount : 0;
-  const groups = data
-    ? [
-        ['PRIORITY', 'Có phiếu đặt trước, đến đúng khung giờ', data.waiting.filter((w) => w.priorityGroup === 'PRIORITY')],
-        ['NORMAL', 'Khách đến trực tiếp hoặc đến sau khung giờ', data.waiting.filter((w) => w.priorityGroup === 'NORMAL')],
-      ]
-    : [];
 
   return (
-    <div className="stack-lg">
-      <PageHeader
-        title="Hàng đợi khám"
-        subtitle={`Mỗi lượt ${data?.capacity ?? 5} người vào khám, khoảng 30 phút. Ai có phiếu đặt trước và đến đúng khung giờ được xếp lên trước.`}
-        actions={
-          <>
-            <Button variant="ghost" icon="refresh" onClick={() => reload()}>
-              Làm mới
-            </Button>
-            <ButtonLink to="/lich-trong-ngay" variant="secondary">
-              Check-in ở Lịch trong ngày
-            </ButtonLink>
-          </>
-        }
-      />
-      {loading && !data && <Loading />}
+    <>
+      <div className="t-pagehead">
+        <div>
+          <p className="t-muted" style={{ marginBottom: 6, fontWeight: 600 }}>
+            {longDay(todayVN())} · bây giờ {clock(new Date())}
+          </p>
+          <h1 className="t-h1">Hàng đợi khám</h1>
+          <p className="t-lead">
+            Người đã check-in xếp hàng ở đây. Mỗi lượt {data?.capacity ?? 5} người vào khám, khoảng 30 phút. Ai có phiếu đặt trước và đến đúng khung giờ thì được xếp lên trước.
+          </p>
+        </div>
+        <Link to="/lich-trong-ngay" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }}>
+          <Icon name="calendar" strokeWidth={1.75} />
+          Check-in ở Lịch trong ngày
+        </Link>
+      </div>
+
+      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
       <ErrorAlert error={error || actionError} />
+      {loading && !data && <Loading />}
+
       {data && (
         <>
-          <section className="stack" aria-labelledby="trong-phong">
-            <div className="row-between">
-              <h2 id="trong-phong">
-                Trong phòng khám{' '}
-                <span className="mono">
-                  {data.inRoomCount}/{data.capacity}
-                </span>{' '}
-                người
-              </h2>
-              <p className="caption">Đã hoàn thành hôm nay: {data.completedCount}</p>
+          <section aria-labelledby="hd-phong" className="t-card t-card-pad" style={{ gap: 18 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div className="t-titlerow">
+                <h2 id="hd-phong" className="t-h2">
+                  Trong phòng khám
+                </h2>
+                <span className="t-count green">
+                  {data.inRoomCount}/{data.capacity} người
+                </span>
+              </div>
+              <p className="t-text">
+                Bấm Ghi nhận lượt khám để điền phiếu kết quả. Lưu phiếu xong thì người đó chuyển sang Đã hoàn thành, rời hàng đợi và ghế trống để mời người kế tiếp.
+              </p>
             </div>
-            <p className="small">Bấm "Ghi nhận lượt khám" để điền phiếu kết quả. Lưu phiếu xong thì người đó rời hàng đợi và ghế trống mời người kế tiếp.</p>
-            <div className="seats">
+            <div className="t-seats">
               {data.seats.map((s) =>
                 s.empty ? (
-                  <div key={s.seatNo} className="seat seat-empty">
-                    <span className="seat-no">Ghế {s.seatNo}</span>
-                    <p className="muted">Ghế trống</p>
+                  <div key={s.seatNo} className="t-seat-empty">
+                    <span>Ghế {s.seatNo}</span>
+                    <span>Ghế trống</span>
+                    <span>Mời người đầu hàng chờ vào khám</span>
                   </div>
                 ) : (
-                  <div key={s.seatNo} className="seat">
-                    <span className="seat-no">Ghế {s.seatNo}</span>
-                    <p style={{ fontWeight: 700, color: 'var(--ink-900)', fontSize: 19, lineHeight: '26px' }}>{s.patient?.fullName}</p>
-                    <p className="caption mono">{s.ticketCode}</p>
-                    <p className="caption">Vào khám lúc {fmtTime(s.enteredAt)}</p>
-                    <div className="stack-sm" style={{ marginTop: 'auto' }}>
-                      <ButtonLink to={`/phieu-kham/${s.appointmentId}/ket-qua`} size="sm" icon="clipboard">
+                  <div key={s.seatNo} className="t-seat">
+                    <span className="t-seat-no">Ghế {s.seatNo}</span>
+                    <div>
+                      <p className="t-seat-name">{s.patient?.fullName}</p>
+                      <p className="t-seat-sub">{s.ticketCode}</p>
+                      <p className="t-seat-sub">Vào khám lúc {clock(s.enteredAt)}</p>
+                    </div>
+                    <div className="t-seat-acts">
+                      <Link to={`/phieu-kham/${s.appointmentId}/ket-qua`} className="t-btn t-btn-primary t-btn-bold">
                         Ghi nhận lượt khám
-                      </ButtonLink>
-                      <Button size="sm" variant="ghost" icon="undo" onClick={() => setUndoTarget(s)}>
+                      </Link>
+                      <button type="button" className="t-btn t-btn-ghost" onClick={() => setUndoTarget(s)}>
                         Hoàn tác vào khám
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ),
@@ -125,113 +216,88 @@ export default function Queue() {
             </div>
           </section>
 
-          <section className="card card-lg stack" aria-labelledby="hang-cho">
-            <div className="row-between">
-              <h2 id="hang-cho">
-                Hàng chờ <span className="mono">{data.waitingCount}</span> người
-              </h2>
-              <div className="row">
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    checked={data.autoInvite}
-                    disabled={busy === 'auto'}
-                    onChange={(e) => run('auto', () => api.put('/staff/queue/auto-invite', { enabled: e.target.checked }))}
-                  />
-                  Tự động vào ghế trống
-                </label>
-                {!data.autoInvite && (
-                  <Button
-                    icon="arrowRight"
-                    disabled={freeSeats === 0 || data.waitingCount === 0}
-                    loading={busy === 'invite'}
-                    onClick={() => run('invite', () => api.post('/staff/queue/invite'))}
-                  >
-                    Mời người đầu hàng chờ vào khám
-                  </Button>
-                )}
+          <section aria-labelledby="hd-cho" className="t-card t-card-pad">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px 20px', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="t-titlerow">
+                <h2 id="hd-cho" className="t-h2">
+                  Hàng chờ
+                </h2>
+                <span className="t-count sand">{data.waitingCount} người</span>
               </div>
+              {!data.autoInvite && (
+                <button type="button" className="t-btn t-btn-primary" disabled={busy || freeSeats === 0 || data.waitingCount === 0} onClick={invite}>
+                  <Icon name="arrowRight" />
+                  Mời người đầu hàng chờ vào khám
+                </button>
+              )}
             </div>
-            <p className="small">
-              Thứ tự tự xếp: người có phiếu đặt trước và đến đúng khung giờ (nền xanh dương, nhãn "Ưu tiên") đứng trên, những người còn lại đứng dưới. Trong mỗi
-              nhóm, ai check-in trước đứng trước.
+            <p className="t-text">
+              Thứ tự tự xếp: người có phiếu đặt trước và đến đúng khung giờ (nền xanh dương) đứng trên, những người còn lại đứng dưới. Trong mỗi nhóm, ai check-in trước đứng trước.
+              {data.autoInvite && ' Khi phòng khám có ghế trống, người đầu Lượt kế tiếp tự động vào khám.'}
             </p>
-            {data.waitingCount === 0 && <Empty icon="users" title="Chưa có ai đang chờ">Người được check-in ở Lịch trong ngày sẽ hiện ở đây.</Empty>}
-            {groups.map(([key, label, list]) =>
-              list.length === 0 ? null : (
-                <div key={key} className="stack-sm">
-                  <h3 style={{ fontSize: 20 }}>
-                    {key === 'PRIORITY' ? 'Ưu tiên' : 'Thường'} — {label}
-                  </h3>
-                  <ol className="stack-sm" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    {list.map((w) => (
-                      <li key={w.id} className={`queue-item ${w.priorityGroup === 'PRIORITY' ? 'priority' : ''}`}>
-                        <span className="queue-no" aria-label={`Thứ tự ${data.waiting.indexOf(w) + 1}`}>
-                          {data.waiting.indexOf(w) + 1}
-                        </span>
-                        <div>
-                          <p style={{ fontWeight: 700, color: 'var(--ink-900)' }}>{w.patient?.fullName}</p>
-                          <p className="caption">
-                            <span className="mono">{w.ticketCode}</span> · khung {shortTime(w.slotStart)} · check-in {fmtTime(w.checkInTime)} · đã chờ {w.waitedMinutes} phút
-                          </p>
-                        </div>
-                        <Badge tone={w.priorityGroup === 'PRIORITY' ? 'blue' : 'gray'} icon={w.priorityGroup === 'PRIORITY' ? 'ticket' : 'user'}>
-                          {w.priorityGroup === 'PRIORITY' ? 'Ưu tiên' : 'Thường'}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              ),
-            )}
+            {data.waitingCount === 0 && <p className="t-dashed">Chưa có ai đang chờ. Người được check-in ở Lịch trong ngày sẽ hiện ở đây.</p>}
+            <ol className="t-wait-list">
+              {data.waiting.map((w, i) => {
+                const prio = w.priorityGroup === 'PRIORITY';
+                return (
+                  <li key={w.id}>
+                    {i % data.capacity === 0 && <p className="t-eyebrow t-wait-group">{i < data.capacity ? 'Lượt kế tiếp' : 'Lượt sau'}</p>}
+                    <div className={`t-wait ${prio ? 'prio' : ''}`}>
+                      <span className={`t-wait-no ${prio ? 'prio' : i < data.capacity ? 'next' : ''}`} aria-label={`Thứ tự ${i + 1}`}>
+                        {i + 1}
+                      </span>
+                      <div className="t-wait-main">
+                        <p className="t-wait-name">{w.patient?.fullName}</p>
+                        <p className="t-wait-sub">
+                          {w.ticketCode} · check-in {clock(w.checkInTime)} · đã chờ {w.waitedMinutes} phút
+                        </p>
+                      </div>
+                      <p className="t-wait-note">{waitNote(w)}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
           </section>
 
-          <section className="stack" aria-labelledby="so-do">
-            <h2 id="so-do">Sơ đồ ghế theo khung giờ hôm nay</h2>
-            <p className="small">Mỗi ô là một người đã check-in vào khung giờ đó. Khung viền vàng là khung hiện tại.</p>
-            <SlotMap slotMap={data.slotMap} />
+          <section aria-labelledby="hd-khung" className="t-card t-card-pad" style={{ gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <h2 id="hd-khung" className="t-h2">
+                Sơ đồ ghế theo khung giờ hôm nay
+              </h2>
+              <p className="t-text">Mỗi ô là một người đã check-in vào khung giờ đó.</p>
+            </div>
+            <SlotMap slotMap={data.slotMap} waiting={data.waiting} />
           </section>
         </>
       )}
+
       {undoTarget && (
-        <Modal
-          title="Hoàn tác vào khám?"
-          onClose={() => setUndoTarget(null)}
-          actions={
-            <>
-              <Button variant="ghost" onClick={() => setUndoTarget(null)}>
-                Quay lại
-              </Button>
-              <Button
-                icon="undo"
-                loading={busy === 'undo'}
-                onClick={async () => {
-                  await run('undo', () => api.post(`/staff/queue/${undoTarget.id}/undo-enter`));
-                  setUndoTarget(null);
-                }}
-              >
+        <TDialog title="Hoàn tác vào khám?" width={560} alert onClose={() => setUndoTarget(null)}>
+          <div className="t-dialog-body" style={{ gap: 20 }}>
+            <Summary
+              items={[
+                ['Bệnh nhân', undoTarget.patient?.fullName],
+                ['Mã phiếu khám', undoTarget.ticketCode],
+                ['Vào khám lúc', clock(undoTarget.enteredAt), null, false],
+              ]}
+            />
+            <p className="t-text">
+              Phiếu trở lại <strong className="t-strong">hàng chờ</strong>, đúng vị trí theo giờ check-in.
+              {data?.autoInvite && ' Ghế vừa trống tự động nhận người kế tiếp trong hàng chờ; người này sẽ vào ở ghế trống sau.'}
+            </p>
+            <ErrorAlert error={actionError} />
+            <div className="t-actions" style={{ gap: 12 }}>
+              <button type="button" className="t-btn t-btn-primary t-btn-bold" style={{ flex: '1 1 220px', minHeight: 48 }} disabled={busy} onClick={undo}>
                 Xác nhận hoàn tác
-              </Button>
-            </>
-          }
-        >
-          <div className="stack-sm">
-            <dl className="info">
-              <dt>Bệnh nhân</dt>
-              <dd>{undoTarget.patient?.fullName}</dd>
-              <dt>Mã phiếu khám</dt>
-              <dd className="mono">{undoTarget.ticketCode}</dd>
-              <dt>Vào khám lúc</dt>
-              <dd>{fmtTime(undoTarget.enteredAt)}</dd>
-            </dl>
-            <Alert type="info">
-              Phiếu trở lại <strong>hàng chờ</strong>, đúng vị trí theo giờ check-in.
-              {data?.autoInvite && ' Ghế vừa trống tự động nhận người kế tiếp; người này sẽ vào ở ghế trống sau.'}
-            </Alert>
+              </button>
+              <button type="button" className="t-btn t-btn-ghost" style={{ minHeight: 48 }} onClick={() => setUndoTarget(null)}>
+                Quay lại
+              </button>
+            </div>
           </div>
-        </Modal>
+        </TDialog>
       )}
-      <p className="caption">Ngày {todayVN().split('-').reverse().join('/')}. Trang tự làm mới mỗi 15 giây.</p>
-    </div>
+    </>
   );
 }
