@@ -7,7 +7,15 @@ let APP = null;
 export function setApiApp(app) {
   APP = app;
 }
-export const appHeaders = () => (APP ? { 'X-App': APP } : {});
+// Tài khoản tab này đang hiển thị. Cookie đăng nhập là chung cho mọi tab, nên server so khớp để từ chối
+// thao tác nếu tab khác vừa đăng nhập tài khoản khác hay đăng xuất (lỗi SESSION_CHANGED).
+let SESSION_USER = null;
+let onSessionChanged = null;
+export function setApiSession(userId, onChanged) {
+  SESSION_USER = userId || null;
+  onSessionChanged = onChanged;
+}
+export const appHeaders = () => ({ ...(APP ? { 'X-App': APP } : {}), ...(SESSION_USER ? { 'X-Session-User': SESSION_USER } : {}) });
 
 export class ApiError extends Error {
   constructor(status, body) {
@@ -32,7 +40,11 @@ async function request(method, path, body) {
     throw new ApiError(0, { error: { message: 'Không kết nối được tới phòng khám. Cô chú kiểm tra mạng rồi thử lại.' } });
   }
   const data = res.status === 204 ? null : await res.json().catch(() => null);
-  if (!res.ok) throw new ApiError(res.status, data);
+  if (!res.ok) {
+    const err = new ApiError(res.status, data);
+    if (err.code === 'SESSION_CHANGED') onSessionChanged?.();
+    throw err;
+  }
   return data;
 }
 
