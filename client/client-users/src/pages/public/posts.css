@@ -34,20 +34,18 @@
 .p-count strong { color: var(--ink-900); }
 
 /* Thẻ bài viết */
-.p-card { background: var(--surface-card); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; transition: box-shadow 0.2s ease, transform 0.2s ease; }
-.p-card:hover { box-shadow: var(--shadow-md); }
+.p-card { background: var(--surface-card); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
 .p-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
 .p-card-body { padding: 24px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
 .p-card h3 { font-family: var(--font-sans); font-size: 21px; line-height: 30px; font-weight: 600; color: var(--ink-900); }
 .p-card p { font-size: 17px; line-height: 27px; color: var(--ink-700); }
-.p-more { margin-top: auto; font-size: 17px; font-weight: 600; color: var(--green-700); text-decoration: underline; }
 
 .p-featured { flex-direction: row; flex-wrap: wrap; border-radius: var(--radius-xl); }
-.p-featured img { flex: 1 1 420px; min-width: 0; width: auto; height: 340px; }
+.p-featured .card-media { flex: 1 1 420px; min-width: 0; }
+.p-featured img { width: 100%; height: 340px; }
 .p-featured .p-card-body { flex: 999 1 420px; min-width: 0; padding: 36px; gap: 16px; justify-content: center; }
 .p-featured h2 { font-family: var(--font-serif); font-size: 30px; line-height: 40px; font-weight: 700; color: var(--ink-900); }
 .p-featured p { max-width: 58ch; font-size: 18px; line-height: 29px; }
-.p-featured .p-more { margin-top: 0; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; font-size: 19px; }
 
 .p-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
 
@@ -81,13 +79,16 @@
 .p-head .p-narrow { gap: 16px; }
 .p-head .p-tag { font-size: 16px; padding: 7px 16px; }
 .p-title { font-family: var(--font-serif); font-size: 42px; line-height: 54px; font-weight: 700; color: var(--ink-900); }
+/* Mô tả bài, ngay dưới tiêu đề */
+.p-desc { max-width: 62ch; font-size: 21px; line-height: 34px; color: var(--ink-700); }
 .p-byline { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; font-size: 17px; color: var(--ink-500); }
 .p-byline span { display: inline-flex; align-items: center; gap: 8px; }
 
 .p-article { padding: 48px 24px 72px; }
 .p-article .p-narrow { gap: 28px; }
 .p-cover { width: 100%; height: 420px; object-fit: cover; border-radius: var(--radius-xl); display: block; }
-.p-summary { font-size: 21px; line-height: 34px; font-weight: 500; color: var(--ink-900); }
+/* Đoạn đầu làm đoạn mở đầu khi bài không có tóm tắt riêng (PostDetail.jsx) */
+.p-prose-lead > p:first-child { font-size: 21px; line-height: 34px; font-weight: 500; color: var(--ink-900); }
 .p-prose { display: flex; flex-direction: column; gap: 28px; }
 .p-prose > * { margin: 0; }
 .p-prose p { font-size: 19px; line-height: 33px; color: var(--ink-700); }
@@ -98,7 +99,18 @@
 .p-prose li { font-size: 19px; line-height: 32px; color: var(--ink-700); }
 .p-prose blockquote { padding: 28px 32px; background: var(--gold-100); border-radius: var(--radius-lg); font-family: var(--font-serif); font-size: 22px; line-height: 36px; color: var(--ink-900); }
 .p-prose blockquote p { font: inherit; color: inherit; margin: 0; }
-.p-prose img { max-width: 100%; border-radius: var(--radius-lg); }
+.p-prose img { max-width: 100%; height: auto; border-radius: var(--radius-lg); }
+/* Bảng (soạn trong trang quản trị hoặc nhập từ Word): cuộn ngang trên điện thoại thay vì tràn trang */
+.p-prose figure { margin: 0; }
+.p-prose figure.table { overflow-x: auto; }
+.p-prose table { width: 100%; border-collapse: collapse; font-size: 18px; line-height: 29px; color: var(--ink-700); }
+.p-prose td,
+.p-prose th { border: 1px solid var(--line-strong); padding: 10px 14px; text-align: left; vertical-align: top; }
+.p-prose th { background: var(--surface-200); color: var(--ink-900); }
+/* Trình soạn thảo bọc chữ trong danh sách và ô bảng bằng <p>: bỏ lề để không cách dòng thừa */
+.p-prose li p,
+.p-prose td p,
+.p-prose th p { margin: 0; font-size: inherit; line-height: inherit; color: inherit; }
 .p-prose a { color: var(--green-700); font-weight: 600; }
 
 .p-action { margin-top: 12px; background: var(--green-100); border-radius: var(--radius-xl); padding: 32px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; }
@@ -122,8 +134,9 @@
   .p-featured .p-card-body { padding: 24px; }
   .p-featured h2 { font-size: 25px; line-height: 34px; }
   .p-title { font-size: 30px; line-height: 40px; }
+  .p-desc { font-size: 19px; line-height: 31px; }
   .p-cover { height: 240px; }
-  .p-summary { font-size: 19px; line-height: 31px; }
+  .p-prose-lead > p:first-child { font-size: 19px; line-height: 31px; }
   .p-prose h2 { font-size: 25px; line-height: 34px; }
   .p-prose blockquote { padding: 20px; font-size: 19px; line-height: 31px; }
   .p-action { padding: 24px; }

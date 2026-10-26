@@ -28,10 +28,13 @@ export function PostImage({ post, className }) {
   return <img className={className} src={post.thumbnailUrl || '/mat-tien.jpg'} alt="" loading="lazy" />;
 }
 
+/** Cả thẻ là một liên kết tới trang chi tiết bài viết. */
 export function PostCard({ post, compact }) {
   return (
-    <article className="p-card">
-      <PostImage post={post} />
+    <Link to={`/tin-tuc/${post.id}`} className="p-card card-link">
+      <span className="card-media">
+        <PostImage post={post} />
+      </span>
       <div className="p-card-body">
         {compact ? (
           <PostTag post={post} />
@@ -43,18 +46,17 @@ export function PostCard({ post, compact }) {
         )}
         <h3>{post.title}</h3>
         {!compact && post.summary && <p>{post.summary}</p>}
-        <Link to={`/tin-tuc/${post.id}`} className="p-more" aria-label={`Đọc thêm: ${post.title}`}>
-          Đọc thêm
-        </Link>
       </div>
-    </article>
+    </Link>
   );
 }
 
 function FeaturedPost({ post }) {
   return (
-    <article className="p-card p-featured">
-      <PostImage post={post} />
+    <Link to={`/tin-tuc/${post.id}`} className="p-card p-featured card-link">
+      <span className="card-media">
+        <PostImage post={post} />
+      </span>
       <div className="p-card-body">
         <div className="p-meta">
           <PostTag post={post} />
@@ -63,12 +65,8 @@ function FeaturedPost({ post }) {
         </div>
         <h2>{post.title}</h2>
         {post.summary && <p>{post.summary}</p>}
-        <Link to={`/tin-tuc/${post.id}`} className="p-more" aria-label={`Đọc thêm: ${post.title}`}>
-          Đọc thêm
-          <Icon name="arrowRight" size={22} strokeWidth={1.75} />
-        </Link>
       </div>
-    </article>
+    </Link>
   );
 }
 

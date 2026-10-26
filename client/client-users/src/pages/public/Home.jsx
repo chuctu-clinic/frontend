@@ -31,12 +31,14 @@ const HIGHLIGHTS = [
 
 const SI = 1.75; // độ dày nét icon của prototype
 
-/** Thẻ bài viết: ảnh trên, chuyên mục + ngày, tiêu đề, tóm tắt, "Đọc thêm". */
+/** Thẻ bài viết: ảnh trên, chuyên mục + ngày, tiêu đề, tóm tắt. Cả thẻ là một liên kết tới bài. */
 export function NewsCard({ post }) {
   const gold = post.category === 'HUONG_DAN';
   return (
-    <article className="h-card h-news">
-      <img src={post.thumbnailUrl || '/mat-tien.jpg'} alt="" loading="lazy" />
+    <Link to={`/tin-tuc/${post.id}`} className="h-card h-news card-link">
+      <span className="card-media">
+        <img src={post.thumbnailUrl || '/mat-tien.jpg'} alt="" loading="lazy" />
+      </span>
       <div className="h-news-body">
         <div className="h-news-meta">
           <span className={`h-chip ${gold ? 'h-chip-gold' : ''}`}>{post.categoryLabel}</span>
@@ -44,11 +46,8 @@ export function NewsCard({ post }) {
         </div>
         <h3>{post.title}</h3>
         {post.summary && <p>{post.summary}</p>}
-        <Link to={`/tin-tuc/${post.id}`} className="h-link" aria-label={`Đọc thêm: ${post.title}`}>
-          Đọc thêm
-        </Link>
       </div>
-    </article>
+    </Link>
   );
 }
 

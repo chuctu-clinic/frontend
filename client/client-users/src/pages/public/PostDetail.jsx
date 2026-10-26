@@ -13,6 +13,16 @@ import './posts.css';
 
 // Theo màn "Bài viết · Chi tiết" của prototype (BaiViet-ChiTiet.dc.html)
 
+/**
+ * Bài cũ lấy đoạn đầu làm mô tả. Khi đó không hiện mô tả dưới tiêu đề (sẽ lặp đoạn đầu),
+ * mà tô đoạn đầu thành đoạn mở đầu.
+ */
+function summaryRepeatsContent(post) {
+  const text = (s) => String(s || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  const summary = text(post.summary).replace(/…$/, '');
+  return Boolean(summary) && text(post.content).startsWith(summary);
+}
+
 function Crumbs({ post }) {
   return (
     <nav aria-label="Đường dẫn" className="i-crumb">
@@ -97,6 +107,7 @@ export default function PostDetail() {
     );
   }
 
+  const showDesc = Boolean(post.summary) && !summaryRepeatsContent(post);
   return (
     <div className="info-page posts">
       <section className="p-head">
@@ -104,6 +115,7 @@ export default function PostDetail() {
           <Crumbs post={post} />
           <PostTag post={post} />
           <h1 className="p-title">{post.title}</h1>
+          {showDesc && <p className="p-desc">{post.summary}</p>}
           <div className="p-byline">
             <span>
               <Icon name="user" size={20} strokeWidth={1.75} />
@@ -120,8 +132,7 @@ export default function PostDetail() {
       <article className="p-article">
         <div className="p-narrow">
           {post.thumbnailUrl && <img className="p-cover" src={post.thumbnailUrl} alt="" />}
-          {post.summary && <p className="p-summary">{post.summary}</p>}
-          <Markdown source={post.content} className="p-prose" />
+          <Markdown source={post.content} className={`p-prose ${post.summary && !showDesc ? 'p-prose-lead' : ''}`} />
 
           <div className="p-action">
             <div>

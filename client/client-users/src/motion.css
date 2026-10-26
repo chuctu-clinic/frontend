@@ -72,12 +72,21 @@ a {
 .h-service,
 .h-news,
 .card-link {
-  transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+  transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
 }
 .h-service:hover,
 .h-news:hover,
-.card-link:hover {
+.card-link:hover,
+.card-link:focus-visible {
   transform: translateY(-3px);
+}
+/* Ảnh trong thẻ bài viết phóng nhẹ */
+.card-link .card-media img {
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.card-link:hover .card-media img,
+.card-link:focus-visible .card-media img {
+  transform: scale(1.06);
 }
 
 .h-service .h-arrow {
@@ -161,6 +170,9 @@ a {
   .h-service:hover,
   .h-news:hover,
   .card-link:hover,
+  .card-link:focus-visible,
+  .card-link:hover .card-media img,
+  .card-link:focus-visible .card-media img,
   .h-service:hover .h-arrow,
   .h-link:hover svg,
   .h-link-lg:hover svg,

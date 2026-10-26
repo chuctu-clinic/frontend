@@ -153,9 +153,8 @@
 .h-panel-text { font-size: 19px; line-height: 31px; color: var(--ink-700); }
 .h-tel { color: var(--green-700); font-weight: 600; }
 
-.h-news { overflow: hidden; display: flex; flex-direction: column; transition: box-shadow 180ms ease; }
-.h-news:hover { box-shadow: var(--shadow-lg); }
-.h-news > img { display: block; width: 100%; height: 200px; object-fit: cover; }
+.h-news { overflow: hidden; display: flex; flex-direction: column; }
+.h-news img { display: block; width: 100%; height: 200px; object-fit: cover; }
 .h-news-body { padding: 24px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
 .h-news-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 15px; color: var(--ink-500); }
 .h-chip { background: var(--green-100); color: var(--green-700); font-size: 15px; font-weight: 600; padding: 6px 14px; border-radius: 999px; }
@@ -163,7 +162,6 @@
 .home .h-news h3,
 .h-news h3 { font-family: var(--font-sans); font-size: 21px; line-height: 30px; font-weight: 600; color: var(--ink-900); margin: 0; }
 .h-news p { font-size: 17px; line-height: 27px; color: var(--ink-700); }
-.h-news .h-link { margin-top: auto; min-height: 44px; font-size: 17px; }
 
 .h-cta { padding: 72px 24px; background: #3b7145; color: #fff; }
 .h-cta-row { display: flex; flex-wrap: wrap; gap: 32px; align-items: center; justify-content: space-between; }
@@ -193,3 +191,17 @@
   .h-actions > .h-btn { width: 100%; }
   .h-hours-float { left: 16px; right: 16px; }
 }
+
+/* Thẻ bài viết bấm được cả thẻ (trang chủ, danh sách bài, bài cùng chuyên mục).
+   Thẻ nhích lên và cách tắt chuyển động nằm ở motion.css; ở đây là bóng, viền, ảnh phóng nhẹ, tiêu đề đổi màu. */
+.card-link { color: inherit; text-decoration: none; cursor: pointer; }
+.card-link .card-media { display: block; overflow: hidden; }
+.card-link h2,
+.card-link h3 { transition: color var(--dur) var(--ease-out); }
+.card-link:hover,
+.card-link:focus-visible { box-shadow: var(--shadow-lg); border-color: var(--green-600); }
+.card-link:hover h2,
+.card-link:hover h3,
+.card-link:focus-visible h2,
+.card-link:focus-visible h3 { color: var(--green-700); }
+.card-link:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
