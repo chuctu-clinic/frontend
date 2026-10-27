@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { Alert, ErrorAlert } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { Alert, ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { isStaff, useSession } from '../../../shared/lib/session.jsx';
-import { useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { AuthShell, ClinicPhoto, PhoneField, phoneDigits, phoneError, toPhone } from './AuthShell.jsx';
+import { useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { AuthShell, ClinicPhoto } from './AuthShell.jsx';
+import { PhoneField, phoneDigits, phoneError, toPhone } from '../../components/fields.jsx';
 import { OtpDialog } from './OtpDialog.jsx';
 
 /** Chỉ nhận đường dẫn nội bộ để tránh chuyển hướng ra ngoài. */

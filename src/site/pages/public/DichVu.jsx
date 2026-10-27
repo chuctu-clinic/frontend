@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
 import { PageHero, usePageMeta } from './infoParts.jsx';
 
 // Theo màn "Khách · Dịch vụ" của prototype (DichVu.dc.html)

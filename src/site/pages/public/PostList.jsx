@@ -1,9 +1,9 @@
 import { Link, useSearchParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { Empty, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { Empty, Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { fmtDate } from '../../../shared/lib/format.js';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { PageHero } from './infoParts.jsx';
 import './posts.css';
 

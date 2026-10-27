@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
+import { Icon } from '../../shared/ui/Icon.jsx';
 
 // Ô chọn tự vẽ thay cho <select>: danh sách luôn mở sát dưới (hoặc trên) ô, chữ to, có ô tìm cho danh sách dài
 

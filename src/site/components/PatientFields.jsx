@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { FieldError, PhoneField, phoneDigits, phoneError, toPhone } from '../auth/AuthShell.jsx';
-import { AddressFields, DobField, PROVINCES, dobError, joinAddress, joinDob, splitAddress, splitDob } from '../auth/fields.jsx';
-import '../booking/booking.css';
+import { Icon } from '../../shared/ui/Icon.jsx';
+import { AddressFields, dobError, DobField, FieldError, joinAddress, joinDob, phoneDigits, phoneError, PhoneField, PROVINCES, splitAddress, splitDob, toPhone } from './fields.jsx';
+import '../pages/booking/booking.css';
 
 // Các ô của một hồ sơ khám, dùng chung cho "Đặt cho người thân" lần đầu và hộp thoại thêm / sửa hồ sơ,
 // để hai nơi luôn cùng ô và cùng quy tắc như lúc tạo tài khoản.

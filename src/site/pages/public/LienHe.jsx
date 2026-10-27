@@ -1,4 +1,4 @@
-import { Icon } from '../../../shared/components/Icon.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
 import { CLINIC } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
 import { GreenCta, PageHero, SectionHead, usePageMeta } from './infoParts.jsx';

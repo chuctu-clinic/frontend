@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { CLINIC, GENDERS } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { FieldError } from '../auth/AuthShell.jsx';
-import { AddressFields, DobField, dobError, joinAddress, joinDob, splitAddress, splitDob } from '../auth/fields.jsx';
-import { Picker } from '../auth/Picker.jsx';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { AddressFields, dobError, DobField, FieldError, joinAddress, joinDob, splitAddress, splitDob } from '../../components/fields.jsx';
+import { Picker } from '../../components/Picker.jsx';
 import './account.css';
 
 // Theo màn "Tài khoản · Thông tin" của prototype (TaiKhoan-ThongTin.dc.html)

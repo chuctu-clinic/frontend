@@ -1,5 +1,5 @@
 // Nhãn dùng chung với server nằm ở shared/constants.js (bản chép của backend)
-export { GENDERS, RELATIONSHIPS, ROLE_LABELS } from '../constants.js';
+export { GENDERS, RELATIONSHIPS, ROLE_LABELS } from '../domain/constants.js';
 
 export const CLINIC = {
   name: 'Phòng chẩn trị Y học cổ truyền từ thiện Chúc Từ',

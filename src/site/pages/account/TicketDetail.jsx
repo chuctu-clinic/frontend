@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { fmtDate, shortTime, weekday } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { Dialog } from '../../components/Dialog.jsx';
-import { Picker } from '../auth/Picker.jsx';
+import { Picker } from '../../components/Picker.jsx';
 import { BookingCrumbs, BookingFrame } from '../booking/Booking.jsx';
 import { Ticket } from './Ticket.jsx';
 import './account.css';

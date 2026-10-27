@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { fmtTime, shortTime, slotLabel, todayVN } from '../../../shared/lib/format.js';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { Notice, Summary, TDialog } from '../../components/t-ui.jsx';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { Notice } from '../../components/fields.jsx';
+import { Summary, TDialog } from '../../components/dialogs.jsx';
 import { longDay, nowMinutesVN } from './ApptActions.jsx';
 
 const clock = (value) => fmtTime(value).replace(/^0/, '');

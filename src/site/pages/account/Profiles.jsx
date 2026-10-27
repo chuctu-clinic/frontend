@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { GENDERS } from '../../../shared/lib/format.js';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { EMPTY_TEXT, ProfileDeleteDialog, ProfileDetailDialog, ProfileFormDialog, dobText, maskPhone, relationLabel } from './ProfileDialogs.jsx';
 import './account.css';
 

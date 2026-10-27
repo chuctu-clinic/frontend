@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Brand } from '../../../shared/components/Brand.jsx';
-import { Icon } from '../../../shared/components/Icon.jsx';
+import { Brand } from '../../../shared/ui/Brand.jsx';
 import { CLINIC } from '../../../shared/lib/format.js';
-import { phoneDigits, phoneInputError, toPhone } from '../../../shared/phone.js';
 import './auth.css';
 
 /**
@@ -53,62 +51,5 @@ export function ClinicPhoto({ framed, short }) {
       src="/mat-tien.jpg"
       alt="Mặt tiền Phòng khám Chúc Từ"
     />
-  );
-}
-
-export function FieldError({ id, children }) {
-  if (!children) return null;
-  return (
-    <p id={id} className="a-error" role="alert">
-      <Icon name="alert" size={22} />
-      {children}
-    </p>
-  );
-}
-
-// Xử lý ô số điện thoại dùng chung với khu nội bộ và cùng quy tắc với Backend (shared/src/phone.js)
-export { phoneDigits, toPhone, phoneInputError as phoneError };
-
-/** Ô số điện thoại có tiền tố +84 cố định. */
-export function PhoneField({ id, label, required, value, onChange, error, note, autoFocus }) {
-  const errId = `${id}-loi`;
-  const noteId = `${id}-note`;
-  return (
-    <div className="a-field">
-      <label htmlFor={id} className="a-label">
-        {label}
-        {required && (
-          <>
-            {' '}
-            <span className="a-req" aria-hidden="true">
-              *
-            </span>
-          </>
-        )}
-      </label>
-      <div className="a-phone">
-        <span className="a-phone-pre" aria-hidden="true">
-          +84
-        </span>
-        <input
-          id={id}
-          type="tel"
-          inputMode="numeric"
-          autoComplete="tel"
-          maxLength={12}
-          value={value}
-          onChange={(e) => onChange(phoneDigits(e.target.value))}
-          aria-invalid={error ? 'true' : 'false'}
-          aria-describedby={[error && errId, note && noteId].filter(Boolean).join(' ') || undefined}
-          autoFocus={autoFocus}
-        />
-      </div>
-      <FieldError id={errId}>{error}</FieldError>
-      {note && (
-        <p id={noteId} className="a-hint">
-          {note}
-        </p>
-      )}
-    </div>
   );
 }

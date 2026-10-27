@@ -1,11 +1,11 @@
 import { Link, useParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { Markdown } from '../../../shared/components/Markdown.jsx';
-import { Empty, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { Markdown } from '../../../shared/ui/Markdown.jsx';
+import { Empty, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { fmtDate } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { PostCard, PostTag } from './PostList.jsx';
 import './home.css';
 import './info.css';

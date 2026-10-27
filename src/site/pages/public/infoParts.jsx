@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import './home.css';
 import './info.css';
 

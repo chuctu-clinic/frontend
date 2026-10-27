@@ -1,5 +1,5 @@
-import { ButtonLink, Empty } from '../../../shared/components/ui.jsx';
-import { useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { ButtonLink, Empty } from '../../../shared/ui/ui.jsx';
+import { useDocumentTitle } from '../../../shared/lib/hooks.js';
 
 export default function NotFound() {
   useDocumentTitle('Không tìm thấy trang');

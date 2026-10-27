@@ -1,10 +1,14 @@
 import { useId, useState } from 'react';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { CLINIC, fmtDate, weekday } from '../../../shared/lib/format.js';
-import { HISTORY_ITEMS, buildHistory, parseHistory } from '../../../shared/medicalHistory.js';
-import { FieldError, MonthGrid, TSheet, fmtLeft, fmtStamp, useDismiss } from '../../components/t-ui.jsx';
+import { HISTORY_ITEMS, buildHistory, parseHistory } from '../../../shared/domain/medicalHistory.js';
+import { FieldError } from '../../components/fields.jsx';
+import { MonthGrid } from '../../components/MonthGrid.jsx';
+import { TSheet } from '../../components/dialogs.jsx';
+import { fmtLeft, fmtStamp } from '../../lib/format.js';
+import { useDismiss } from '../../../shared/lib/hooks.js';
 
 // Phiếu kết quả khám: biểu mẫu nhập và bản xem đúng như bệnh nhân thấy (UC.9.7, UC.9.9).
 

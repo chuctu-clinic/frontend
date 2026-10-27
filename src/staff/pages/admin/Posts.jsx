@@ -1,12 +1,14 @@
 import { useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { fmtDate, fmtTime } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { Notice, Pager, PlainDialog, useDismiss } from '../../components/t-ui.jsx';
+import { useAsync, useDismiss, useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { Notice } from '../../components/fields.jsx';
+import { Pager } from '../../components/Pager.jsx';
+import { PlainDialog } from '../../components/dialogs.jsx';
 import './admin.css';
 
 const PER_PAGE = 10;

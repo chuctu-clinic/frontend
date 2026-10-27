@@ -1,12 +1,12 @@
 import { Component, Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { fmtDate, todayVN } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { FieldError, Notice } from '../../components/t-ui.jsx';
+import { useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { FieldError, Notice } from '../../components/fields.jsx';
 import { hasContent, toEditorHtml, uploadImage } from './postHtml.js';
 import './admin.css';
 

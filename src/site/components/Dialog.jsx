@@ -1,48 +1,18 @@
-import { useEffect, useId, useRef } from 'react';
+import { useId } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon } from '../../shared/components/Icon.jsx';
+import { Icon } from '../../shared/ui/Icon.jsx';
+import { useModal } from '../../shared/lib/hooks.js';
 import '../pages/auth/auth.css';
 
 /**
  * Hộp thoại theo prototype: thanh tiêu đề màu (xanh, hoặc đỏ khi xoá/huỷ), thân và hàng nút ở cuối.
- * Mở ra thì đặt con trỏ vào ô đầu tiên, Esc để đóng, phím Tab không chạy ra ngoài.
+ * Mở ra thì đặt con trỏ vào ô đầu tiên, Esc để đóng, phím Tab không chạy ra ngoài (useModal).
  * Gắn thẳng vào <body>: khung trang (.route-fade) có hiệu ứng transform nên position: fixed bên trong
  * sẽ bám theo khung trang thay vì màn hình, làm hộp thoại không nằm giữa màn hình.
  */
 export function Dialog({ title, tone = 'green', width = 680, onClose, children, actions, alert }) {
-  const ref = useRef(null);
   const titleId = useId();
-
-  useEffect(() => {
-    const prev = document.activeElement;
-    const first = ref.current?.querySelector('.a-dialog-body input, .a-dialog-body select, .a-dialog-body textarea') || ref.current?.querySelector('.a-dialog-close');
-    first?.focus();
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = overflow;
-      prev?.focus?.();
-    };
-  }, []);
-
-  const onKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-      onClose();
-      return;
-    }
-    if (e.key !== 'Tab') return;
-    const items = ref.current.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea, a[href]');
-    const first = items[0];
-    const last = items[items.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
+  const { ref, onKeyDown } = useModal(onClose, ['.a-dialog-body input, .a-dialog-body select, .a-dialog-body textarea', '.a-dialog-close']);
 
   return createPortal(
     <div className="a-dialog-backdrop a-vars" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>

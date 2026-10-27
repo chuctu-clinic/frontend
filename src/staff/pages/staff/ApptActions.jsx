@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { addDays, fmtDate, fmtTime, shortTime, todayVN, weekday } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync } from '../../../shared/lib/useAsync.js';
-import { FieldError, PhoneField, Summary, TDialog, normalizePhone, phoneError } from '../../components/t-ui.jsx';
+import { useAsync } from '../../../shared/lib/hooks.js';
+import { FieldError, PhoneField, normalizePhone, phoneError } from '../../components/fields.jsx';
+import { Summary, TDialog } from '../../components/dialogs.jsx';
 
 // Hộp thoại của Lịch trong ngày (UC.7.3 – UC.7.7), theo prototype "TiepTan-LichTrongNgay".
 

@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { fmtDate, fmtTime, shortTime, todayVN } from '../../../shared/lib/format.js';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { longDay, nowMinutesVN } from '../staff/ApptActions.jsx';
 import './admin.css';
 

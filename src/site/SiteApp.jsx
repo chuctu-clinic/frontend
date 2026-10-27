@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { PublicLayout } from './components/PublicLayout.jsx';
 import { StaffOnSite } from './components/StaffOnSite.jsx';
-import { Loading } from '../shared/components/ui.jsx';
+import { Loading } from '../shared/ui/ui.jsx';
 import { isStaff, useSession } from '../shared/lib/session.jsx';
 
 import Home from './pages/public/Home.jsx';

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { fmtDate } from '../../../shared/lib/format.js';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { Pager, TDialog } from '../../components/t-ui.jsx';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { Pager } from '../../components/Pager.jsx';
+import { TDialog } from '../../components/dialogs.jsx';
 import { NewPatientFields } from './ApptActions.jsx';
 
 const PER_PAGE = 10;

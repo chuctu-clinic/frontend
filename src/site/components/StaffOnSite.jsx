@@ -1,4 +1,4 @@
-import { Button, ButtonLink, Empty } from '../../shared/components/ui.jsx';
+import { Button, ButtonLink, Empty } from '../../shared/ui/ui.jsx';
 import { useSession } from '../../shared/lib/session.jsx';
 import { homeFor } from '../../staff/home.js';
 

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { CLINIC, GENDERS, RELATIONSHIPS } from '../../../shared/lib/format.js';
-import { FieldError } from '../auth/AuthShell.jsx';
-import { Picker } from '../auth/Picker.jsx';
-import { PatientFields, RELATIVE_PHONE_NOTE, SectionTitle, focusFirstError, patientBody, patientErrors, patientForm, validatePatient } from '../account/PatientFields.jsx';
+import { FieldError } from '../../components/fields.jsx';
+import { Picker } from '../../components/Picker.jsx';
+import { PatientFields, RELATIVE_PHONE_NOTE, SectionTitle, focusFirstError, patientBody, patientErrors, patientForm, validatePatient } from '../../components/PatientFields.jsx';
 import { ProfileChip, ProfileLines } from '../account/Profiles.jsx';
 
 // Bước 2 theo các màn "Đặt lịch 2" của prototype: hai thẻ "Đặt cho mình" / "Đặt cho người thân",

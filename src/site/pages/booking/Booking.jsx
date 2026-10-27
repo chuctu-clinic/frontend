@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { CLINIC, GENDERS, RELATIONSHIPS, addDays, fmtDate, shortTime, weekday } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { Dialog } from '../../components/Dialog.jsx';
-import { Picker } from '../auth/Picker.jsx';
+import { Picker } from '../../components/Picker.jsx';
 import { ProfileDeleteDialog, ProfileDetailDialog, ProfileFormDialog } from '../account/ProfileDialogs.jsx';
 import { PatientStep } from './PatientStep.jsx';
 import '../account/account.css';

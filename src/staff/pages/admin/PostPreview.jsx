@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { CLINIC, fmtDate } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { checkPost, clearDraft, readDraft, toPayload } from './PostEditor.jsx';
 import { toEditorHtml } from './postHtml.js';
 import '../../components/staff.css';

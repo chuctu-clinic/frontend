@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { StaffLayout } from './components/StaffLayout.jsx';
-import { Empty, Loading } from '../shared/components/ui.jsx';
+import { Empty, Loading } from '../shared/ui/ui.jsx';
 import { isAdmin, isStaff, useSession } from '../shared/lib/session.jsx';
 
 import StaffLogin from './pages/auth/StaffLogin.jsx';

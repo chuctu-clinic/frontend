@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Icon } from '../components/Icon.jsx';
+import { Icon } from '../ui/Icon.jsx';
 import { api, setApiSession } from './api.js';
 
 const SessionContext = createContext(null);

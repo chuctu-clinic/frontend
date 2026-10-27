@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { Alert, ErrorAlert } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { Alert, ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { isStaff, useSession } from '../../../shared/lib/session.jsx';
-import { useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { AuthShell, ClinicPhoto, FieldError, PhoneField, phoneDigits, phoneError, toPhone } from './AuthShell.jsx';
-import { AddressFields, DobField, PROVINCES, dobError, joinAddress, joinDob } from './fields.jsx';
+import { useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { AuthShell, ClinicPhoto } from './AuthShell.jsx';
+import { AddressFields, dobError, DobField, FieldError, joinAddress, joinDob, phoneDigits, phoneError, PhoneField, PROVINCES, toPhone } from '../../components/fields.jsx';
 import { safeNext, withNext } from './Login.jsx';
 import { OtpDialog } from './OtpDialog.jsx';
 

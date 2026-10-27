@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { CLINIC } from '../../shared/lib/format.js';
+import { useDismiss } from '../../shared/lib/hooks.js';
 import { isStaff, useSession } from '../../shared/lib/session.jsx';
-import { Brand } from '../../shared/components/Brand.jsx';
-import { Icon } from '../../shared/components/Icon.jsx';
+import { Brand } from '../../shared/ui/Brand.jsx';
+import { Icon } from '../../shared/ui/Icon.jsx';
 import { homeFor } from '../../staff/home.js';
 import './layout.css';
 
@@ -25,20 +26,8 @@ export const ACCOUNT_LINKS = [
 /** Nút tên người dùng và menu tài khoản, theo prototype "Người dùng · Trang chủ". */
 function UserMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  useEffect(() => {
-    if (!open) return undefined;
-    const close = (e) => {
-      if (!ref.current?.contains(e.target)) setOpen(false);
-    };
-    const esc = (e) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', close);
-    document.addEventListener('keydown', esc);
-    return () => {
-      document.removeEventListener('mousedown', close);
-      document.removeEventListener('keydown', esc);
-    };
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  const ref = useDismiss(open, close);
 
   return (
     <div className="user-menu" ref={ref}>

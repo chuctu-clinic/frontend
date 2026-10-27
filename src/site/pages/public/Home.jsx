@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { CLINIC, fmtDate } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import './home.css';
 
 // Bố cục theo màn "Khách · Trang chủ" của prototype (Main.dc.html)

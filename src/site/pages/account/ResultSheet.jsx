@@ -1,6 +1,6 @@
-import { Icon } from '../../../shared/components/Icon.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
 import { CLINIC, fmtDate, weekday } from '../../../shared/lib/format.js';
-import { HISTORY_ITEMS, parseHistory } from '../../../shared/medicalHistory.js';
+import { HISTORY_ITEMS, parseHistory } from '../../../shared/domain/medicalHistory.js';
 
 // Phiếu kết quả khám theo màn "Phiếu khám · Kết quả khám" của prototype (KetQuaKham.dc.html)
 

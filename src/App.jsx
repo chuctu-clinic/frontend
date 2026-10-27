@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { Loading } from './shared/components/ui.jsx';
+import { Loading } from './shared/ui/ui.jsx';
 
 // Trang khách ở "/" và khu nội bộ (tiếp tân, Admin) ở "/noi-bo/" là hai phần tải riêng:
 // khách không phải tải mã của khu nội bộ và ngược lại.

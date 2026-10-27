@@ -1,9 +1,68 @@
 import { useEffect, useMemo, useState } from 'react';
-import { todayVN } from '../../../shared/lib/format.js';
-import { FieldError } from './AuthShell.jsx';
+import { todayVN } from '../../shared/lib/format.js';
+import { Icon } from '../../shared/ui/Icon.jsx';
+import { phoneDigits, phoneInputError, toPhone } from '../../shared/domain/phone.js';
 import { Picker } from './Picker.jsx';
+import '../pages/auth/auth.css';
 
 // Ô nhập dùng chung cho tạo tài khoản, thông tin tài khoản và hồ sơ khám (theo prototype)
+
+export function FieldError({ id, children }) {
+  if (!children) return null;
+  return (
+    <p id={id} className="a-error" role="alert">
+      <Icon name="alert" size={22} />
+      {children}
+    </p>
+  );
+}
+
+// Xử lý ô số điện thoại dùng chung với khu nội bộ và cùng quy tắc với Backend (shared/domain/phone.js)
+export { phoneDigits, toPhone, phoneInputError as phoneError };
+
+/** Ô số điện thoại có tiền tố +84 cố định. */
+export function PhoneField({ id, label, required, value, onChange, error, note, autoFocus }) {
+  const errId = `${id}-loi`;
+  const noteId = `${id}-note`;
+  return (
+    <div className="a-field">
+      <label htmlFor={id} className="a-label">
+        {label}
+        {required && (
+          <>
+            {' '}
+            <span className="a-req" aria-hidden="true">
+              *
+            </span>
+          </>
+        )}
+      </label>
+      <div className="a-phone">
+        <span className="a-phone-pre" aria-hidden="true">
+          +84
+        </span>
+        <input
+          id={id}
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel"
+          maxLength={12}
+          value={value}
+          onChange={(e) => onChange(phoneDigits(e.target.value))}
+          aria-invalid={error ? 'true' : 'false'}
+          aria-describedby={[error && errId, note && noteId].filter(Boolean).join(' ') || undefined}
+          autoFocus={autoFocus}
+        />
+      </div>
+      <FieldError id={errId}>{error}</FieldError>
+      {note && (
+        <p id={noteId} className="a-hint">
+          {note}
+        </p>
+      )}
+    </div>
+  );
+}
 
 // 63 tỉnh, thành phố trước sắp xếp đơn vị hành chính năm 2025; cùng thứ tự với dvhc.json
 export const PROVINCES = [

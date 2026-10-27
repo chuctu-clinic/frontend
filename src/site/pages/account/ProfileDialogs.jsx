@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { GENDERS, RELATIONSHIPS, fmtDate } from '../../../shared/lib/format.js';
 import { Dialog } from '../../components/Dialog.jsx';
-import { FieldError } from '../auth/AuthShell.jsx';
-import { Picker } from '../auth/Picker.jsx';
-import { PatientFields, RELATIVE_PHONE_NOTE, focusFirstError, patientBody, patientErrors, patientForm, validatePatient } from './PatientFields.jsx';
+import { FieldError } from '../../components/fields.jsx';
+import { Picker } from '../../components/Picker.jsx';
+import { PatientFields, RELATIVE_PHONE_NOTE, focusFirstError, patientBody, patientErrors, patientForm, validatePatient } from '../../components/PatientFields.jsx';
 
 // Hộp thoại hồ sơ khám theo prototype "Hồ sơ khám bệnh": thêm / sửa, xem chi tiết, xác nhận xoá.
 // Dùng ở trang Hồ sơ khám bệnh và bước chọn người đi khám khi đặt lịch.

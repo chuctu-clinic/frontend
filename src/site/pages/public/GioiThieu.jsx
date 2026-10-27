@@ -1,4 +1,4 @@
-import { Icon } from '../../../shared/components/Icon.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
 import { GreenCta, PageHero, SectionHead, usePageMeta } from './infoParts.jsx';
 
 // Theo màn "Khách · Giới thiệu" của prototype (GioiThieu.dc.html)

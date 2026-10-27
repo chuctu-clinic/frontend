@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, matchPath, useLocation, useNavigate } from 'reac
 import { api } from '../../shared/lib/api.js';
 import { fmtTime } from '../../shared/lib/format.js';
 import { isAdmin, useSession } from '../../shared/lib/session.jsx';
-import { Icon } from '../../shared/components/Icon.jsx';
+import { Icon } from '../../shared/ui/Icon.jsx';
 import './staff.css';
 
 const STAFF_NAV = [

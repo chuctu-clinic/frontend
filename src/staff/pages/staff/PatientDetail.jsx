@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { GENDERS, ageFrom, fmtDate, shortTime, todayVN } from '../../../shared/lib/format.js';
 import { isAdmin, useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { FieldError, Notice, PhoneField, TDialog, normalizePhone, phoneError } from '../../components/t-ui.jsx';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { FieldError, Notice, PhoneField, normalizePhone, phoneError } from '../../components/fields.jsx';
+import { TDialog } from '../../components/dialogs.jsx';
 import { EditRecordDialog, HistoryTable, ResultDialog } from './RecordParts.jsx';
 
 /** Sửa thông tin hồ sơ: mã bệnh nhân không đổi (UC.9.5). */

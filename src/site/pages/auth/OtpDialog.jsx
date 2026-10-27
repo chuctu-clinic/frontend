@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { Alert, ErrorAlert } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { Alert, ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { CLINIC } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { FieldError } from './AuthShell.jsx';
+import { FieldError } from '../../components/fields.jsx';
 import { confirmFirebaseCode, sendFirebaseCode } from './firebasePhone.js';
 
 /** 0912345678 → "0912 *** 678" */

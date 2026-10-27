@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { addDays, fmtDate, fmtTime, shortTime, todayVN, weekday } from '../../../shared/lib/format.js';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { MonthGrid, Notice, Pager, useDismiss } from '../../components/t-ui.jsx';
-import { AddAppointmentDialog, CancelDialog, CheckinDialog, RescheduleDialog, UndoCheckinDialog, nowMinutesVN } from './ApptActions.jsx';
+import { useAsync, useDismiss, useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { MonthGrid } from '../../components/MonthGrid.jsx';
+import { Notice } from '../../components/fields.jsx';
+import { Pager } from '../../components/Pager.jsx';
+import { AddAppointmentDialog, CancelDialog, CheckinDialog, nowMinutesVN, RescheduleDialog, UndoCheckinDialog } from './ApptActions.jsx';
 
 const PER_PAGE = 10;
 const FILTERS = [

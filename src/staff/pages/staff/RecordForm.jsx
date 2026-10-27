@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert, Loading } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { GENDERS, fmtDate, shortTime, todayVN } from '../../../shared/lib/format.js';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/useAsync.js';
-import { fmtLeft, fmtStamp } from '../../components/t-ui.jsx';
+import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { fmtLeft, fmtStamp } from '../../lib/format.js';
 import { EMPTY_FORM, EditRecordDialog, HistoryTable, RecordFields, ResultDialog, editState, fromRecord, toPayload, validateRecord } from './RecordParts.jsx';
 
 /** Lập và sửa phiếu kết quả khám (UC.9.7, UC.9.9, UC.10.4), theo prototype "TiepTan-HoSoChiTiet". */

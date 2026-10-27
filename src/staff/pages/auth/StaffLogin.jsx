@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Icon } from '../../../shared/components/Icon.jsx';
-import { Alert, Button, ErrorAlert, Field, TextInput } from '../../../shared/components/ui.jsx';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { Alert, Button, ErrorAlert, Field, TextInput } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { CLINIC } from '../../../shared/lib/format.js';
 import { isStaff, useSession } from '../../../shared/lib/session.jsx';
-import { useDocumentTitle } from '../../../shared/lib/useAsync.js';
+import { useDocumentTitle } from '../../../shared/lib/hooks.js';
 import './staff-auth.css';
 
 import { homeFor } from '../../home.js';
