@@ -130,7 +130,7 @@ export default function Posts() {
   const remove = async () => {
     setError(null);
     try {
-      await api.delete(`/admin/posts/${delTarget.id}`);
+      await api.del(`/admin/posts/${delTarget.id}`);
       setNotice(`Đã xoá bài viết “${delTarget.title}” khỏi hệ thống.`);
       reload({ silent: true });
     } catch (err) {
