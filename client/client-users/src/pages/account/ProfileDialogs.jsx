@@ -4,9 +4,9 @@ import { ErrorAlert } from '@chuctu/shared/components/ui.jsx';
 import { api } from '@chuctu/shared/lib/api.js';
 import { GENDERS, RELATIONSHIPS, fmtDate } from '@chuctu/shared/lib/format.js';
 import { Dialog } from '../../components/Dialog.jsx';
-import { FieldError, PhoneField, phoneDigits, phoneError, toPhone } from '../auth/AuthShell.jsx';
-import { DobField, dobError, joinDob, splitDob } from '../auth/fields.jsx';
+import { FieldError } from '../auth/AuthShell.jsx';
 import { Picker } from '../auth/Picker.jsx';
+import { PatientFields, RELATIVE_PHONE_NOTE, focusFirstError, patientBody, patientErrors, patientForm, validatePatient } from './PatientFields.jsx';
 
 // Hộp thoại hồ sơ khám theo prototype "Hồ sơ khám bệnh": thêm / sửa, xem chi tiết, xác nhận xoá.
 // Dùng ở trang Hồ sơ khám bệnh và bước chọn người đi khám khi đặt lịch.
@@ -20,107 +20,30 @@ export const relationLabel = (p) => RELATIONSHIPS[p.relationship] || 'Chưa khai
 
 const isoDate = (d) => (d ? String(d).slice(0, 10) : '');
 
-function TextField({ id, label, required, error, ...props }) {
-  return (
-    <div className="a-field">
-      <label htmlFor={id} className="a-label">
-        {label}
-        {required && (
-          <>
-            {' '}
-            <span className="a-req" aria-hidden="true">
-              *
-            </span>
-          </>
-        )}
-      </label>
-      <input id={id} className="a-input" aria-invalid={error ? 'true' : 'false'} aria-describedby={error ? `${id}-loi` : undefined} {...props} />
-      <FieldError id={`${id}-loi`}>{error}</FieldError>
-    </div>
-  );
-}
-
-function SelectField({ id, label, required, error, options, value, onChange, disabled }) {
-  return (
-    <div className="a-field">
-      <label htmlFor={id} className="a-label">
-        {label}
-        {required && (
-          <>
-            {' '}
-            <span className="a-req" aria-hidden="true">
-              *
-            </span>
-          </>
-        )}
-      </label>
-      <Picker
-        id={id}
-        items={options.map(([v, text]) => ({ value: v, label: text }))}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        aria-invalid={error ? 'true' : 'false'}
-        aria-describedby={error ? `${id}-loi` : undefined}
-      />
-      <FieldError id={`${id}-loi`}>{error}</FieldError>
-    </div>
-  );
-}
-
 /** Thêm hồ sơ mới (profile = null) hoặc sửa hồ sơ có sẵn. onSaved(patient) sau khi lưu xong. */
 export function ProfileFormDialog({ profile, onClose, onSaved }) {
   const editing = Boolean(profile);
   const isSelf = profile?.relationship === 'BAN_THAN';
-  const [form, setForm] = useState(() => ({
-    fullName: profile?.fullName || '',
-    phone: phoneDigits(profile?.phone || ''),
-    dob: splitDob(isoDate(profile?.dob)),
-    gender: profile?.gender || '',
-    relationship: profile?.relationship || '',
-    nationalId: profile?.nationalId || '',
-    email: profile?.email || '',
-    address: profile?.address || '',
-  }));
+  const [form, setForm] = useState(() => patientForm(profile));
   const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
+  const fe = patientErrors(form, error, tried);
 
-  const setValue = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const set = (k) => (e) => setValue(k, e.target.value);
-
-  const validate = () => {
-    const e = {};
-    if (form.fullName.trim().length < 2) e.fullName = 'Vui lòng nhập họ và tên.';
-    const p = phoneError(form.phone, { required: false });
-    if (p) e.phone = p;
-    const d = dobError(form.dob);
-    if (d) e.dob = d;
-    if (!form.gender) e.gender = 'Vui lòng chọn giới tính.';
-    if (!form.relationship) e.relationship = 'Vui lòng chọn quan hệ với cô chú.';
-    return e;
-  };
-  const local = tried ? validate() : {};
-  const fe = { ...(error?.fields || {}), ...local };
-
-  const relOptions = Object.entries(RELATIONSHIPS).filter(([v]) => isSelf || v !== 'BAN_THAN');
+  const relItems = Object.entries(RELATIONSHIPS)
+    .filter(([v]) => isSelf || v !== 'BAN_THAN')
+    .map(([value, label]) => ({ value, label }));
 
   const save = async () => {
     setTried(true);
     setError(null);
-    if (Object.keys(validate()).length) return;
+    if (Object.keys(validatePatient(form)).length) {
+      focusFirstError('.a-dialog');
+      return;
+    }
     setPending(true);
-    const body = {
-      fullName: form.fullName.trim(),
-      phone: form.phone ? toPhone(form.phone) : null,
-      dob: joinDob(form.dob),
-      gender: form.gender,
-      relationship: form.relationship,
-      nationalId: form.nationalId.trim() || null,
-      email: form.email.trim() || null,
-      address: form.address.trim() || null,
-    };
     try {
+      const body = patientBody(form);
       const res = editing ? await api.patch(`/me/patients/${profile.id}`, body) : await api.post('/me/patients', body);
       onSaved(res.patient);
     } catch (err) {
@@ -133,6 +56,7 @@ export function ProfileFormDialog({ profile, onClose, onSaved }) {
   return (
     <Dialog
       title={editing ? 'Sửa hồ sơ' : 'Thêm hồ sơ mới'}
+      width={860}
       onClose={onClose}
       actions={
         <>
@@ -147,51 +71,25 @@ export function ProfileFormDialog({ profile, onClose, onSaved }) {
       }
     >
       <p className="a-lead">
-        {editing
-          ? 'Cô chú sửa các thông tin cần thiết rồi bấm Lưu thay đổi.'
-          : 'Lập hồ sơ cho người thân để lần sau đặt lịch khỏi nhập lại. Các ô không có dấu * thì cô chú không cần điền, phòng khám sẽ hỏi thêm khi đến khám.'}
+        {editing ? 'Cô chú sửa các thông tin cần thiết rồi bấm Lưu thay đổi.' : 'Lập hồ sơ cho người thân để lần sau đặt lịch khỏi nhập lại.'} Ô có dấu{' '}
+        <span className="a-req">*</span> là bắt buộc.
       </p>
-      <TextField id="hs-ten" label="Họ và tên" required value={form.fullName} onChange={set('fullName')} error={fe.fullName} />
-      <PhoneField id="hs-sdt" label="Số điện thoại" value={form.phone} onChange={(v) => setValue('phone', v)} error={fe.phone} />
-      <DobField id="hs-ns" required value={form.dob} onChange={(v) => setValue('dob', v)} error={fe.dob} />
-      <div className="a-row" style={{ gap: 14 }}>
-        <SelectField
-          id="hs-gt"
-          label="Giới tính"
-          required
-          options={Object.entries(GENDERS)}
-          value={form.gender}
-          onChange={(v) => setValue('gender', v)}
-          error={fe.gender}
-        />
-        <SelectField
+      <PatientFields id="hs" form={form} setForm={setForm} errors={fe} phoneNote={isSelf ? undefined : RELATIVE_PHONE_NOTE} />
+      <div className="a-field">
+        <label htmlFor="hs-qh" className="a-label">
+          Quan hệ với cô chú <span className="a-req">*</span>
+        </label>
+        <Picker
           id="hs-qh"
-          label="Quan hệ với cô chú"
-          required
-          options={relOptions}
+          items={relItems}
           value={form.relationship}
-          onChange={(v) => setValue('relationship', v)}
+          onChange={(v) => setForm((f) => ({ ...f, relationship: v }))}
           disabled={isSelf}
-          error={fe.relationship}
+          aria-invalid={fe.relationship ? 'true' : 'false'}
+          aria-describedby={fe.relationship ? 'hs-qh-loi' : undefined}
         />
+        <FieldError id="hs-qh-loi">{fe.relationship}</FieldError>
       </div>
-      <TextField
-        id="hs-cccd"
-        label="Số căn cước công dân"
-        inputMode="numeric"
-        maxLength={12}
-        value={form.nationalId}
-        onChange={(e) => setValue('nationalId', e.target.value.replace(/\D/g, '').slice(0, 12))}
-        error={fe.nationalId}
-      />
-      <TextField id="hs-email" label="Email" type="email" value={form.email} onChange={set('email')} error={fe.email} />
-      <TextField
-        id="hs-diachi"
-        label="Địa chỉ"
-        value={form.address}
-        onChange={set('address')}
-        error={fe.address}
-      />
       {error && !Object.keys(error.fields || {}).length && <ErrorAlert error={error} />}
     </Dialog>
   );

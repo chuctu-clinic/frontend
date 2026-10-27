@@ -175,6 +175,7 @@
 .b-sec > span { flex-grow: 1; height: 1px; background: var(--line-soft); }
 .b-sec-toggle { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; background: none; border: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; }
 .b-sec-toggle svg { transition: transform 0.15s ease; }
+.b-sec-opt { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-500); }
 .b-sec-toggle[aria-expanded="false"] svg { transform: rotate(-90deg); }
 .b-chosen { display: flex; gap: 10px; align-items: center; background: var(--green-100); border-radius: 16px; padding: 16px 20px; font-size: 18px; line-height: 28px; color: var(--green-700); }
 .b-chosen svg { flex-shrink: 0; }

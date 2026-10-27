@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { Icon } from '@chuctu/shared/components/Icon.jsx';
 import { ErrorAlert, Loading } from '@chuctu/shared/components/ui.jsx';
 import { api } from '@chuctu/shared/lib/api.js';
-import { CLINIC, GENDERS, RELATIONSHIPS, todayVN } from '@chuctu/shared/lib/format.js';
-import { FieldError, PhoneField, phoneError, toPhone } from '../auth/AuthShell.jsx';
+import { CLINIC, GENDERS, RELATIONSHIPS } from '@chuctu/shared/lib/format.js';
+import { FieldError } from '../auth/AuthShell.jsx';
 import { Picker } from '../auth/Picker.jsx';
+import { PatientFields, RELATIVE_PHONE_NOTE, SectionTitle, focusFirstError, patientBody, patientErrors, patientForm, validatePatient } from '../account/PatientFields.jsx';
 import { ProfileChip, ProfileLines } from '../account/Profiles.jsx';
 
 // Bước 2 theo các màn "Đặt lịch 2" của prototype: hai thẻ "Đặt cho mình" / "Đặt cho người thân",
@@ -33,15 +34,6 @@ function ReadOnly({ label, value, grow }) {
         <Icon name="lock" size={20} strokeWidth={1.75} />
       </span>
     </div>
-  );
-}
-
-function SectionTitle({ children, ...props }) {
-  return (
-    <h3 className="b-sec" {...props}>
-      {children}
-      <span aria-hidden="true" />
-    </h3>
   );
 }
 
@@ -149,50 +141,25 @@ function SelfCreate({ user, onBack, onCreated }) {
   );
 }
 
-const EMPTY_RELATIVE = { fullName: '', phone: '', birthYear: '', gender: '', nationalId: '', email: '', relationship: '' };
-
-/** Đặt cho người thân lần đầu: điền ngay hồ sơ người thân. */
+/** Đặt cho người thân lần đầu: điền ngay hồ sơ người thân, cùng các ô với hộp thoại thêm hồ sơ. */
 function RelativeCreate({ user, max, onBack, onCreated }) {
-  const [form, setForm] = useState(EMPTY_RELATIVE);
-  const [moreOpen, setMoreOpen] = useState(true);
+  const [form, setForm] = useState(() => patientForm(null));
   const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const thisYear = Number(todayVN().slice(0, 4));
-  const years = Array.from({ length: thisYear - 1919 }, (_, i) => thisYear - i);
-
-  const validate = () => {
-    const e = {};
-    if (form.fullName.trim().length < 2) e.fullName = 'Vui lòng nhập họ và tên.';
-    const p = phoneError(form.phone);
-    if (p) e.phone = p;
-    if (!form.birthYear) e.birthYear = 'Vui lòng chọn năm sinh.';
-    if (!form.gender) e.gender = 'Vui lòng chọn giới tính.';
-    if (!form.relationship) e.relationship = 'Vui lòng chọn quan hệ với người khám.';
-    return e;
-  };
   const server = error?.fields || {};
-  const fe = { ...server, birthYear: server.birthYear || server.dob, ...(tried ? validate() : {}) };
+  const fe = patientErrors(form, error, tried);
 
   const create = async () => {
     setTried(true);
     setError(null);
-    if (Object.keys(validate()).length) {
-      setTimeout(() => document.querySelector('.b-panel [aria-invalid="true"], .b-panel .a-radios-invalid input')?.focus());
+    if (Object.keys(validatePatient(form)).length) {
+      focusFirstError('.b-panel');
       return;
     }
     setPending(true);
     try {
-      const res = await api.post('/me/patients', {
-        fullName: form.fullName.trim(),
-        phone: toPhone(form.phone),
-        birthYear: Number(form.birthYear),
-        gender: form.gender,
-        relationship: form.relationship,
-        nationalId: form.nationalId.trim() || null,
-        email: form.email.trim() || null,
-      });
+      const res = await api.post('/me/patients', patientBody(form));
       onCreated(res.patient);
     } catch (err) {
       setError(err);
@@ -210,91 +177,7 @@ function RelativeCreate({ user, max, onBack, onCreated }) {
         người khám rồi bấm <strong>Tạo hồ sơ và tiếp tục</strong>.
       </MissingNote>
 
-      <div className="b-group">
-        <SectionTitle>Thông tin người khám</SectionTitle>
-        <div className="a-row" style={{ gap: 20 }}>
-          <div className="a-field" style={{ flex: '999 1 260px' }}>
-            <label htmlFor="nk-ten" className="a-label">
-              Họ và tên <span className="a-req">*</span>
-            </label>
-            <input id="nk-ten" className="a-input" type="text" value={form.fullName} onChange={set('fullName')} aria-invalid={inv('fullName')} />
-            <FieldError id="nk-ten-loi">{fe.fullName}</FieldError>
-          </div>
-          <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-            <PhoneField id="nk-sdt" label="Số điện thoại" required value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} error={fe.phone} />
-          </div>
-        </div>
-        <div className="a-row" style={{ gap: 20 }}>
-          <div className="a-field" style={{ flex: '1 1 200px' }}>
-            <label htmlFor="nk-nam" className="a-label">
-              Năm sinh <span className="a-req">*</span>
-            </label>
-            <Picker
-              id="nk-nam"
-              items={years.map((y) => ({ value: String(y), label: String(y) }))}
-              searchable={false}
-              value={String(form.birthYear)}
-              onChange={(v) => setForm((f) => ({ ...f, birthYear: v }))}
-              aria-invalid={inv('birthYear')}
-            />
-            <FieldError id="nk-nam-loi">{fe.birthYear}</FieldError>
-          </div>
-          <div role="radiogroup" aria-labelledby="nk-gt" className={`a-field ${fe.gender ? 'a-radios-invalid' : ''}`} style={{ flex: '999 1 240px' }}>
-            <span id="nk-gt" className="a-label">
-              Giới tính <span className="a-req">*</span>
-            </span>
-            <div className="a-row" style={{ gap: 12 }}>
-              {[
-                ['NAM', 'Nam'],
-                ['NU', 'Nữ'],
-              ].map(([v, label]) => (
-                <label key={v} className="a-radio" style={{ flexBasis: 0 }}>
-                  <input type="radio" name="nk-gioitinh" value={v} checked={form.gender === v} onChange={set('gender')} />
-                  {label}
-                </label>
-              ))}
-            </div>
-            <FieldError id="nk-gt-loi">{fe.gender}</FieldError>
-          </div>
-        </div>
-      </div>
-
-      <div className="b-group">
-        <h3 className="b-sec">
-          <button type="button" className="b-sec-toggle" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)}>
-            Thông tin khác
-            <Icon name="chevronDown" size={20} strokeWidth={2.25} />
-          </button>
-          <span aria-hidden="true" />
-        </h3>
-        {moreOpen && (
-          <div className="a-row" style={{ gap: 20 }}>
-            <div className="a-field" style={{ flex: '1 1 240px' }}>
-              <label htmlFor="nk-cccd" className="a-label">
-                Số căn cước công dân
-              </label>
-              <input
-                id="nk-cccd"
-                className="a-input"
-                type="text"
-                inputMode="numeric"
-                maxLength={12}
-                value={form.nationalId}
-                onChange={(e) => setForm((f) => ({ ...f, nationalId: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
-                aria-invalid={inv('nationalId')}
-              />
-              <FieldError id="nk-cccd-loi">{fe.nationalId}</FieldError>
-            </div>
-            <div className="a-field" style={{ flex: '999 1 260px' }}>
-              <label htmlFor="nk-email" className="a-label">
-                Email nhận phiếu khám
-              </label>
-              <input id="nk-email" className="a-input" type="email" value={form.email} onChange={set('email')} aria-invalid={inv('email')} />
-              <FieldError id="nk-email-loi">{fe.email}</FieldError>
-            </div>
-          </div>
-        )}
-      </div>
+      <PatientFields id="nk" form={form} setForm={setForm} errors={fe} phoneNote={RELATIVE_PHONE_NOTE} />
 
       <div className="b-group">
         <SectionTitle>Thông tin người đặt</SectionTitle>
