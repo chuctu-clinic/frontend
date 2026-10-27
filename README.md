@@ -75,7 +75,9 @@ Chép `server/.env.example` thành `server/.env`:
 | `MONGODB_URI` | Chuỗi kết nối MongoDB Atlas. Bắt buộc khi chạy production. |
 | `JWT_SECRET` | Khoá ký phiên đăng nhập. Bắt buộc đổi khi chạy production. |
 | `CLIENT_ORIGIN` | Địa chỉ frontend được gọi API (CORS); nhiều địa chỉ thì ngăn bằng dấu phẩy. |
-| `SMS_PROVIDER` | `console` (in mã ra log) hoặc `firebase` (chưa nối, xem bên dưới). |
+| `SMS_PROVIDER` | `console` (in mã ra log) hoặc `firebase` (Firebase Phone Auth, xem mục *Gửi mã xác nhận qua Firebase*). |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_APP_ID` | Cấu hình Web app Firebase (giá trị công khai), chỉ dùng khi `SMS_PROVIDER=firebase`. |
+| `FIREBASE_AUTH_EMULATOR_HOST` | Ví dụ `127.0.0.1:9099`: dùng Firebase Auth Emulator, không gửi SMS thật. |
 
 Hai ứng dụng frontend đọc các biến sau lúc build. Để trống thì dùng cùng địa chỉ với server:
 
@@ -137,13 +139,24 @@ docker-compose.yml       chạy đồng thời mongo, server, client
 4. **Trang Giới thiệu, Dịch vụ, Hướng dẫn, Liên hệ**: là bài viết thuộc chuyên mục "Trang thông tin", có đường dẫn cố định. Admin sửa được nội dung nhưng không xoá được.
 5. **Thêm collection hỗ trợ**: `counters` để sinh mã bệnh nhân `CT-BN-26-0001` và mã phiếu `CT-PK-26-2010-001`, `slotCounters` để đếm chỗ trong khung giờ, `settings` để lưu cài đặt tự động mời. Ngoài ra `checkins` có thêm trường `visitDate`, `posts` có thêm `slug` và `summary`, `patients` có thêm `birthYear` (tiếp tân chỉ hỏi năm sinh).
 
+### Gửi mã xác nhận qua Firebase
+
+Đặt `SMS_PROVIDER=firebase`. Trình duyệt gửi và xác nhận mã bằng Firebase Phone Auth (kèm reCAPTCHA ẩn), rồi gửi ID token cho server; server kiểm token bằng `firebase-admin` (chỉ cần Project ID, không cần khoá service account), đối chiếu số điện thoại và lần xin mã, rồi cấp phiên đăng nhập như cũ. Giới hạn 3 mã mỗi giờ và chờ 60 giây (BR.03) vẫn do server giữ.
+
+Cài đặt trên Firebase Console:
+
+1. Tạo project, thêm **Web app**, chép các giá trị `apiKey`, `authDomain`, `projectId`, `appId` vào `server/.env`.
+2. **Authentication → Sign-in method**: bật **Phone**.
+3. **Authentication → Settings → Authorized domains**: thêm `localhost` và tên miền thật.
+4. **SMS region policy**: cho phép Việt Nam.
+
+Thử không tốn tiền, không gửi SMS thật:
+
+- **Số điện thoại thử**: Authentication → Sign-in method → Phone → *Phone numbers for testing*, thêm số kèm mã cố định (ví dụ `+84 999 000 001` / `123456`). Số phải có đầu số di động hợp lệ (03, 05, 07, 08, 09).
+- **Firebase Auth Emulator**: `npx firebase-tools emulators:start --only auth --project demo-chuctu`, đặt `FIREBASE_PROJECT_ID=demo-chuctu` và `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099` (các biến web khác điền giá trị bất kỳ). Mã gửi đi xem ở `http://127.0.0.1:9099/emulator/v1/projects/demo-chuctu/verificationCodes`.
+
 ### Việc còn lại
 
-- **Gửi mã qua Firebase**: Firebase Phone Auth tự sinh mã và gửi từ trình duyệt (cần reCAPTCHA), Backend không gửi hộ được. Cách đó khác với thiết kế hiện tại, nơi Backend sinh mã và lưu dạng băm. Nhóm cần chọn một trong hai hướng:
-  - (a) Đổi sang luồng Firebase: trình duyệt xác thực rồi gửi ID token cho Backend kiểm bằng `firebase-admin`.
-  - (b) Giữ thiết kế hiện tại, dùng một nhà cung cấp SMS có API phía server.
-
-  Chỗ nối nằm ở `server/src/services/smsGateway.js`.
-- **Ảnh bài viết**: hiện nhập bằng đường dẫn ảnh, chưa có chức năng tải ảnh lên.
+- **Nhà cung cấp SMS khi chạy thật**: Firebase dùng để thử nghiệm. Khi chạy thật nên cân nhắc nhà cung cấp SMS trong nước có tên người gửi (brandname), chỉ cần thêm một provider trong `server/src/services/smsGateway.js`.
 - **Triển khai lên Render**: chưa cấu hình.
 - **Giới hạn số lần thử đăng nhập nội bộ**: chưa có.

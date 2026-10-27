@@ -7,6 +7,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   resolve: { dedupe: ['react', 'react-dom', 'react-router-dom'] },
+  // Firebase chỉ được tải khi gửi mã xác nhận; khai báo sẵn để Vite đóng gói ngay khi khởi động
+  optimizeDeps: { include: ['firebase/app', 'firebase/auth'] },
   server: {
     port: 5173,
     strictPort: true,

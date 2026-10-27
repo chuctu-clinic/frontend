@@ -95,11 +95,12 @@ export default function Register() {
     }
   };
 
-  const submitCode = async (code) => {
+  /** proof: { code } khi server tự gửi mã, { idToken } khi gửi qua Firebase */
+  const submitCode = async (proof) => {
     setPending(true);
     setCodeError(null);
     try {
-      const res = await api.post('/auth/register/verify', { phone, code });
+      const res = await api.post('/auth/register/verify', { phone, ...proof });
       setUser(res.user);
       navigate(next === '/' ? '/tai-khoan/ho-so?moi=1' : next, { replace: true });
     } catch (err) {

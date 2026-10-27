@@ -4,7 +4,9 @@ import { Icon } from '@chuctu/shared/components/Icon.jsx';
 import { Alert, ErrorAlert } from '@chuctu/shared/components/ui.jsx';
 import { api } from '@chuctu/shared/lib/api.js';
 import { CLINIC } from '@chuctu/shared/lib/format.js';
+import { useSession } from '@chuctu/shared/lib/session.jsx';
 import { FieldError } from './AuthShell.jsx';
+import { confirmFirebaseCode, sendFirebaseCode } from './firebasePhone.js';
 
 /** 0912345678 → "0912 *** 678" */
 const maskPhone = (p) => (p.length >= 8 ? `${p.slice(0, 4)} *** ${p.slice(-3)}` : p);
@@ -12,16 +14,60 @@ const maskPhone = (p) => (p.length >= 8 ? `${p.slice(0, 4)} *** ${p.slice(-3)}` 
 /**
  * Hộp thoại nhập mã 6 số gửi qua tin nhắn, có đếm ngược gửi lại mã (BR.03).
  * Dùng chung cho đăng nhập trên máy mới và tạo tài khoản.
+ * onSubmit nhận { code } (server tự gửi mã) hoặc { idToken } (gửi mã qua Firebase).
  */
 export function OtpDialog({ phone, purpose, otp, intro, outro, submitLabel, submitIcon, backLabel, onSubmit, onClose, pending, error, remember, setRemember }) {
+  const { meta } = useSession();
+  const firebaseCfg = otp?.provider === 'firebase' ? meta?.otp?.firebase : null;
   const [code, setCode] = useState('');
   const [wait, setWait] = useState(otp?.resendAfterSeconds ?? 60);
   const [info, setInfo] = useState(otp);
   const [resendError, setResendError] = useState(null);
   const [resending, setResending] = useState(false);
   const [tried, setTried] = useState(false);
+  // Firebase: đang gửi tin, đang xác nhận mã, lỗi phía Firebase
+  const [sending, setSending] = useState(Boolean(firebaseCfg));
+  const [confirming, setConfirming] = useState(false);
+  const [fbError, setFbError] = useState(null);
+  const [fbSent, setFbSent] = useState(false);
+  const sentRef = useRef(null);
+  const startedRef = useRef(false);
+  const captchaRef = useRef(null);
   const inputRef = useRef(null);
   const dialogRef = useRef(null);
+
+  /** Firebase: gửi tin nhắn có mã (trình duyệt gửi, kèm reCAPTCHA ẩn). */
+  const sendViaFirebase = async () => {
+    setSending(true);
+    setFbError(null);
+    setFbSent(false);
+    sentRef.current?.clear();
+    sentRef.current = null;
+    try {
+      sentRef.current = await sendFirebaseCode(firebaseCfg, phone, captchaRef.current);
+      setFbSent(true);
+    } catch (err) {
+      setFbError(err);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  useEffect(() => {
+    // Chỉ gửi một lần khi mở hộp thoại (StrictMode chạy effect hai lần; lần hai sẽ phá reCAPTCHA của lần đầu)
+    if (startedRef.current) return undefined;
+    startedRef.current = true;
+    if (otp?.provider === 'firebase' && !firebaseCfg) {
+      setSending(false);
+      setFbError(new Error('Phòng khám chưa cấu hình gửi mã qua tin nhắn. Cô chú gọi phòng khám để được giúp.'));
+      return undefined;
+    }
+    if (firebaseCfg) sendViaFirebase();
+    return undefined;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Đóng hộp thoại thì dọn reCAPTCHA
+  useEffect(() => () => sentRef.current?.clear(), []);
 
   useEffect(() => {
     if (wait <= 0) return undefined;
@@ -64,10 +110,12 @@ export function OtpDialog({ phone, purpose, otp, intro, outro, submitLabel, subm
     setResending(true);
     setResendError(null);
     try {
+      // Server ghi nhận lần xin mã (giới hạn 3 mã mỗi giờ); với Firebase thì trình duyệt gửi tin sau đó
       const res = await api.post('/auth/otp/resend', { phone, purpose });
       setInfo(res);
       setWait(res.resendAfterSeconds ?? 60);
       setCode('');
+      if (firebaseCfg) await sendViaFirebase();
       inputRef.current?.focus();
     } catch (err) {
       setResendError(err);
@@ -77,17 +125,36 @@ export function OtpDialog({ phone, purpose, otp, intro, outro, submitLabel, subm
     }
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setTried(true);
     if (code.length !== 6) {
       inputRef.current?.focus();
       return;
     }
-    onSubmit(code);
+    if (!firebaseCfg) {
+      onSubmit({ code });
+      return;
+    }
+    if (!sentRef.current) {
+      setFbError(new Error('Mã chưa được gửi. Cô chú bấm "Gửi lại mã".'));
+      return;
+    }
+    setConfirming(true);
+    setFbError(null);
+    try {
+      const idToken = await confirmFirebaseCode(firebaseCfg, sentRef.current, code);
+      onSubmit({ idToken });
+    } catch (err) {
+      setFbError(err);
+      inputRef.current?.focus();
+    } finally {
+      setConfirming(false);
+    }
   };
 
-  const codeError = (tried && code.length !== 6 ? 'Mã xác nhận gồm 6 chữ số.' : null) || error?.fields?.code;
+  const codeError = (tried && code.length !== 6 ? 'Mã xác nhận gồm 6 chữ số.' : null) || fbError?.fields?.code || error?.fields?.code;
+  const busy = pending || confirming;
 
   // Gắn thẳng vào <body> để luôn nằm giữa màn hình (xem components/Dialog.jsx)
   return createPortal(
@@ -100,9 +167,20 @@ export function OtpDialog({ phone, purpose, otp, intro, outro, submitLabel, subm
           </button>
         </div>
         <form className="a-dialog-body" onSubmit={submit} noValidate>
-          <p className="a-lead">
-            {intro && `${intro} `}Phòng khám vừa gửi tin nhắn có mã 6 số tới số <strong>{maskPhone(phone)}</strong>.{outro && ` ${outro}`}
+          <p className="a-lead" aria-live="polite">
+            {intro && `${intro} `}
+            {sending
+              ? 'Phòng khám đang gửi tin nhắn có mã 6 số tới số '
+              : firebaseCfg && !fbSent
+                ? 'Phòng khám chưa gửi được mã tới số '
+                : 'Phòng khám vừa gửi tin nhắn có mã 6 số tới số '}
+            <strong>{maskPhone(phone)}</strong>
+            {sending ? '…' : '.'}
+            {outro && !sending && (!firebaseCfg || fbSent) && ` ${outro}`}
           </p>
+          {/* Chỗ gắn reCAPTCHA ẩn của Firebase */}
+          <div ref={captchaRef} />
+          {fbError && !fbError.fields?.code && <ErrorAlert error={fbError} />}
           {info?.devCode && (
             <Alert type="success" title="Chế độ phát triển">
               Chưa nối dịch vụ tin nhắn, mã xác nhận là <strong className="mono">{info.devCode}</strong>.
@@ -167,8 +245,8 @@ export function OtpDialog({ phone, purpose, otp, intro, outro, submitLabel, subm
 
           {error && !error.fields?.code && <ErrorAlert error={error} />}
 
-          <button type="submit" className="a-btn-primary" disabled={pending} aria-busy={pending || undefined}>
-            {pending ? <span className="spinner" aria-hidden="true" /> : <Icon name={submitIcon} strokeWidth={1.75} />}
+          <button type="submit" className="a-btn-primary" disabled={busy || sending} aria-busy={busy || undefined}>
+            {busy ? <span className="spinner" aria-hidden="true" /> : <Icon name={submitIcon} strokeWidth={1.75} />}
             {submitLabel}
           </button>
           <button type="button" className="a-btn-ghost a-btn-block" onClick={onClose}>

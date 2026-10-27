@@ -64,11 +64,12 @@ export default function Login() {
     }
   };
 
-  const submitCode = async (code) => {
+  /** proof: { code } khi server tự gửi mã, { idToken } khi gửi qua Firebase */
+  const submitCode = async (proof) => {
     setPending(true);
     setCodeError(null);
     try {
-      const res = await api.post('/auth/login/verify', { phone, code, remember });
+      const res = await api.post('/auth/login/verify', { phone, ...proof, remember });
       setUser(res.user);
       navigate(next, { replace: true });
     } catch (err) {
