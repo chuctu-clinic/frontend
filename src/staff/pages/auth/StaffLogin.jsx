@@ -8,7 +8,7 @@ import { isStaff, useSession } from '../../../shared/lib/session.jsx';
 import { useDocumentTitle } from '../../../shared/lib/hooks.js';
 import './staff-auth.css';
 
-import { homeFor } from '../../home.js';
+import { homeFor } from '../../lib/home.js';
 
 /** Khung trang theo prototype "NoiBo-DangNhap": đầu trang "Khu quản trị", thẻ giữa trang, chân trang một dòng. */
 export function StaffShell({ title, subtitle, illustration, children }) {

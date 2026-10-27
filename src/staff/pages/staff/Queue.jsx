@@ -7,7 +7,7 @@ import { fmtTime, shortTime, slotLabel, todayVN } from '../../../shared/lib/form
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { Notice } from '../../components/fields.jsx';
 import { Summary, TDialog } from '../../components/dialogs.jsx';
-import { longDay, nowMinutesVN } from './ApptActions.jsx';
+import { longDay, nowMinutesVN } from '../../components/appointments/time.js';
 
 const clock = (value) => fmtTime(value).replace(/^0/, '');
 const minutesOf = (hhmm) => {

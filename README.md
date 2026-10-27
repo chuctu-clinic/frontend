@@ -53,22 +53,31 @@ Khách và nhân viên dùng chung một phiên đăng nhập (cookie `ct_sessio
 
 ```
 src/
-  main.jsx, App.jsx     điểm vào; "/noi-bo/*" tải khu nội bộ, còn lại tải trang khách (hai phần tải riêng)
-  site/                 trang khách, chạy ở /
-    pages/public        Trang chủ, Giới thiệu, Dịch vụ, Hướng dẫn, Liên hệ, Tin tức
-    pages/auth          Đăng nhập / đăng ký bằng số điện thoại + mã 6 số (console hoặc Firebase)
-    pages/account       Thông tin tài khoản, hồ sơ khám (tối đa 10), phiếu khám, kết quả, lịch sử
-    pages/booking       Đặt lịch 4 bước
-  staff/                khu tiếp tân và Admin, chạy ở /noi-bo/
-    pages/auth          Đăng nhập nội bộ, đổi mật khẩu
-    pages/staff         Lịch trong ngày, đặt hộ tại quầy, hàng đợi, hồ sơ bệnh nhân, phiếu kết quả
-    pages/admin         Tổng quan, quản lý tài khoản, quản lý bài viết (trình soạn Tiptap)
-  shared/               mã dùng chung cho hai khu
-    constants.js, phone.js  BẢN CHÉP: repo backend có một bản ở src/shared/. Sửa bên nào thì chép sang bên kia.
-    lib/, components/   gọi API, phiên đăng nhập, định dạng, Icon, nút, ô nhập, hộp thoại,
-                        chọn ngày giờ, phiếu kết quả
-    styles.css          CSS nền tảng theo Design System
+  main.jsx, App.jsx       điểm vào; "/noi-bo/*" tải khu nội bộ, còn lại tải trang khách (hai phần tải riêng)
+  shared/                 dùng chung cho hai khu
+    ui/                   Icon, Brand, Markdown, nút, ô nhập, thông báo (ui.jsx)
+    lib/                  api (gọi REST), session (phiên đăng nhập), format (ngày giờ, CLINIC),
+                          hooks (useAsync, useDocumentTitle, useDismiss, useModal)
+    domain/               BẢN CHÉP của backend (src/shared/): constants, phone, medicalHistory. Sửa bên nào thì chép sang bên kia.
+    styles.css            CSS nền tảng theo Design System
+  site/                   trang khách, chạy ở /
+    components/           khung trang, Dialog, Picker, ô nhập dùng chung (fields, PatientFields)
+    pages/public          Trang chủ, Giới thiệu, Dịch vụ, Hướng dẫn, Liên hệ, Tin tức
+    pages/auth            Đăng nhập / đăng ký bằng số điện thoại + mã 6 số (console hoặc Firebase)
+    pages/account         Thông tin tài khoản, hồ sơ khám (tối đa 10), phiếu khám, kết quả, lịch sử
+    pages/booking         Đặt lịch 4 bước
+  staff/                  khu tiếp tân và Admin, chạy ở /noi-bo/
+    components/           khung khu nội bộ, hộp thoại, ô nhập, phân trang, lịch tháng
+      appointments/       check-in, huỷ, đổi lịch, thêm lịch khám
+      records/            biểu mẫu và bản xem phiếu kết quả khám
+    lib/                  định dạng riêng, homeFor (trang đầu theo vai trò)
+    pages/auth            Đăng nhập nội bộ, đổi mật khẩu
+    pages/staff           Lịch trong ngày, hàng đợi, hồ sơ bệnh nhân, phiếu kết quả
+    pages/admin           Tổng quan, quản lý tài khoản, quản lý bài viết (trình soạn Tiptap)
 Dockerfile, nginx.conf  build ứng dụng và phục vụ bằng nginx
+```
+
+Mỗi trang hay nhóm trang có tệp CSS riêng, tên class có tiền tố theo tệp để hai khu không đè nhau: `t-` khu nội bộ (staff.css), `ad-` và `pv-` quản trị, `s-` đăng nhập nội bộ; `a-` biểu mẫu trang khách (auth.css), `b-` và `bk-` đặt lịch, `r-` phiếu kết quả, `h-` trang chủ, `i-` trang thông tin, `p-` tin tức.
 
 ## Việc còn lại
 

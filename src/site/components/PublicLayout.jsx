@@ -5,7 +5,7 @@ import { useDismiss } from '../../shared/lib/hooks.js';
 import { isStaff, useSession } from '../../shared/lib/session.jsx';
 import { Brand } from '../../shared/ui/Brand.jsx';
 import { Icon } from '../../shared/ui/Icon.jsx';
-import { homeFor } from '../../staff/home.js';
+import { homeFor } from '../../staff/lib/home.js';
 import './layout.css';
 
 const NAV = [

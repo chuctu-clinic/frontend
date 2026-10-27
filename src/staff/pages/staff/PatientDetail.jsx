@@ -8,7 +8,9 @@ import { isAdmin, useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { FieldError, Notice, PhoneField, normalizePhone, phoneError } from '../../components/fields.jsx';
 import { TDialog } from '../../components/dialogs.jsx';
-import { EditRecordDialog, HistoryTable, ResultDialog } from './RecordParts.jsx';
+import { EditRecordDialog } from '../../components/records/EditRecordDialog.jsx';
+import { HistoryTable } from '../../components/records/HistoryTable.jsx';
+import { ResultDialog } from '../../components/records/ResultSheet.jsx';
 
 /** Sửa thông tin hồ sơ: mã bệnh nhân không đổi (UC.9.5). */
 function EditPatientDialog({ patient, onClose, onSaved }) {

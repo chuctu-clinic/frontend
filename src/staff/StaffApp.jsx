@@ -5,7 +5,7 @@ import { Empty, Loading } from '../shared/ui/ui.jsx';
 import { isAdmin, isStaff, useSession } from '../shared/lib/session.jsx';
 
 import StaffLogin from './pages/auth/StaffLogin.jsx';
-import { homeFor } from './home.js';
+import { homeFor } from './lib/home.js';
 import ChangePassword from './pages/auth/ChangePassword.jsx';
 
 import DailySchedule from './pages/staff/DailySchedule.jsx';

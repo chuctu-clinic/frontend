@@ -4,7 +4,7 @@ import { Button, ErrorAlert, TextInput } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { isStaff, useSession } from '../../../shared/lib/session.jsx';
 import { useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { homeFor } from '../../home.js';
+import { homeFor } from '../../lib/home.js';
 import { StaffShell } from './StaffLogin.jsx';
 
 export default function ChangePassword() {

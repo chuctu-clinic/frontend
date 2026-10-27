@@ -1,6 +1,6 @@
 import { Button, ButtonLink, Empty } from '../../shared/ui/ui.jsx';
 import { useSession } from '../../shared/lib/session.jsx';
-import { homeFor } from '../../staff/home.js';
+import { homeFor } from '../../staff/lib/home.js';
 
 /**
  * Tài khoản nội bộ mở trang chỉ dành cho khách (đặt lịch, tài khoản…). Không chuyển sang trang đăng nhập,

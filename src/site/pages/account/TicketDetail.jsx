@@ -8,7 +8,7 @@ import { useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { Dialog } from '../../components/Dialog.jsx';
 import { Picker } from '../../components/Picker.jsx';
-import { BookingCrumbs, BookingFrame } from '../booking/Booking.jsx';
+import { BookingCrumbs, BookingFrame } from '../booking/BookingFrame.jsx';
 import { Ticket } from './Ticket.jsx';
 import './account.css';
 import '../booking/booking.css';

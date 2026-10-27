@@ -7,7 +7,7 @@ import { fmtDate } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { Pager } from '../../components/Pager.jsx';
 import { TDialog } from '../../components/dialogs.jsx';
-import { NewPatientFields } from './ApptActions.jsx';
+import { NewPatientFields } from '../../components/appointments/NewPatientFields.jsx';
 
 const PER_PAGE = 10;
 const GRID = { gridTemplateColumns: '170px minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1.3fr) 150px' };

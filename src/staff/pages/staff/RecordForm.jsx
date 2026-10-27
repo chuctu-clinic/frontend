@@ -6,7 +6,11 @@ import { api } from '../../../shared/lib/api.js';
 import { GENDERS, fmtDate, shortTime, todayVN } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { fmtLeft, fmtStamp } from '../../lib/format.js';
-import { EMPTY_FORM, EditRecordDialog, HistoryTable, RecordFields, ResultDialog, editState, fromRecord, toPayload, validateRecord } from './RecordParts.jsx';
+import { EMPTY_FORM, editState, fromRecord, toPayload, validateRecord } from '../../components/records/recordForm.js';
+import { EditRecordDialog } from '../../components/records/EditRecordDialog.jsx';
+import { HistoryTable } from '../../components/records/HistoryTable.jsx';
+import { RecordFields } from '../../components/records/RecordFields.jsx';
+import { ResultDialog } from '../../components/records/ResultSheet.jsx';
 
 /** Lập và sửa phiếu kết quả khám (UC.9.7, UC.9.9, UC.10.4), theo prototype "TiepTan-HoSoChiTiet". */
 export default function RecordForm() {
