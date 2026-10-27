@@ -24,7 +24,6 @@ a {
 .main-nav a,
 .user-menu-list a,
 .user-menu-list button,
-.side-nav a,
 .f-col a,
 .tab,
 .choice {
@@ -142,13 +141,6 @@ a {
   .main-nav.open {
     animation: ct-fade-up var(--dur) var(--ease-out) both;
   }
-}
-
-.modal-backdrop {
-  animation: ct-fade var(--dur) ease both;
-}
-.modal {
-  animation: ct-pop var(--dur-slow) var(--ease-out) both;
 }
 
 .alert,

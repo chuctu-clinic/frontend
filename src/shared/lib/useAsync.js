@@ -30,28 +30,6 @@ export function useAsync(fn, deps = []) {
   return { ...state, reload, setData };
 }
 
-/** Chạy một thao tác (gửi form, bấm nút) với trạng thái đang xử lý và lỗi. */
-export function useAction(fn) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState(null);
-  const run = useCallback(
-    async (...args) => {
-      setPending(true);
-      setError(null);
-      try {
-        return await fn(...args);
-      } catch (err) {
-        setError(err);
-        throw err;
-      } finally {
-        setPending(false);
-      }
-    },
-    [fn],
-  );
-  return { run, pending, error, setError };
-}
-
 export function useDocumentTitle(title) {
   useEffect(() => {
     document.title = title ? `${title} — Phòng khám Chúc Từ` : 'Phòng khám Chúc Từ — Y học cổ truyền từ thiện';

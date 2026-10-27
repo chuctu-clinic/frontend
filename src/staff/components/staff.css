@@ -169,7 +169,6 @@
 .t-btn-gold:hover { background: var(--gold-100); }
 .t-btn-danger { background: var(--alert-700); border-color: var(--alert-700); color: var(--on-brand); font-weight: 700; }
 .t-btn-danger:hover { background: #6e2a20; border-color: #6e2a20; }
-.t-btn-warn { background: var(--gold-700); border-color: var(--gold-700); color: var(--on-brand); font-weight: 700; }
 .t-btn-bold { font-weight: 700; }
 .t-btn-sm { padding: 0 12px; }
 .t-btn-lg { min-height: 48px; padding: 0 30px; font-weight: 700; }
@@ -182,7 +181,6 @@
 /* ---------- Ô nhập ---------- */
 .t-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .t-label { font-size: 16px; font-weight: 600; color: var(--ink-900); }
-.t-label-opt { font-weight: 400; color: var(--ink-500); }
 .t-input,
 .t-select,
 .t-textarea {
@@ -254,7 +252,6 @@
 .t-chip-done { background: var(--surface-200); color: var(--ink-700); border-color: var(--line-strong); }
 .t-chip-cancel { background: var(--t-red-100); color: var(--alert-700); border-color: var(--alert-700); }
 .t-chip-locked { background: var(--surface-card); color: var(--ink-500); border-color: var(--line-strong); }
-.t-chip-sand { background: var(--surface-200); color: var(--ink-900); }
 
 /* ---------- Bảng dạng lưới ---------- */
 .t-table { width: 100%; }
@@ -564,7 +561,6 @@ button.t-check { cursor: pointer; }
 .t-queue-no { font-family: var(--font-serif); font-size: 24px; line-height: 32px; font-weight: 700; color: var(--green-700); }
 .t-cancel-reason { grid-column: 1 / -1; padding: 0 16px 14px; color: var(--alert-700); }
 .t-state-note { display: block; margin-top: 6px; line-height: 22px; color: var(--ink-500); }
-.t-click-catch { position: fixed; inset: 0; z-index: 25; background: transparent; }
 
 /* Hộp thoại Thêm lịch khám */
 .t-pick { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 60px; padding: 12px 18px; background: var(--t-white); border: 2px solid var(--line-strong); border-radius: 16px; font: inherit; text-align: left; cursor: pointer; }

@@ -1,6 +1,4 @@
-import { STATUS_LABELS, USER_STATUS_LABELS } from '../constants.js';
-
-// Nhãn dùng chung với server nằm ở shared/src/constants.js
+// Nhãn dùng chung với server nằm ở shared/constants.js (bản chép của backend)
 export { GENDERS, RELATIONSHIPS, ROLE_LABELS } from '../constants.js';
 
 export const CLINIC = {
@@ -41,20 +39,11 @@ export function fmtDate(value) {
   return `${pad(vn.getUTCDate())}/${pad(vn.getUTCMonth() + 1)}/${vn.getUTCFullYear()}`;
 }
 
-/** Thứ Ba, 20/10/2026 */
-export function fmtDateLong(dateStr) {
-  return `${weekday(dateStr)}, ${fmtDate(dateStr)}`;
-}
-
 /** 09:05 theo giờ Việt Nam */
 export function fmtTime(value) {
   if (!value) return '—';
   const vn = new Date(new Date(value).getTime() + 7 * 3600_000);
   return `${pad(vn.getUTCHours())}:${pad(vn.getUTCMinutes())}`;
-}
-
-export function fmtDateTime(value) {
-  return value ? `${fmtTime(value)} · ${fmtDate(value)}` : '—';
 }
 
 /** "08:00" → "8:00 – 9:00" */
@@ -72,12 +61,6 @@ export function shortTime(start) {
 export function todayVN() {
   return new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
 }
-
-// Trạng thái phiếu: màu luôn đi kèm chữ (Design System — Accessibility)
-const TONES = { BOOKED: 'gold', CHECKED_IN: 'blue', IN_PROGRESS: 'green', COMPLETED: 'green', CANCELLED: 'red' };
-export const STATUS = Object.fromEntries(
-  Object.entries(STATUS_LABELS).map(([k, label]) => [k, { label, userLabel: USER_STATUS_LABELS[k], tone: TONES[k] }]),
-);
 
 export function ageFrom(birthYear) {
   if (!birthYear) return null;

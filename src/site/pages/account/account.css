@@ -17,7 +17,6 @@
 .k-main { padding: 40px 24px 72px; }
 .k-main-tight { padding-top: 32px; }
 .k-wrap { max-width: var(--container); margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
-.k-narrow { max-width: 880px; }
 
 .k-card { background: var(--surface-card); border: 1px solid var(--line-soft); border-radius: var(--radius-xl); padding: 32px; display: flex; flex-direction: column; gap: 24px; }
 .k-card-head h2 { margin-bottom: 8px !important; font-family: var(--font-serif); font-size: 26px; line-height: 36px; font-weight: 700; color: var(--ink-900); }
