@@ -1,3 +1,4 @@
+// BẢN CHÉP: file này có ở cả repo backend (src/shared/) và repo frontend (shared/src/). Sửa bên nào thì chép sang bên kia.
 // Hằng số dùng chung giữa server và hai ứng dụng client.
 // File này chỉ là JavaScript thuần (không React, không import.meta.env) để Node.js nạp được.
 

@@ -1,3 +1,4 @@
+// BẢN CHÉP: file này có ở cả repo backend (src/shared/) và repo frontend (shared/src/). Sửa bên nào thì chép sang bên kia.
 // Số điện thoại di động Việt Nam: dùng chung giữa server và client để hai bên báo cùng một lỗi
 
 /** Chuẩn hoá về dạng 0xxxxxxxxx: bỏ khoảng trắng, dấu chấm, gạch; "+84…" hoặc "84…" (11 số) đổi thành "0…". */

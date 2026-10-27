@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Mã dùng chung. src/constants.js: hằng số dùng chung giữa server và client. src/lib, src/components, src/styles.css: phần giao diện dùng chung cho client-users và client-admin",
+  "description": "Mã dùng chung cho client-users và client-admin: lib, components, styles.css. constants.js và phone.js là bản chép, repo backend có một bản ở src/shared/",
   "exports": {
     "./*": "./src/*"
   },
