@@ -73,4 +73,4 @@ Dockerfile, nginx.conf   build hai ứng dụng và phục vụ bằng nginx
 
 ## Việc còn lại
 
-- **Nơi triển khai**: chưa chọn, chưa có CI/CD. Bản CI/CD lên GHCR + Render cũ còn ở nhánh `ban-typescript-cu`.
+- **Nơi triển khai**: chưa chọn, chưa có CI/CD.
