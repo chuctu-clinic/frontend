@@ -16,8 +16,8 @@ export function checkInWindow(start, { early = 15, length = 60 } = {}) {
 
 const USER_STATUS = {
   BOOKED: ['Đã đặt lịch', ''],
-  COMPLETED: ['Đã hoàn thành', 't-chip-done'],
-  CANCELLED: ['Đã huỷ', 't-chip-off'],
+  COMPLETED: ['Đã hoàn thành', 'bk-chip-done'],
+  CANCELLED: ['Đã huỷ', 'bk-chip-off'],
 };
 
 /** Phiếu khám: mã phiếu, nội dung khám, giờ khám dự kiến thật to, thông tin người đi khám (UC.6.5). */
@@ -38,53 +38,53 @@ export function Ticket({ appt, meta }) {
   if (cancelled && appt.cancelReason) rows.push(['Lý do huỷ', appt.cancelReason]);
 
   return (
-    <section className={`t-ticket ${cancelled ? 't-off' : ''}`} aria-label={`Phiếu khám ${appt.ticketCode}`}>
-      <div className="t-top">
-        <div className="t-brand">
+    <section className={`bk-ticket ${cancelled ? 'bk-off' : ''}`} aria-label={`Phiếu khám ${appt.ticketCode}`}>
+      <div className="bk-top">
+        <div className="bk-brand">
           <img src="/logo-192.png" alt="" />
           <div>
-            <p className="t-cap">Phiếu khám bệnh</p>
-            <p className="t-name">{CLINIC.short}</p>
+            <p className="bk-cap">Phiếu khám bệnh</p>
+            <p className="bk-name">{CLINIC.short}</p>
           </div>
         </div>
-        <div className="t-code">
-          <p className="t-cap">Mã phiếu khám</p>
+        <div className="bk-code">
+          <p className="bk-cap">Mã phiếu khám</p>
           <p>{appt.ticketCode}</p>
         </div>
       </div>
 
-      <div className="t-main">
+      <div className="bk-main">
         <div>
-          <p className="t-clinic">Phòng khám {CLINIC.short}</p>
-          <p className="t-addr">{CLINIC.address}</p>
+          <p className="bk-clinic">Phòng khám {CLINIC.short}</p>
+          <p className="bk-addr">{CLINIC.address}</p>
         </div>
-        <span className={`t-chip ${chipClass}`}>
+        <span className={`bk-chip ${chipClass}`}>
           <span aria-hidden="true" />
           {chip}
         </span>
         <div>
-          <p className="t-label">Nội dung khám</p>
-          <p className="t-service">{appt.serviceLabel}</p>
+          <p className="bk-label">Nội dung khám</p>
+          <p className="bk-service">{appt.serviceLabel}</p>
         </div>
-        <p className="t-cap t-gold">Giờ khám dự kiến</p>
-        <div className="t-time">{shortTime(appt.slotStart)}</div>
-        <p className="t-date">
+        <p className="bk-cap bk-gold">Giờ khám dự kiến</p>
+        <div className="bk-time">{shortTime(appt.slotStart)}</div>
+        <p className="bk-date">
           {weekday(appt.slotDate)}, {fmtDate(appt.slotDate)}
         </p>
-        <p className="t-fine">Đây là giờ dự kiến. Thứ tự khám có thể thay đổi tuỳ số người đang chờ ở phòng khám.</p>
+        <p className="bk-fine">Đây là giờ dự kiến. Thứ tự khám có thể thay đổi tuỳ số người đang chờ ở phòng khám.</p>
         {appt.status === 'BOOKED' && (
-          <p className="t-remind">
+          <p className="bk-remind">
             Cô chú đến check-in từ {from} đến trước {to} để được xếp ưu tiên trong khung đã đặt.
           </p>
         )}
       </div>
 
-      <div className="t-cut" aria-hidden="true">
+      <div className="bk-cut" aria-hidden="true">
         <span />
         <span />
       </div>
 
-      <div className="t-details">
+      <div className="bk-details">
         <dl className="a-dl">
           {rows.map(([dt, dd]) => (
             <div key={dt}>
@@ -93,7 +93,7 @@ export function Ticket({ appt, meta }) {
             </div>
           ))}
         </dl>
-        <p className="t-counter">
+        <p className="bk-counter">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
             <path d="M12 8v4M12 16h.01" />

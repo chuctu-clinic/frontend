@@ -100,12 +100,12 @@ export default function Dashboard() {
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
-        <section className="a-panel" style={{ flex: '999 1 460px', minWidth: 0 }} aria-labelledby="db-so-do">
-          <div className="a-panel-head">
+        <section className="ad-panel" style={{ flex: '999 1 460px', minWidth: 0 }} aria-labelledby="db-so-do">
+          <div className="ad-panel-head">
             <h2 id="db-so-do" className="t-h2">
               Sơ đồ ghế theo khung giờ hôm nay
             </h2>
-            <Link to="/noi-bo/hang-doi" className="a-link">
+            <Link to="/noi-bo/hang-doi" className="ad-link">
               Mở hàng đợi
             </Link>
           </div>
@@ -126,12 +126,12 @@ export default function Dashboard() {
         </section>
       </div>
 
-      <section className="a-panel" aria-labelledby="db-nhap">
-        <div className="a-panel-head">
+      <section className="ad-panel" aria-labelledby="db-nhap">
+        <div className="ad-panel-head">
           <h2 id="db-nhap" className="t-h2">
             Bài viết bản nháp
           </h2>
-          <Link to="/noi-bo/quan-tri/bai-viet" className="a-link">
+          <Link to="/noi-bo/quan-tri/bai-viet" className="ad-link">
             Quản lý bài viết
           </Link>
         </div>

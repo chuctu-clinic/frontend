@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { StaffLayout } from './components/StaffLayout.jsx';
 import { Empty, Loading } from '../shared/components/ui.jsx';
@@ -46,7 +47,19 @@ function Start() {
   return <Navigate to={isStaff(user) ? homeFor(user) : '/noi-bo/dang-nhap'} replace />;
 }
 
+/** Khu nội bộ không cho máy tìm kiếm lập chỉ mục (thêm thẻ khi vào khu, gỡ khi rời đi). */
+function useNoIndex() {
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow';
+    document.head.appendChild(meta);
+    return () => meta.remove();
+  }, []);
+}
+
 export default function StaffApp() {
+  useNoIndex();
   return (
     <Routes>
       <Route index element={<Start />} />

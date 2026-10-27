@@ -53,7 +53,7 @@ function CancelDialog({ appt, onClose, onCancelled }) {
       }
     >
       <p className="a-lead">Huỷ rồi thì phiếu khám này không dùng được nữa. Cô chú vẫn có thể đặt lại buổi khác sau.</p>
-      <div className="t-cancel-sum">
+      <div className="bk-cancel-sum">
         <p>
           <Icon name="calendar" size={22} strokeWidth={1.75} />
           <span>
@@ -126,7 +126,7 @@ export default function TicketDetail() {
         </div>
       )}
       <section className="k-main k-main-tight">
-        <div className="t-wrap">
+        <div className="bk-wrap">
           <BookingFrame
             step={justBooked ? 4 : 0}
             title={justBooked ? 'Phiếu khám' : 'Chi tiết phiếu khám'}
@@ -140,8 +140,8 @@ export default function TicketDetail() {
               {appt && (
                 <>
                   {booked && justBooked && (
-                    <div className="t-banner">
-                      <span className="t-banner-dot">
+                    <div className="bk-banner">
+                      <span className="bk-banner-dot">
                         <Icon name="check" size={26} />
                       </span>
                       <div>
@@ -151,8 +151,8 @@ export default function TicketDetail() {
                     </div>
                   )}
                   {completed && (
-                    <div className="t-banner">
-                      <span className="t-banner-dot">
+                    <div className="bk-banner">
+                      <span className="bk-banner-dot">
                         <Icon name="checkCircle" size={26} />
                       </span>
                       <div>
@@ -172,8 +172,8 @@ export default function TicketDetail() {
                     </div>
                   )}
                   {cancelled && (
-                    <div className="t-banner t-banner-off">
-                      <span className="t-banner-dot">
+                    <div className="bk-banner bk-banner-off">
+                      <span className="bk-banner-dot">
                         <Icon name="x" size={26} />
                       </span>
                       <div>
@@ -190,7 +190,7 @@ export default function TicketDetail() {
                   <Ticket appt={appt} meta={meta} />
 
                   {booked && (
-                    <div className="t-actions">
+                    <div className="bk-actions">
                       <button type="button" className="a-btn-primary" onClick={() => window.print()}>
                         <Icon name="file" strokeWidth={1.75} />
                         In phiếu khám
@@ -207,8 +207,8 @@ export default function TicketDetail() {
                   )}
 
                   {booked && (
-                    <div className="t-tips">
-                      <span className="t-tips-dot">
+                    <div className="bk-tips">
+                      <span className="bk-tips-dot">
                         <Icon name="infoSoft" size={26} strokeWidth={1.75} />
                       </span>
                       <div>
