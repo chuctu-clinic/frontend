@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert } from '../../../shared/components/ui.jsx';
+import { Alert, ErrorAlert } from '../../../shared/components/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { useSession } from '../../../shared/lib/session.jsx';
+import { isStaff, useSession } from '../../../shared/lib/session.jsx';
 import { useDocumentTitle } from '../../../shared/lib/useAsync.js';
 import { AuthShell, ClinicPhoto, FieldError, PhoneField, phoneDigits, phoneError, toPhone } from './AuthShell.jsx';
 import { AddressFields, DobField, PROVINCES, dobError, joinAddress, joinDob } from './fields.jsx';
@@ -41,7 +41,7 @@ function validate(f) {
 
 export default function Register() {
   useDocumentTitle('Tạo tài khoản');
-  const { setUser } = useSession();
+  const { user, setUser } = useSession();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = safeNext(params.get('tiep'));
@@ -136,6 +136,11 @@ export default function Register() {
       </div>
 
       <form className="a-form" onSubmit={submitForm} noValidate>
+        {isStaff(user) && (
+          <Alert>
+            Cô chú đang đăng nhập tài khoản nội bộ {user.fullName}. Tạo tài khoản khách sẽ đăng xuất tài khoản nội bộ.
+          </Alert>
+        )}
         <div className="a-field">
           <label htmlFor="dk-hoten" className="a-label">
             Họ và tên <span className="a-req" aria-hidden="true">*</span>

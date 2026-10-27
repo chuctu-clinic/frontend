@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../shared/components/Icon.jsx';
-import { ErrorAlert } from '../../../shared/components/ui.jsx';
+import { Alert, ErrorAlert } from '../../../shared/components/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { useSession } from '../../../shared/lib/session.jsx';
+import { isStaff, useSession } from '../../../shared/lib/session.jsx';
 import { useDocumentTitle } from '../../../shared/lib/useAsync.js';
 import { AuthShell, ClinicPhoto, PhoneField, phoneDigits, phoneError, toPhone } from './AuthShell.jsx';
 import { OtpDialog } from './OtpDialog.jsx';
@@ -91,6 +91,11 @@ export default function Login() {
       </div>
 
       <form className="a-form" onSubmit={submitPhone} noValidate>
+        {isStaff(user) && (
+          <Alert>
+            Cô chú đang đăng nhập tài khoản nội bộ {user.fullName}. Đăng nhập tài khoản khách sẽ đăng xuất tài khoản nội bộ.
+          </Alert>
+        )}
         <PhoneField
           id="dn-sdt"
           label="Số điện thoại"

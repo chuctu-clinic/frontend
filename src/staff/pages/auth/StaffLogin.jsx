@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Icon } from '../../../shared/components/Icon.jsx';
-import { Button, ErrorAlert, Field, TextInput } from '../../../shared/components/ui.jsx';
+import { Alert, Button, ErrorAlert, Field, TextInput } from '../../../shared/components/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { CLINIC } from '../../../shared/lib/format.js';
 import { isStaff, useSession } from '../../../shared/lib/session.jsx';
@@ -95,6 +95,9 @@ export default function StaffLogin() {
   return (
     <StaffShell title="Đăng nhập" illustration={<DoctorAvatar />} subtitle="Dùng số điện thoại hoặc email của tài khoản, cùng với mật khẩu.">
       <form className="s-form" onSubmit={submit} noValidate>
+        {user?.role === 'USER' && (
+          <Alert>Cô chú đang đăng nhập tài khoản khách {user.fullName}. Đăng nhập nội bộ sẽ đăng xuất tài khoản này.</Alert>
+        )}
         <TextInput
           label="Số điện thoại hoặc email"
           autoComplete="username"

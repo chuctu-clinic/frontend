@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { PublicLayout } from './components/PublicLayout.jsx';
+import { StaffOnSite } from './components/StaffOnSite.jsx';
 import { Loading } from '../shared/components/ui.jsx';
-import { useSession } from '../shared/lib/session.jsx';
+import { isStaff, useSession } from '../shared/lib/session.jsx';
 
 import Home from './pages/public/Home.jsx';
 import GioiThieu from './pages/public/GioiThieu.jsx';
@@ -34,6 +35,7 @@ function RequireUser({ children }) {
   const { user, loading } = useSession();
   const location = useLocation();
   if (loading) return <Loading />;
+  if (isStaff(user)) return <StaffOnSite />;
   if (!user || user.role !== 'USER') {
     return <Navigate to={`/dang-nhap?tiep=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   }
