@@ -81,7 +81,7 @@ export default function Patients() {
           <label htmlFor="bn-tim" className="t-label">
             Tìm theo mã bệnh nhân, họ tên hoặc số điện thoại
           </label>
-          <input id="bn-tim" type="search" className="t-input" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input autoComplete="off" id="bn-tim" type="search" className="t-input" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="t-field" style={{ flex: '1 1 200px' }}>
           <label htmlFor="bn-trangthai" className="t-label">

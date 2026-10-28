@@ -251,6 +251,7 @@ export default function PostEditor() {
               Tiêu đề <span className="t-req">*</span>
             </label>
             <input
+              autoComplete="off"
               id="bv-tieude"
               className="t-input a-title-input"
               placeholder="Viết ngắn gọn, nói rõ bài này về việc gì"
@@ -266,6 +267,7 @@ export default function PostEditor() {
               Mô tả <span className="t-req">*</span>
             </label>
             <textarea
+              autoComplete="off"
               id="bv-mota"
               className="t-input a-desc-input"
               rows={3}
@@ -334,6 +336,7 @@ export default function PostEditor() {
                 Tác giả <span className="t-req">*</span>
               </label>
               <input
+                autoComplete="off"
                 id="bv-tacgia"
                 className="t-input"
                 value={form.authorName}
@@ -348,6 +351,7 @@ export default function PostEditor() {
                 Thời gian đăng <span className="t-req">*</span>
               </label>
               <input
+                autoComplete="off"
                 id="bv-thoigian"
                 type="date"
                 className="t-input"

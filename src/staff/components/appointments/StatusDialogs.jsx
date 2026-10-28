@@ -168,7 +168,7 @@ export function CancelDialog({ appt, onClose, onDone }) {
             <label htmlFor="hd-lydo-khac" className="t-label">
               Ghi rõ lý do <span className="t-req">*</span>
             </label>
-            <input id="hd-lydo-khac" className="t-input" value={other} onChange={(e) => setOther(e.target.value)} maxLength={300} />
+            <input autoComplete="off" id="hd-lydo-khac" className="t-input" value={other} onChange={(e) => setOther(e.target.value)} maxLength={300} />
           </div>
         )}
         <div className="t-tint-red t-iconrow">

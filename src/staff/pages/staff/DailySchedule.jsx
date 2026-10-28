@@ -235,6 +235,7 @@ export default function DailySchedule() {
             Tra cứu nhanh bằng mã phiếu khám hoặc tên bệnh nhân
           </label>
           <input
+            autoComplete="off"
             id="lt-ma"
             type="search"
             className="t-input"
