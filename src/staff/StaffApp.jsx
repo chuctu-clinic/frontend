@@ -59,8 +59,20 @@ function useNoIndex() {
   }, []);
 }
 
+/** Khu nội bộ dùng logo khiên làm favicon (đổi khi vào khu, trả lại favicon chung khi rời đi). */
+function useStaffFavicon() {
+  useEffect(() => {
+    const link = document.querySelector('link[rel="icon"]');
+    if (!link) return undefined;
+    const prev = link.getAttribute('href');
+    link.setAttribute('href', `${import.meta.env.BASE_URL}logo-admin-64.png`);
+    return () => link.setAttribute('href', prev);
+  }, []);
+}
+
 export default function StaffApp() {
   useNoIndex();
+  useStaffFavicon();
   return (
     <Routes>
       <Route index element={<Start />} />
