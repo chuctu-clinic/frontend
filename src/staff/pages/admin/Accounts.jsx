@@ -3,14 +3,15 @@ import { useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
-import { fmtDate, ROLE_LABELS } from '../../../shared/lib/format.js';
+import { ROLE_LABELS } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDismiss, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { Notice } from '../../components/fields.jsx';
+import { Notice, TPicker } from '../../components/fields.jsx';
 import { Pager } from '../../components/Pager.jsx';
 import { PlainDialog } from '../../components/dialogs.jsx';
 import './admin.css';
 import { AccountDialog, RolePasswordDialog } from './AccountDialogs.jsx';
+import { StatusIcon, StatusLegend } from './StatusIcon.jsx';
 
 const PER_PAGE = 10;
 
@@ -18,18 +19,26 @@ export const ROLE_ORDER = ['USER', 'RECEPTIONIST', 'ADMIN'];
 
 export const STAFF = ['RECEPTIONIST', 'ADMIN'];
 
+const ROLE_ITEMS = ROLE_ORDER.map((r) => ({ value: r, label: ROLE_LABELS[r] }));
+
 /** "0919770245" → "0919 770 245" */
 const fmtPhone = (p) => String(p || '').replace(/^(\d{4})(\d{3})(\d+)$/, '$1 $2 $3');
+
+/** Trạng thái tài khoản: dấu tích xanh (hoạt động) hoặc ổ khoá đỏ (đã khoá). */
+const ACCOUNT_STATUS = {
+  active: { icon: 'checkCircle', tone: 'green', label: 'Đang hoạt động' },
+  locked: { icon: 'lock', tone: 'red', label: 'Đã khoá', note: 'Đã khoá, không đăng nhập được' },
+};
 
 function RowMenu({ a, self, open, up, onToggle, onEdit, onLock, onUnlock }) {
   const ref = useDismiss(open, onToggle);
   return (
     <div className="t-menu-wrap" ref={ref}>
-      <button type="button" className="t-btn t-btn-ghost t-btn-icon" aria-haspopup="menu" aria-expanded={open} aria-label={`Thao tác cho ${a.fullName}`} onClick={onToggle}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <circle cx="5" cy="12" r="2" />
+      <button type="button" className="t-kebab" aria-haspopup="menu" aria-expanded={open} aria-label={`Thao tác cho ${a.fullName}`} onClick={onToggle}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="5" r="2" />
           <circle cx="12" cy="12" r="2" />
-          <circle cx="19" cy="12" r="2" />
+          <circle cx="12" cy="19" r="2" />
         </svg>
       </button>
       {open && (
@@ -145,28 +154,21 @@ export default function Accounts() {
           <label htmlFor="tk-tim" className="t-label">
             Tìm theo tên hoặc số điện thoại
           </label>
-          <input id="tk-tim" type="search" className="t-input" placeholder="Nhập để lọc danh sách" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input autoComplete="off" id="tk-tim" type="search" className="t-input" placeholder="Nhập để lọc danh sách" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="t-field" style={{ flex: '1 1 200px' }}>
           <label htmlFor="tk-vaitro" className="t-label">
             Vai trò
           </label>
-          <select
+          <TPicker
             id="tk-vaitro"
-            className="t-select"
             value={role}
-            onChange={(e) => {
-              setRole(e.target.value);
+            onChange={(v) => {
+              setRole(v);
               setPage(1);
             }}
-          >
-            <option value="">Tất cả</option>
-            {ROLE_ORDER.map((r) => (
-              <option key={r} value={r}>
-                {ROLE_LABELS[r]}
-              </option>
-            ))}
-          </select>
+            items={[{ value: '', label: 'Tất cả' }, ...ROLE_ITEMS]}
+          />
         </div>
       </div>
 
@@ -180,13 +182,15 @@ export default function Accounts() {
               {data.roleCounts.ADMIN} Quản trị viên · {data.roleCounts.RECEPTIONIST} Tiếp tân · {data.roleCounts.USER} Người dùng
             </p>
           )}
+          {/* Cột Trạng thái chỉ hiện biểu tượng: chú thích ý nghĩa ngay trên bảng */}
+          <StatusLegend items={[ACCOUNT_STATUS.active, ACCOUNT_STATUS.locked]} />
         </div>
         {loading && !data && <Loading />}
         {data && data.items.length > 0 && (
           <div className="t-scroll">
             <div role="table" aria-label="Danh sách tài khoản hệ thống" className="t-table a-accounts">
               <div role="row" className="t-tr t-thead" style={{ borderTop: '1px solid var(--line-soft)' }}>
-                {['Họ và tên', 'Số điện thoại', 'Vai trò', 'Trạng thái', 'Tạo lúc', 'Thao tác'].map((h) => (
+                {['Họ và tên', 'Số điện thoại', 'Email', 'Vai trò', 'Trạng thái', 'Thao tác'].map((h) => (
                   <div key={h} role="columnheader" className="t-th">
                     {h}
                   </div>
@@ -201,8 +205,17 @@ export default function Accounts() {
                         <span className="t-td-name">{a.fullName}</span>
                         {self && <span className="t-td-sub">Tài khoản đang đăng nhập</span>}
                       </div>
-                      <div role="cell" className="t-td t-text">
+                      <div role="cell" className="t-td t-text a-nowrap">
                         {fmtPhone(a.phone)}
+                      </div>
+                      <div role="cell" className="t-td t-text">
+                        {a.email ? (
+                          <span className="a-ellipsis" title={a.email}>
+                            {a.email}
+                          </span>
+                        ) : (
+                          <span className="t-muted">Chưa có</span>
+                        )}
                       </div>
                       <div role="cell" className="t-td">
                         {self ? (
@@ -210,32 +223,21 @@ export default function Accounts() {
                             {ROLE_LABELS[a.role]}
                           </span>
                         ) : (
-                          <select className="t-select a-role-select" aria-label={`Vai trò của ${a.fullName}`} value={a.role} onChange={(e) => changeRole(a, e.target.value)}>
-                            {ROLE_ORDER.map((r) => (
-                              <option key={r} value={r}>
-                                {ROLE_LABELS[r]}
-                              </option>
-                            ))}
-                          </select>
+                          <TPicker
+                            id={`vt-${a.id}`}
+                            className="a-role-select"
+                            aria-label={`Vai trò của ${a.fullName}`}
+                            value={a.role}
+                            // Chọn lại đúng vai trò đang có thì không làm gì (như <select> trước đây)
+                            onChange={(r) => r !== a.role && changeRole(a, r)}
+                            items={ROLE_ITEMS}
+                          />
                         )}
                       </div>
-                      <div role="cell" className="t-td">
-                        {a.isActive ? (
-                          <span className="t-chip t-chip-green">
-                            <Icon name="checkCircle" size={18} strokeWidth={2.25} />
-                            Đang hoạt động
-                          </span>
-                        ) : (
-                          <span className="t-chip" style={{ background: 'var(--alert-100)', color: 'var(--alert-700)' }}>
-                            <Icon name="lock" size={18} strokeWidth={2.25} />
-                            Đã khoá
-                          </span>
-                        )}
+                      <div role="cell" className="t-td a-td-status">
+                        <StatusIcon {...ACCOUNT_STATUS[a.isActive ? 'active' : 'locked']} labelled />
                       </div>
-                      <div role="cell" className="t-td t-text">
-                        {fmtDate(a.createdAt)}
-                      </div>
-                      <div role="cell" className="t-td" style={{ padding: '14px 12px 14px 16px' }}>
+                      <div role="cell" className="t-td a-td-action">
                         <RowMenu
                           a={a}
                           self={self}

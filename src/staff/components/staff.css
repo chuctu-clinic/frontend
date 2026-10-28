@@ -185,6 +185,10 @@
 .t-btn-sm { padding: 0 12px; }
 .t-btn-lg { min-height: 48px; padding: 0 30px; font-weight: 700; }
 .t-btn-icon { width: 44px; padding: 0; flex-shrink: 0; }
+/* Nút ba chấm dọc mở menu thao tác của một dòng: không viền, vùng bấm 44px */
+.t-kebab { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; background: transparent; border: 0; border-radius: 12px; color: var(--ink-700); cursor: pointer; flex-shrink: 0; }
+.t-kebab:hover,
+.t-kebab[aria-expanded='true'] { background: var(--green-100); color: var(--green-700); }
 .t-btn-grow { flex: 1 1 240px; }
 .t-btn[disabled],
 .t-btn[aria-disabled='true'] { background: var(--surface-200); border-color: var(--t-muted-line); color: var(--ink-500); cursor: not-allowed; }

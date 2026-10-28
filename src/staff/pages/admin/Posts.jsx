@@ -6,10 +6,11 @@ import { api, qs } from '../../../shared/lib/api.js';
 import { fmtDate, fmtTime } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDismiss, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { Notice } from '../../components/fields.jsx';
+import { Notice, TPicker } from '../../components/fields.jsx';
 import { Pager } from '../../components/Pager.jsx';
 import { PlainDialog } from '../../components/dialogs.jsx';
 import './admin.css';
+import { StatusIcon, StatusLegend } from './StatusIcon.jsx';
 
 const PER_PAGE = 10;
 const STATUSES = [
@@ -20,39 +21,23 @@ const STATUSES = [
 // Màu nhãn danh mục: xanh cho tin tức, thiện nguyện; vàng cho hướng dẫn, sự kiện
 const GOLD_CATEGORIES = ['HUONG_DAN', 'SU_KIEN'];
 
-export function PostStatusChip({ status }) {
-  if (status === 'PUBLISHED')
-    return (
-      <span className="t-chip t-chip-green">
-        <Icon name="checkCircle" size={18} strokeWidth={2.25} />
-        Đã công khai
-      </span>
-    );
-  if (status === 'HIDDEN')
-    return (
-      <span className="t-chip t-chip-gold">
-        <Icon name="eye" size={18} strokeWidth={2.25} />
-        Đã ẩn
-      </span>
-    );
-  return (
-    <span className="t-chip t-chip-done t-chip-sm">
-      <Icon name="edit" size={18} strokeWidth={2.25} />
-      Bản nháp
-    </span>
-  );
-}
+/** Trạng thái bài viết: dấu tích xanh (công khai), mắt gạch chéo vàng (đã ẩn), bút chì xám (bản nháp). */
+const POST_STATUS = {
+  PUBLISHED: { icon: 'checkCircle', tone: 'green', label: 'Đã công khai', note: 'Đã công khai, hiện trên website' },
+  HIDDEN: { icon: 'eyeOff', tone: 'gold', label: 'Đã ẩn', note: 'Đã ẩn, không hiện trên website' },
+  DRAFT: { icon: 'edit', tone: 'gray', label: 'Bản nháp', note: 'Bản nháp, chưa đăng' },
+};
 
 function RowMenu({ p, open, up, onToggle, onHide, onPublish, onDelete }) {
   const ref = useDismiss(open, onToggle);
   const fixedPage = Boolean(p.slug);
   return (
     <div className="t-menu-wrap" ref={ref}>
-      <button type="button" className="t-btn t-btn-ghost t-btn-icon" aria-haspopup="menu" aria-expanded={open} aria-label={`Thao tác cho bài ${p.title}`} onClick={onToggle}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <circle cx="5" cy="12" r="2" />
+      <button type="button" className="t-kebab" aria-haspopup="menu" aria-expanded={open} aria-label={`Thao tác cho bài ${p.title}`} onClick={onToggle}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="5" r="2" />
           <circle cx="12" cy="12" r="2" />
-          <circle cx="19" cy="12" r="2" />
+          <circle cx="12" cy="19" r="2" />
         </svg>
       </button>
       {open && (
@@ -165,57 +150,47 @@ export default function Posts() {
           <label htmlFor="bv-tim" className="t-label">
             Tìm theo tiêu đề
           </label>
-          <input id="bv-tim" type="search" className="t-input" placeholder="Nhập để lọc danh sách" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input autoComplete="off" id="bv-tim" type="search" className="t-input" placeholder="Nhập để lọc danh sách" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="t-field" style={{ flex: '1 1 180px' }}>
           <label htmlFor="bv-chuyenmuc" className="t-label">
             Danh mục
           </label>
-          <select
+          {/* Chỉ 4 danh mục bài viết như bên website; trang thông tin cố định không quản lý ở đây */}
+          <TPicker
             id="bv-chuyenmuc"
-            className="t-select"
             value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
+            onChange={(v) => {
+              setCategory(v);
               setPage(1);
             }}
-          >
-            <option value="">Tất cả</option>
-            {/* Chỉ 4 danh mục bài viết như bên website; trang thông tin cố định không quản lý ở đây */}
-            {(meta?.postCategories || []).filter((c) => c.value !== 'TRANG').map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+            items={[{ value: '', label: 'Tất cả' }, ...(meta?.postCategories || []).filter((c) => c.value !== 'TRANG')]}
+          />
         </div>
         <div className="t-field" style={{ flex: '1 1 180px' }}>
           <label htmlFor="bv-trangthai" className="t-label">
             Trạng thái
           </label>
-          <select
+          <TPicker
             id="bv-trangthai"
-            className="t-select"
             value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
+            onChange={(v) => {
+              setStatus(v);
               setPage(1);
             }}
-          >
-            <option value="">Tất cả</option>
-            {STATUSES.map(([v, label]) => (
-              <option key={v} value={v}>
-                {label}
-              </option>
-            ))}
-          </select>
+            items={[{ value: '', label: 'Tất cả' }, ...STATUSES.map(([value, label]) => ({ value, label }))]}
+          />
         </div>
       </div>
 
       <div className="t-card">
-        <p className="t-label" style={{ padding: '20px 24px 14px' }}>
-          Bài viết trong hệ thống — {data ? `${filtered ? `${data.total} trên ${all}` : all} bài · ${counts.PUBLISHED} đã công khai · ${counts.DRAFT} bản nháp · ${counts.HIDDEN} đã ẩn` : '…'}
-        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '6px 20px', padding: '20px 24px 14px' }}>
+          <p className="t-label">
+            Bài viết trong hệ thống — {data ? `${filtered ? `${data.total} trên ${all}` : all} bài · ${counts.PUBLISHED} đã công khai · ${counts.DRAFT} bản nháp · ${counts.HIDDEN} đã ẩn` : '…'}
+          </p>
+          {/* Cột Trạng thái chỉ hiện biểu tượng: chú thích ý nghĩa ngay trên bảng */}
+          <StatusLegend items={[POST_STATUS.PUBLISHED, POST_STATUS.HIDDEN, POST_STATUS.DRAFT]} />
+        </div>
         {loading && !data && <Loading />}
         {data && data.items.length > 0 && (
           <div className="t-scroll">
@@ -250,14 +225,14 @@ export default function Posts() {
                     <div role="cell" className="t-td t-text">
                       {p.authorName}
                     </div>
-                    <div role="cell" className="t-td">
-                      <PostStatusChip status={p.status} />
+                    <div role="cell" className="t-td a-td-status">
+                      <StatusIcon {...(POST_STATUS[p.status] || POST_STATUS.DRAFT)} labelled />
                     </div>
                     <div role="cell" className="t-td t-text">
                       <span style={{ display: 'block', whiteSpace: 'nowrap' }}>{fmtDate(p.updatedAt)}</span>
                       <span style={{ display: 'block', color: 'var(--ink-500)' }}>{fmtTime(p.updatedAt)}</span>
                     </div>
-                    <div role="cell" className="t-td">
+                    <div role="cell" className="t-td a-td-action">
                       <RowMenu
                         p={p}
                         open={menu === p.id}
