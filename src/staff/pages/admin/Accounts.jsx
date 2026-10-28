@@ -70,7 +70,7 @@ function RowMenu({ a, self, open, up, onToggle, onEdit, onLock, onUnlock }) {
 /** Quản lý tài khoản: tìm, thêm, sửa, đổi vai trò, khoá và mở khoá (UC.8.1 – UC.8.5). */
 export default function Accounts() {
   useDocumentTitle('Quản lý tài khoản');
-  const { user } = useSession();
+  const { user, setUser } = useSession();
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
@@ -279,6 +279,8 @@ export default function Accounts() {
           onClose={() => setDialog(null)}
           onSaved={(acc, isAdd) => {
             setDialog(null);
+            // Sửa chính tài khoản đang đăng nhập: cập nhật phiên để tên trên thanh đầu đổi ngay
+            if (acc.id === user.id) setUser(acc);
             setNotice(
               isAdd
                 ? `Đã thêm tài khoản ${acc.fullName} với vai trò ${ROLE_LABELS[acc.role]}. ${
