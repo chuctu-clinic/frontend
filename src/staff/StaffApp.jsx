@@ -13,6 +13,7 @@ import Queue from './pages/staff/Queue.jsx';
 import Patients from './pages/staff/Patients.jsx';
 import PatientDetail from './pages/staff/PatientDetail.jsx';
 import RecordForm from './pages/staff/RecordForm.jsx';
+import AccountInfo from './pages/staff/AccountInfo.jsx';
 
 import Dashboard from './pages/admin/Dashboard.jsx';
 import Accounts from './pages/admin/Accounts.jsx';
@@ -73,6 +74,7 @@ export default function StaffApp() {
         <Route path="benh-nhan" element={<Patients />} />
         <Route path="benh-nhan/:id" element={<PatientDetail />} />
         <Route path="phieu-kham/:appointmentId/ket-qua" element={<RecordForm />} />
+        <Route path="tai-khoan" element={<AccountInfo />} />
         <Route path="*" element={<Empty title="Không tìm thấy trang">Đường dẫn này không có trong khu vực nội bộ.</Empty>} />
       </Route>
 
