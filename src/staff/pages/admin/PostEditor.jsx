@@ -6,7 +6,7 @@ import { api } from '../../../shared/lib/api.js';
 import { fmtDate, todayVN } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
 import { useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { FieldError, Notice } from '../../components/fields.jsx';
+import { FieldError, Notice, TPicker } from '../../components/fields.jsx';
 import { hasContent, toEditorHtml, uploadImage } from './postHtml.js';
 import './admin.css';
 
@@ -324,13 +324,7 @@ export default function PostEditor() {
               <label htmlFor="bv-cm" className="t-label">
                 Danh mục <span className="t-req">*</span>
               </label>
-              <select id="bv-cm" className="t-select" value={form.category} disabled={fixedPage} onChange={(e) => set('category', e.target.value)}>
-                {categories.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              <TPicker id="bv-cm" value={form.category} disabled={fixedPage} onChange={(v) => set('category', v)} items={categories} />
               <p className="t-muted">
                 {fixedPage ? 'Đây là trang thông tin cố định của website, không đổi được danh mục và không xoá được.' : 'Danh mục quyết định bài hiện ở mục nào trên menu.'}
               </p>

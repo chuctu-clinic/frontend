@@ -8,6 +8,7 @@ import { TDialog } from '../dialogs.jsx';
 import { RECEIVING_CLOSED, isReceivingNow, nowMinutesVN, minutesOf, longDay, patientLine } from './time.js';
 import { DayCards, SlotChoices } from './RescheduleDialog.jsx';
 import { NewPatientFields } from './NewPatientFields.jsx';
+import { TPicker } from '../fields.jsx';
 
 /** Tìm hồ sơ có sẵn theo họ tên, số điện thoại hoặc mã bệnh nhân. */
 function usePatientSearch(q) {
@@ -172,13 +173,7 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
             <label htmlFor="tl-dv" className="t-label">
               Khám về việc gì? <span className="t-req">*</span>
             </label>
-            <select id="tl-dv" className="t-select" value={service} onChange={(e) => setService(e.target.value)}>
-              {services.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+            <TPicker id="tl-dv" value={service} onChange={setService} items={services} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <span className="t-label">

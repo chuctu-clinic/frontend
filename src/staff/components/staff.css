@@ -224,6 +224,11 @@
 .t-readonly-lock { gap: 10px; min-height: 52px; padding: 0 16px; border-color: var(--t-soft-line); font-size: 17px; color: var(--ink-700); }
 .t-readonly-lock svg { flex-shrink: 0; color: var(--ink-500); }
 .t-input-tall { min-height: 52px; font-size: 17px; }
+/* Ô chọn (TPicker = Picker của trang khách): giữ kiểu trang đăng ký, cao bằng các ô khác của khu nội bộ */
+.t-vars,
+.t-app-portal { --auth-input: var(--t-white); }
+.a-input.t-pick { min-height: 44px; padding: 0 6px 0 14px; font-size: 16px; }
+.t-pick .a-pick-chev { width: 32px; height: 32px; }
 /* Ô mã xác nhận 6 số và dòng gửi lại mã (hộp thoại xác minh email) */
 .t-otp-lead { font-size: 17px; line-height: 27px; color: var(--ink-700); overflow-wrap: anywhere; }
 .t-otp { min-height: 68px; font-size: 32px; font-weight: 700; letter-spacing: 0.45em; text-align: center; font-variant-numeric: tabular-nums; }

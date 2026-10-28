@@ -6,6 +6,7 @@ import { fmtDate, fmtTime, shortTime, todayVN } from '../../../shared/lib/format
 import { useSession } from '../../../shared/lib/session.jsx';
 import { Summary, TDialog } from '../dialogs.jsx';
 import { nowMinutesVN, minutesOf, longDay } from './time.js';
+import { TPicker } from '../fields.jsx';
 
 // Check-in, hoàn tác check-in, huỷ phiếu khám
 
@@ -160,11 +161,7 @@ export function CancelDialog({ appt, onClose, onDone }) {
           <label htmlFor="hd-lydo" className="t-label">
             Lý do huỷ
           </label>
-          <select id="hd-lydo" className="t-select" value={choice} onChange={(e) => setChoice(e.target.value)}>
-            {CANCEL_REASONS.map((r) => (
-              <option key={r}>{r}</option>
-            ))}
-          </select>
+          <TPicker id="hd-lydo" value={choice} onChange={setChoice} items={CANCEL_REASONS.map((r) => ({ value: r, label: r }))} />
         </div>
         {choice === 'Lý do khác' && (
           <div className="t-field">

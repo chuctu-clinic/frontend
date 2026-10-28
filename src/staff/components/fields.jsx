@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Icon } from '../../shared/ui/Icon.jsx';
+import { Picker } from '../../site/components/Picker.jsx';
+// Kiểu ô chọn (a-pick) dùng chung với trang khách
+import '../../site/pages/auth/auth.css';
 import { phoneDigits, phoneInputError, toPhone } from '../../shared/domain/phone.js';
 
 // Thông báo và ô nhập của khu nội bộ
@@ -37,6 +40,14 @@ export function FieldError({ id, children }) {
 export function AccountNameHint({ value }) {
   if (!value) return null;
   return <input type="text" name="username" autoComplete="username" value={value} readOnly hidden />;
+}
+
+/**
+ * Ô chọn của khu nội bộ: cùng kiểu với trang đăng ký của khách (Picker: mũi tên trong vòng tròn xanh,
+ * danh sách tự vẽ chữ to), cao bằng các ô nhập khác của khu nội bộ. items = [{ value, label }], onChange nhận giá trị.
+ */
+export function TPicker({ className = '', ...props }) {
+  return <Picker className={`t-pick ${className}`.trim()} {...props} />;
 }
 
 /** Ô mật khẩu có nút hiện / ẩn bên cạnh. */
