@@ -6,109 +6,64 @@ import { api } from '../../../shared/lib/api.js';
 import { GENDERS, ageFrom, fmtDate, shortTime, todayVN } from '../../../shared/lib/format.js';
 import { isAdmin, useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { FieldError, Notice, PhoneField, normalizePhone, phoneError } from '../../components/fields.jsx';
+import { Notice } from '../../components/fields.jsx';
+import { PatientFields, focusFirstError, patientBody, patientForm, validatePatient } from '../../../site/components/PatientFields.jsx';
 import { TDialog } from '../../components/dialogs.jsx';
 import { EditRecordDialog } from '../../components/records/EditRecordDialog.jsx';
 import { HistoryTable } from '../../components/records/HistoryTable.jsx';
 import { ResultDialog } from '../../components/records/ResultSheet.jsx';
 
-/** Sửa thông tin hồ sơ: mã bệnh nhân không đổi (UC.9.5). */
+/** Hồ sơ chưa có ngày sinh đủ (tạo tại quầy chỉ có năm sinh): điền sẵn năm để tiếp tân chọn thêm ngày, tháng. */
+function editForm(patient) {
+  const form = patientForm(patient);
+  if (!patient.dob && patient.birthYear) form.dob = { day: '', month: '', year: String(patient.birthYear) };
+  return form;
+}
+
+/** Cùng quy tắc như lúc người dùng tạo hồ sơ, trừ quan hệ với người khám (chỉ có nghĩa với tài khoản người dùng). */
+function editErrors(form) {
+  const { relationship, ...rest } = validatePatient({ ...form, relationship: form.relationship || 'KHAC' });
+  return rest;
+}
+
+/** Sửa thông tin hồ sơ: đủ các ô như lúc người dùng tạo hồ sơ (UC.9.5). Mã bệnh nhân không đổi. */
 function EditPatientDialog({ patient, onClose, onSaved }) {
-  const [form, setForm] = useState({
-    fullName: patient.fullName,
-    birthYear: String(patient.birthYear || ''),
-    phone: String(patient.phone || '').replace(/^0/, ''),
-    gender: patient.gender || '',
-    address: patient.address || '',
-  });
+  const [form, setForm] = useState(() => editForm(patient));
   const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const year = Number(form.birthYear);
-  const errs = {
-    fullName: form.fullName.trim().length >= 2 ? null : 'Vui lòng nhập họ và tên (ít nhất 2 ký tự).',
-    birthYear: /^(19|20)\d{2}$/.test(form.birthYear) && year <= Number(todayVN().slice(0, 4)) ? null : 'Nhập năm sinh gồm 4 chữ số, ví dụ 1952.',
-    phone: phoneError(form.phone),
-  };
-  const fe = { ...(tried ? errs : {}), ...(error?.fields || {}) };
+  const server = error?.fields || {};
+  // Lỗi địa chỉ của Backend gắn vào ô phường / xã như bên người dùng
+  const fe = { ...server, ward: server.address, ...(tried ? editErrors(form) : {}) };
 
   const submit = async (e) => {
     e.preventDefault();
     setTried(true);
-    if (Object.values(errs).some(Boolean)) return;
+    if (Object.keys(editErrors(form)).length) {
+      focusFirstError('.t-dialog');
+      return;
+    }
     setPending(true);
     setError(null);
     try {
-      const res = await api.patch(`/staff/patients/${patient.id}`, {
-        fullName: form.fullName.trim(),
-        birthYear: form.birthYear,
-        phone: normalizePhone(form.phone),
-        gender: form.gender || null,
-        address: form.address.trim() || null,
-      });
+      const { relationship, ...body } = patientBody(form);
+      const res = await api.patch(`/staff/patients/${patient.id}`, body);
       onSaved(res.patient);
     } catch (err) {
       setError(err);
       setPending(false);
+      focusFirstError('.t-dialog');
     }
   };
 
   return (
-    <TDialog title="Sửa thông tin hồ sơ" width={640} onClose={onClose}>
-      <form className="t-dialog-body" style={{ padding: '24px 28px 28px', gap: 18 }} onSubmit={submit} noValidate>
+    <TDialog title="Sửa thông tin hồ sơ" width={760} onClose={onClose}>
+      <form className="t-dialog-body a-vars" style={{ padding: '24px 28px 28px', gap: 22 }} onSubmit={submit} noValidate>
         <p className="t-text">
-          Mã bệnh nhân <strong className="t-strong">{patient.patientCode}</strong> được cấp một lần và không đổi.
+          Mã bệnh nhân <strong className="t-strong">{patient.patientCode}</strong> được cấp một lần và không đổi. Ô có dấu <span className="t-req">*</span> là bắt buộc.
         </p>
-        <div className="t-field">
-          <label htmlFor="sua-ten" className="t-label">
-            Họ và tên <span className="t-req">*</span>
-          </label>
-          <input id="sua-ten" className="t-input" autoComplete="off" value={form.fullName} onChange={set('fullName')} aria-invalid={fe.fullName ? 'true' : 'false'} />
-          <FieldError>{fe.fullName}</FieldError>
-        </div>
-        <div className="t-row">
-          <div className="t-field" style={{ flex: '1 1 180px' }}>
-            <label htmlFor="sua-nam" className="t-label">
-              Năm sinh <span className="t-req">*</span>
-            </label>
-            <input
-              id="sua-nam"
-              className="t-input"
-              inputMode="numeric"
-              maxLength={4}
-              autoComplete="off"
-              value={form.birthYear}
-              onChange={(e) => setForm((f) => ({ ...f, birthYear: e.target.value.replace(/\D/g, '') }))}
-              aria-invalid={fe.birthYear ? 'true' : 'false'}
-            />
-            <FieldError>{fe.birthYear}</FieldError>
-          </div>
-          <div style={{ flex: '1 1 240px', minWidth: 0 }}>
-            <PhoneField id="sua-sdt" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} error={fe.phone} />
-          </div>
-        </div>
-        <div className="t-row">
-          <div className="t-field" style={{ flex: '1 1 180px' }}>
-            <label htmlFor="sua-gt" className="t-label">
-              Giới tính
-            </label>
-            <select id="sua-gt" className="t-select" value={form.gender} onChange={set('gender')}>
-              <option value="">Chưa cập nhật</option>
-              <option value="NU">Nữ</option>
-              <option value="NAM">Nam</option>
-              {form.gender === 'KHAC' && <option value="KHAC">Khác</option>}
-            </select>
-          </div>
-          <div className="t-field" style={{ flex: '1 1 240px' }}>
-            <label htmlFor="sua-dc" className="t-label">
-              Địa chỉ
-            </label>
-            <input id="sua-dc" className="t-input" autoComplete="off" value={form.address} onChange={set('address')} />
-            <FieldError>{fe.address}</FieldError>
-          </div>
-        </div>
-        {error && !error.fields && <ErrorAlert error={error} />}
+        <PatientFields id="sua" form={form} setForm={setForm} errors={fe} />
+        {error && !Object.keys(server).length && <ErrorAlert error={error} />}
         <div className="t-actions" style={{ paddingTop: 8, borderTop: '1px solid var(--line-soft)' }}>
           <button type="submit" className="t-btn t-btn-primary" style={{ padding: '0 26px' }} disabled={pending}>
             Lưu thay đổi
