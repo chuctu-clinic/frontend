@@ -9,6 +9,7 @@ import { useDocumentTitle } from '../../../shared/lib/hooks.js';
 import './staff-auth.css';
 
 import { homeFor } from '../../lib/home.js';
+import { ForgotPasswordDialog } from './ForgotPasswordDialog.jsx';
 
 /** Khung trang theo prototype "NoiBo-DangNhap": đầu trang "Khu quản trị", thẻ giữa trang, chân trang một dòng. */
 export function StaffShell({ title, subtitle, illustration, children }) {
@@ -74,6 +75,8 @@ export default function StaffLogin() {
   const [showPw, setShowPw] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
+  const [forgot, setForgot] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
   if (isStaff(user)) return <Navigate to={homeFor(user)} replace />;
 
@@ -98,9 +101,12 @@ export default function StaffLogin() {
         {user?.role === 'USER' && (
           <Alert>Cô chú đang đăng nhập tài khoản khách {user.fullName}. Đăng nhập nội bộ sẽ đăng xuất tài khoản này.</Alert>
         )}
+        {resetDone && (
+          <Alert type="success">Đã đổi mật khẩu. Hãy đăng nhập bằng mật khẩu mới.</Alert>
+        )}
         <TextInput
           label="Số điện thoại hoặc email"
-          autoComplete="username"
+          autoComplete="off"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           error={error?.fields?.identifier}
@@ -111,9 +117,12 @@ export default function StaffLogin() {
               <input
                 className="input"
                 type={showPw ? 'text' : 'password'}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setResetDone(false);
+                }}
                 {...a11y}
               />
               <button type="button" className="s-pw-toggle" onClick={() => setShowPw((v) => !v)} aria-pressed={showPw} aria-label={showPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>
@@ -123,14 +132,38 @@ export default function StaffLogin() {
             </div>
           )}
         </Field>
+        <div className="s-forgot">
+          <button
+            type="button"
+            className="s-forgot-link"
+            onClick={() => {
+              setForgot(true);
+              setResetDone(false);
+            }}
+          >
+            Quên mật khẩu?
+          </button>
+        </div>
         {error && !Object.keys(error.fields || {}).length && <ErrorAlert error={error} />}
         <Button type="submit" size="lg" block loading={pending} icon="login">
           Đăng nhập
         </Button>
         <p className="s-help">
-          Quên mật khẩu? Liên hệ quản trị viên để được cấp mật khẩu tạm. <Link to="/">Về trang chủ</Link>
+          <Link to="/">Về trang chủ</Link>
         </p>
       </form>
+      {forgot && (
+        <ForgotPasswordDialog
+          onClose={() => setForgot(false)}
+          onDone={() => {
+            setForgot(false);
+            setPassword('');
+            setShowPw(false);
+            setError(null);
+            setResetDone(true);
+          }}
+        />
+      )}
     </StaffShell>
   );
 }
