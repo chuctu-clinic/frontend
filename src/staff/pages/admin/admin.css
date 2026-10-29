@@ -22,16 +22,41 @@
 .a-drafts li { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line-soft); }
 
 /* ---------- Bảng tài khoản, bài viết ---------- */
-.a-accounts .t-tr { grid-template-columns: minmax(150px, 1.4fr) minmax(120px, 0.9fr) minmax(165px, 1.1fr) 200px 110px 112px; }
-.a-posts .t-tr { grid-template-columns: minmax(250px, 1fr) 152px 176px 160px 116px 100px; }
+/* Họ và tên · Số điện thoại · Email · Vai trò · Trạng thái · Thao tác: tên và email co giãn, các cột còn lại cố định */
+.a-accounts .t-tr { grid-template-columns: minmax(140px, 1fr) 136px minmax(160px, 1.3fr) 176px 112px 96px; }
+/* Bài viết · Danh mục · Tác giả · Trạng thái · Cập nhật · Thao tác */
+.a-posts .t-tr { grid-template-columns: minmax(250px, 1fr) 152px 160px 96px 116px 80px; }
 .a-accounts .t-td,
-.a-accounts .t-th { padding: 14px 16px; }
+.a-accounts .t-th,
 .a-posts .t-td,
 .a-posts .t-th { padding: 14px 12px; }
+.a-accounts .t-th,
+.a-posts .t-th { white-space: nowrap; }
+/* Cột Trạng thái (chỉ biểu tượng, chú thích ở .a-legend trên bảng) và Thao tác (nút ⋮): căn giữa, đệm hẹp để tiêu đề không tràn */
+.a-accounts .t-th:nth-child(5),
+.a-accounts .t-th:nth-child(6),
+.a-posts .t-th:nth-child(4),
+.a-posts .t-th:nth-child(6),
+.t-table .a-td-status,
+.t-table .a-td-action { padding-left: 4px; padding-right: 4px; text-align: center; }
+.a-td-status,
+.a-td-action { display: flex; justify-content: center; }
+.a-status-icon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 999px; flex-shrink: 0; }
+.a-status-icon.green { background: var(--green-100); color: var(--green-700); }
+.a-status-icon.red { background: var(--alert-100); color: var(--alert-700); }
+.a-status-icon.gold { background: var(--gold-100); color: var(--gold-700); }
+.a-status-icon.gray { background: var(--surface-200); color: var(--ink-700); }
+.a-legend { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 4px 0 0; padding: 0; list-style: none; color: var(--ink-700); }
+.a-legend li { display: inline-flex; align-items: center; gap: 10px; }
+.a-nowrap { white-space: nowrap; }
+.a-ellipsis { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .a-tr-locked { background: var(--t-cancel-bg); }
 .a-tr-locked .t-td-name,
 .a-tr-locked .t-text { color: var(--ink-500); }
 .a-role-select { min-height: 44px; padding: 0 12px; }
+/* Ô chọn vai trò trong bảng: gọn hơn ô chọn thường để cột Vai trò hẹp mà vẫn đủ chữ "Quản trị viên" */
+.a-accounts .a-input.a-role-select { gap: 6px; padding: 0 4px 0 10px; }
+.a-accounts .a-role-select .a-pick-chev { width: 26px; height: 26px; }
 .a-tr-locked .a-role-select { background: var(--surface-200); color: var(--ink-700); }
 .a-thumb { width: 72px; height: 54px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
 .a-thumb-empty { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 54px; background: var(--surface-200); border: 2px dashed var(--line-strong); border-radius: 10px; flex-shrink: 0; color: var(--ink-500); }

@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { ROLE_LABELS } from '../../../shared/lib/format.js';
-import { FieldError, normalizePhone, phoneError, PhoneField } from '../../components/fields.jsx';
+import { FieldError, normalizePhone, phoneError, PhoneField, TPicker } from '../../components/fields.jsx';
 import { PlainDialog } from '../../components/dialogs.jsx';
 import { ROLE_ORDER, STAFF } from './Accounts.jsx';
 
@@ -76,13 +76,12 @@ export function AccountDialog({ account, onClose, onSaved }) {
             <label htmlFor="tk-f-vaitro" className="t-label">
               Vai trò
             </label>
-            <select id="tk-f-vaitro" className="t-select" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
-              {ROLE_ORDER.map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_LABELS[r]}
-                </option>
-              ))}
-            </select>
+            <TPicker
+              id="tk-f-vaitro"
+              value={form.role}
+              onChange={(role) => setForm((f) => ({ ...f, role }))}
+              items={ROLE_ORDER.map((r) => ({ value: r, label: ROLE_LABELS[r] }))}
+            />
           </div>
           {needsPassword ? (
             <div className="t-field">

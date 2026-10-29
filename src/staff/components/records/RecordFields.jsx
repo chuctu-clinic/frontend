@@ -30,6 +30,7 @@ export function RecordFields({ form, setForm, errors, visitDate }) {
             1. Chẩn đoán <span className="t-req">*</span>
           </label>
           <textarea
+            autoComplete="off"
             id={id('cd')}
             rows={2}
             className="t-textarea"
@@ -111,20 +112,20 @@ export function RecordFields({ form, setForm, errors, visitDate }) {
             <label htmlFor={id('cc')} className="t-label">
               Châm cứu
             </label>
-            <textarea id={id('cc')} rows={3} className="t-textarea" placeholder="Để trống nếu không thực hiện" value={form.acupuncture} onChange={set('acupuncture')} />
+            <textarea autoComplete="off" id={id('cc')} rows={3} className="t-textarea" placeholder="Để trống nếu không thực hiện" value={form.acupuncture} onChange={set('acupuncture')} />
           </div>
           <div className="t-field" style={{ flex: '1 1 280px' }}>
             <label htmlFor={id('bh')} className="t-label">
               Bấm huyệt
             </label>
-            <textarea id={id('bh')} rows={3} className="t-textarea" placeholder="Để trống nếu không thực hiện" value={form.acupressure} onChange={set('acupressure')} />
+            <textarea autoComplete="off" id={id('bh')} rows={3} className="t-textarea" placeholder="Để trống nếu không thực hiện" value={form.acupressure} onChange={set('acupressure')} />
           </div>
         </div>
         <div className="t-field">
           <label htmlFor={id('kh')} className="t-label">
             Khác
           </label>
-          <textarea id={id('kh')} rows={2} className="t-textarea" placeholder="Thuốc Nam, xông, dặn dò tại nhà…" value={form.other} onChange={set('other')} />
+          <textarea autoComplete="off" id={id('kh')} rows={2} className="t-textarea" placeholder="Thuốc Nam, xông, dặn dò tại nhà…" value={form.other} onChange={set('other')} />
         </div>
         <p className="t-iconrow" style={{ gap: 10, color: 'var(--gold-700)', fontWeight: 600 }}>
           <Icon name="info" size={22} />

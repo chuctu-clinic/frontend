@@ -80,6 +80,50 @@
 .s-pw-toggle:hover { background: var(--green-100); }
 
 .s-auth .btn-lg { min-height: 60px; font-size: 20px; }
+/* Quên mật khẩu: link dưới ô mật khẩu và hộp thoại hai bước */
+.s-forgot { display: flex; justify-content: flex-end; margin-top: -12px; }
+.s-forgot-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--green-700);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.s-forgot-link:hover { color: var(--green-600); }
+.s-send-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.s-send-row .a-input { flex: 1 1 220px; min-width: 0; width: auto; }
+.s-send-row .s-send-btn { flex: 0 0 auto; width: auto; padding: 0 22px; font-size: 17px; font-weight: 700; white-space: nowrap; }
+.s-sent { display: flex; gap: 8px; align-items: flex-start; font-size: 16px; line-height: 24px; font-weight: 600; color: var(--green-700); }
+.s-sent svg { flex-shrink: 0; margin-top: 1px; }
+.s-pw-row { display: flex; gap: 10px; align-items: stretch; }
+/* Đã có nút hiện / ẩn riêng: ẩn nút xem mật khẩu Edge tự gắn vào ô */
+.s-pw input::-ms-reveal,
+.s-pw input::-ms-clear,
+.s-pw-row input::-ms-reveal,
+.s-pw-row input::-ms-clear { display: none; }
+.s-pw-row .s-pw-input { flex: 1 1 auto; min-width: 0; width: auto; }
+.s-pw-eye {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  background: var(--surface-card);
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  color: var(--green-700);
+  cursor: pointer;
+}
+.s-pw-eye:hover { background: var(--green-100); }
+
 .s-help { font-size: 16px; line-height: 24px; color: var(--ink-500); text-align: center; }
 .s-help a { color: var(--green-700); font-weight: 600; }
 

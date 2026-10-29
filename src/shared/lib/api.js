@@ -1,5 +1,6 @@
 // API Client: tập trung mọi lời gọi REST tới Backend.
-const BASE = import.meta.env.VITE_API_URL || '';
+// Địa chỉ API (VITE_API_URL trong .env); để trống thì gọi /api cùng địa chỉ
+export const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // Tài khoản tab này đang hiển thị. Cookie đăng nhập là chung cho mọi tab, nên server so khớp để từ chối
 // thao tác nếu tab khác vừa đăng nhập tài khoản khác hay đăng xuất (lỗi SESSION_CHANGED).
@@ -24,7 +25,7 @@ export class ApiError extends Error {
 async function request(method, path, body) {
   let res;
   try {
-    res = await fetch(`${BASE}/api${path}`, {
+    res = await fetch(`${API_BASE}/api${path}`, {
       method,
       credentials: 'include',
       headers: { ...appHeaders(), ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) },

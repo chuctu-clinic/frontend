@@ -61,7 +61,15 @@
   white-space: nowrap;
 }
 .t-user { margin-left: auto; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-.t-user-name { font-size: 16px; font-weight: 600; color: #fff; white-space: nowrap; }
+.t-user-name { font-size: 16px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-user-btn { display: inline-flex; align-items: center; gap: 10px; max-width: 100%; min-height: 44px; padding: 0 12px 0 6px; background: rgba(255, 255, 255, 0.18); border: 0; border-radius: 12px; font: inherit; color: #fff; cursor: pointer; }
+.t-user-btn:hover,
+.t-user-btn[aria-expanded='true'] { background: rgba(255, 255, 255, 0.26); }
+.t-user-btn svg { flex-shrink: 0; }
+.t-user-avatar { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: rgba(255, 255, 255, 0.22); border-radius: 999px; flex-shrink: 0; }
+.t-user-menu .t-menu { width: 270px; }
+.t-user-menu .t-menu-item { min-height: 52px; font-size: 17px; }
+.t-user-menu .t-menu-item[aria-current='page'] { background: var(--green-100); color: var(--green-700); }
 .t-btn-dark {
   display: inline-flex;
   align-items: center;
@@ -115,6 +123,10 @@
   }
   .t-burger[aria-expanded='true'] { background: rgba(255, 255, 255, 0.18); }
   .t-user { order: 3; flex: 1 1 100%; margin-left: 0; justify-content: space-between; }
+  .t-user-menu { width: 100%; }
+  .t-user-btn { width: 100%; }
+  .t-user-btn .t-user-name { flex: 1 1 auto; text-align: left; }
+  .t-user-menu .t-menu { left: 0; right: 0; width: auto; }
   .t-aside { display: contents; }
   .t-side { display: none; order: -1; flex: 1 1 100%; }
   .t-side.open { display: flex; }
@@ -173,6 +185,10 @@
 .t-btn-sm { padding: 0 12px; }
 .t-btn-lg { min-height: 48px; padding: 0 30px; font-weight: 700; }
 .t-btn-icon { width: 44px; padding: 0; flex-shrink: 0; }
+/* Nút ba chấm dọc mở menu thao tác của một dòng: không viền, vùng bấm 44px */
+.t-kebab { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; background: transparent; border: 0; border-radius: 12px; color: var(--ink-700); cursor: pointer; flex-shrink: 0; }
+.t-kebab:hover,
+.t-kebab[aria-expanded='true'] { background: var(--green-100); color: var(--green-700); }
 .t-btn-grow { flex: 1 1 240px; }
 .t-btn[disabled],
 .t-btn[aria-disabled='true'] { background: var(--surface-200); border-color: var(--t-muted-line); color: var(--ink-500); cursor: not-allowed; }
@@ -209,6 +225,28 @@
 :is(.t-app, .t-app-portal) .t-textarea[aria-invalid='true']:focus { border-color: var(--alert-700); box-shadow: 0 0 0 4px rgba(144, 55, 42, 0.18); }
 .t-input-num { width: 96px; padding: 0 12px; text-align: right; }
 .t-readonly { display: flex; align-items: center; min-height: 44px; padding: 0 14px; background: var(--surface-200); border: 2px solid var(--line-soft); border-radius: 12px; font-weight: 600; color: var(--ink-900); }
+.t-readonly-lock { gap: 10px; min-height: 52px; padding: 0 16px; border-color: var(--t-soft-line); font-size: 17px; color: var(--ink-700); }
+.t-readonly-lock svg { flex-shrink: 0; color: var(--ink-500); }
+.t-input-tall { min-height: 52px; font-size: 17px; }
+/* Ô chọn (TPicker = Picker của trang khách): giữ kiểu trang đăng ký, cao bằng các ô khác của khu nội bộ */
+.t-vars,
+.t-app-portal { --auth-input: var(--t-white); }
+.a-input.t-pick { min-height: 44px; padding: 0 6px 0 14px; font-size: 16px; }
+.t-pick .a-pick-chev { width: 32px; height: 32px; }
+/* Ô mã xác nhận 6 số và dòng gửi lại mã (hộp thoại xác minh email) */
+.t-otp-lead { font-size: 17px; line-height: 27px; color: var(--ink-700); overflow-wrap: anywhere; }
+.t-otp { min-height: 68px; font-size: 32px; font-weight: 700; letter-spacing: 0.45em; text-align: center; font-variant-numeric: tabular-nums; }
+.t-otp-resend { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: var(--surface-200); border-radius: 16px; padding: 14px 18px; color: var(--ink-900); }
+.t-btn-full { width: 100%; justify-content: center; }
+@media (max-width: 600px) {
+  .t-otp { font-size: 28px; letter-spacing: 0.3em; }
+}
+.t-pw { display: flex; gap: 10px; align-items: stretch; }
+.t-pw .t-input { flex: 1 1 auto; min-width: 0; min-height: 52px; font-size: 17px; }
+/* Đã có nút hiện / ẩn riêng: ẩn nút xem mật khẩu Edge tự gắn vào ô */
+.t-pw input::-ms-reveal,
+.t-pw input::-ms-clear { display: none; }
+.t-pw-toggle { width: 52px; min-height: 52px; }
 .t-error { display: flex; gap: 8px; align-items: flex-start; font-size: 16px; line-height: 24px; font-weight: 600; color: var(--alert-700); }
 .t-error svg { flex-shrink: 0; margin-top: 2px; }
 .t-row { display: flex; flex-wrap: wrap; gap: 18px 20px; align-items: flex-start; }
@@ -429,6 +467,9 @@
 .t-menu-item:focus-visible { background: var(--green-100); }
 .t-menu-item.danger:hover,
 .t-menu-item.danger:focus-visible { background: var(--t-red-100); }
+/* Thao tác chưa làm được (vd. check-in ngoài giờ nhận bệnh): mờ, ghi rõ lý do */
+.t-menu-item:disabled { min-height: 52px; padding: 6px 14px; color: var(--ink-500); font-weight: 500; line-height: 22px; white-space: normal; cursor: not-allowed; }
+.t-menu-item:disabled:hover { background: transparent; }
 
 /* ---------- Hộp thoại ---------- */
 .t-dialog-backdrop { position: fixed; inset: 0; z-index: 90; background: rgba(42, 33, 24, 0.58); overflow-y: auto; padding: 24px 20px; display: flex; align-items: flex-start; justify-content: center; }

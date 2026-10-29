@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../../shared/lib/api.js';
 import { fmtTime } from '../../shared/lib/format.js';
+import { useDismiss } from '../../shared/lib/hooks.js';
 import { isAdmin, useSession } from '../../shared/lib/session.jsx';
 import { Icon } from '../../shared/ui/Icon.jsx';
 import './staff.css';
@@ -64,10 +65,7 @@ export function StaffLayout() {
             </button>
           )}
           <div className="t-user">
-            <span className="t-user-name">{user.fullName}</span>
-            <button type="button" className="t-btn-dark" onClick={handleLogout}>
-              Đăng xuất
-            </button>
+            <UserMenu user={user} onLogout={handleLogout} />
           </div>
         </div>
       </header>
@@ -95,6 +93,38 @@ export function StaffLayout() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+/** Nút tên người dùng trên thanh đầu, mở menu Thông tin tài khoản và Đăng xuất. */
+function UserMenu({ user, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  const ref = useDismiss(open, close);
+  const { pathname } = useLocation();
+  useEffect(close, [pathname, close]);
+  return (
+    <div className="t-menu-wrap t-user-menu" ref={ref}>
+      <button type="button" className="t-user-btn" aria-haspopup="menu" aria-expanded={open} aria-label={`Tài khoản của ${user.fullName}`} onClick={() => setOpen((v) => !v)}>
+        <span className="t-user-avatar">
+          <Icon name="user" size={20} strokeWidth={1.75} />
+        </span>
+        <span className="t-user-name">{user.fullName}</span>
+        <Icon name="chevronDown" size={18} strokeWidth={2.25} />
+      </button>
+      {open && (
+        <div role="menu" aria-label={`Tài khoản của ${user.fullName}`} className="t-menu down">
+          <NavLink to="/noi-bo/tai-khoan" role="menuitem" className="t-menu-item">
+            <Icon name="user" size={22} strokeWidth={1.75} />
+            Thông tin tài khoản
+          </NavLink>
+          <button type="button" role="menuitem" className="t-menu-item danger" onClick={onLogout}>
+            <Icon name="logout" size={22} strokeWidth={1.75} />
+            Đăng xuất
+          </button>
+        </div>
+      )}
     </div>
   );
 }

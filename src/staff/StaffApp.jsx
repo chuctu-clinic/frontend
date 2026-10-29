@@ -13,6 +13,7 @@ import Queue from './pages/staff/Queue.jsx';
 import Patients from './pages/staff/Patients.jsx';
 import PatientDetail from './pages/staff/PatientDetail.jsx';
 import RecordForm from './pages/staff/RecordForm.jsx';
+import AccountInfo from './pages/staff/AccountInfo.jsx';
 
 import Dashboard from './pages/admin/Dashboard.jsx';
 import Accounts from './pages/admin/Accounts.jsx';
@@ -58,8 +59,20 @@ function useNoIndex() {
   }, []);
 }
 
+/** Khu nội bộ dùng logo khiên làm favicon (đổi khi vào khu, trả lại favicon chung khi rời đi). */
+function useStaffFavicon() {
+  useEffect(() => {
+    const link = document.querySelector('link[rel="icon"]');
+    if (!link) return undefined;
+    const prev = link.getAttribute('href');
+    link.setAttribute('href', `${import.meta.env.BASE_URL}logo-admin-64.png`);
+    return () => link.setAttribute('href', prev);
+  }, []);
+}
+
 export default function StaffApp() {
   useNoIndex();
+  useStaffFavicon();
   return (
     <Routes>
       <Route index element={<Start />} />
@@ -73,6 +86,7 @@ export default function StaffApp() {
         <Route path="benh-nhan" element={<Patients />} />
         <Route path="benh-nhan/:id" element={<PatientDetail />} />
         <Route path="phieu-kham/:appointmentId/ket-qua" element={<RecordForm />} />
+        <Route path="tai-khoan" element={<AccountInfo />} />
         <Route path="*" element={<Empty title="Không tìm thấy trang">Đường dẫn này không có trong khu vực nội bộ.</Empty>} />
       </Route>
 

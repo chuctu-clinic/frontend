@@ -8,6 +8,7 @@ import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { Pager } from '../../components/Pager.jsx';
 import { TDialog } from '../../components/dialogs.jsx';
 import { NewPatientFields } from '../../components/appointments/NewPatientFields.jsx';
+import { TPicker } from '../../components/fields.jsx';
 
 const PER_PAGE = 10;
 const GRID = { gridTemplateColumns: '170px minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1.3fr) 150px' };
@@ -80,17 +81,22 @@ export default function Patients() {
           <label htmlFor="bn-tim" className="t-label">
             Tìm theo mã bệnh nhân, họ tên hoặc số điện thoại
           </label>
-          <input id="bn-tim" type="search" className="t-input" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input autoComplete="off" id="bn-tim" type="search" className="t-input" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="t-field" style={{ flex: '1 1 200px' }}>
           <label htmlFor="bn-trangthai" className="t-label">
             Trạng thái
           </label>
-          <select id="bn-trangthai" className="t-select" value={locked} onChange={(e) => set({ khoa: e.target.value, trang: 1 })}>
-            <option value="">Tất cả</option>
-            <option value="false">Đang hoạt động</option>
-            <option value="true">Đã khoá</option>
-          </select>
+          <TPicker
+            id="bn-trangthai"
+            value={locked}
+            onChange={(v) => set({ khoa: v, trang: 1 })}
+            items={[
+              { value: '', label: 'Tất cả' },
+              { value: 'false', label: 'Đang hoạt động' },
+              { value: 'true', label: 'Đã khoá' },
+            ]}
+          />
         </div>
       </div>
 

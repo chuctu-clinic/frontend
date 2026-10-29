@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { useDismiss } from '../../../shared/lib/hooks.js';
-import { nowMinutesVN } from '../../components/appointments/time.js';
+import { RECEIVING_HOURS } from '../../../shared/domain/constants.js';
+import { RECEIVING_CLOSED, isReceivingNow, nowMinutesVN } from '../../components/appointments/time.js';
 import { clock, minutesOf } from './DailySchedule.jsx';
 
 // Thành phần của từng dòng trong Lịch trong ngày
@@ -53,6 +54,8 @@ export function stateNote(a, isToday) {
     if (checkInMin >= minutesOf(a.slotStart) + 60) return 'Đến sau khung đã đặt';
     if (checkInMin < minutesOf(a.slotStart)) return `Đến sớm, xếp nhóm thường`;
   }
+  // Đã đóng cửa: không check-in được nữa, phiếu sẽ tự huỷ lúc 17:00
+  if (a.status === 'BOOKED' && isToday && nowMinutesVN() >= minutesOf(RECEIVING_HOURS.close)) return `Ngoài giờ nhận bệnh, tự huỷ lúc ${RECEIVING_HOURS.noShowCancel.replace(/^0/, '')} nếu không đến`;
   if (a.status === 'BOOKED' && isToday && minutesOf(a.slotStart) + 60 <= nowMinutesVN()) return 'Đã qua khung giờ khám';
   return '';
 }
@@ -61,7 +64,10 @@ export function RowMenu({ a, isToday, isPast, open, onToggle, up, act }) {
   const ref = useDismiss(open, onToggle);
   const name = a.patient?.fullName;
   const items = [];
-  if (a.status === 'BOOKED' && isToday) items.push(['checkin', 'check', 'Check-in', 'green']);
+  if (a.status === 'BOOKED' && isToday) {
+    // Ngoài giờ nhận bệnh: vẫn hiện mục Check-in nhưng làm mờ, kèm lý do
+    items.push(isReceivingNow() ? ['checkin', 'check', 'Check-in', 'green'] : ['checkin', 'check', RECEIVING_CLOSED, 'disabled']);
+  }
   if (a.status === 'CHECKED_IN' && isToday) items.push(['enter', 'arrowRight', 'Vào khám', 'green']);
   if (a.status === 'BOOKED' && !isPast) items.push(['reschedule', 'clock', 'Đổi giờ khám']);
   if (a.status === 'IN_PROGRESS') items.push(['record', 'file', 'Ghi nhận lượt khám']);
@@ -101,7 +107,14 @@ export function RowMenu({ a, isToday, isPast, open, onToggle, up, act }) {
                 {label}
               </Link>
             ) : (
-              <button key={key} type="button" role="menuitem" className={`t-menu-item ${tone || ''}`} onClick={() => act(key, a)}>
+              <button
+                key={key}
+                type="button"
+                role="menuitem"
+                className={`t-menu-item ${tone || ''}`}
+                disabled={tone === 'disabled'}
+                onClick={() => act(key, a)}
+              >
                 <Icon name={icon} size={22} />
                 {label}
               </button>
