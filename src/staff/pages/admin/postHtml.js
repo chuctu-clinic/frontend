@@ -1,6 +1,6 @@
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
-import { appHeaders } from '../../../shared/lib/api.js';
+import { API_BASE, appHeaders } from '../../../shared/lib/api.js';
 
 // Xử lý nội dung bài viết, tách khỏi RichEditor.jsx để trang xem trước và danh sách không phải tải CKEditor.
 // Nội dung lưu dạng HTML; trang công khai hiển thị qua Markdown (marked + DOMPurify) nên HTML vẫn hiện đúng.
@@ -36,7 +36,7 @@ export async function uploadImage(file, maxSide = 1600) {
     blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
   }
   if (blob.size > 3 * 1024 * 1024) throw new Error('Ảnh quá lớn, vui lòng chọn ảnh dưới 3 MB.');
-  const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/uploads`, {
+  const res = await fetch(`${API_BASE}/api/admin/uploads`, {
     method: 'POST',
     credentials: 'include',
     headers: { ...appHeaders(), 'Content-Type': blob.type },

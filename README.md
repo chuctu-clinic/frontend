@@ -42,10 +42,14 @@ Có hai cách nối với backend:
 1. **Cùng địa chỉ** (khuyên dùng): chạy image Docker của repo này với `API_UPSTREAM` là địa chỉ backend, ví dụ `API_UPSTREAM=https://api.chuctu.vn`. Trình duyệt chỉ thấy một địa chỉ, cookie phiên là cookie cùng trang.
 2. **Khác địa chỉ** (ví dụ frontend tĩnh trên Vercel/Netlify): build với `VITE_API_URL=https://dia-chi-backend` và đặt `CLIENT_ORIGIN` bên backend là địa chỉ frontend. Cả hai bên phải dùng HTTPS vì cookie phiên là `SameSite=None; Secure`. Trang tĩnh cần cấu hình chuyển mọi đường dẫn về `index.html` giống `nginx.conf`.
 
+Mọi biến đặt trong file `.env` (chép từ `.env.example`, không commit). Biến nào để trống thì dùng giá trị mặc định.
+
 | Biến | Lúc | Ý nghĩa |
 | --- | --- | --- |
-| `API_UPSTREAM` | chạy container | Địa chỉ backend mà nginx chuyển `/api` tới. |
+| `DEV_PORT` | `npm run dev` | Cổng của Vite, mặc định 5173. |
+| `DEV_API_TARGET` | `npm run dev` | Backend mà Vite chuyển `/api` tới, mặc định `http://localhost:4000`. |
 | `VITE_API_URL` | build | Địa chỉ API khi frontend và backend ở hai địa chỉ khác nhau. Để trống thì gọi `/api` cùng địa chỉ. |
+| `API_UPSTREAM` | chạy container | Địa chỉ backend mà nginx chuyển `/api` tới. |
 
 Khách và nhân viên dùng chung một phiên đăng nhập (cookie `ct_session`); trang nào dùng được do vai trò của tài khoản quyết định. Một trình duyệt chỉ đăng nhập được một tài khoản tại một thời điểm.
 
