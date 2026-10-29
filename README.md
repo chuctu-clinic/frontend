@@ -40,7 +40,8 @@ Mở http://localhost:8080 (trang khách) và http://localhost:8080/noi-bo/ (ti�
 Có hai cách nối với backend:
 
 1. **Cùng địa chỉ** (khuyên dùng): chạy image Docker của repo này với `API_UPSTREAM` là địa chỉ backend, ví dụ `API_UPSTREAM=https://api.chuctu.vn`. Trình duyệt chỉ thấy một địa chỉ, cookie phiên là cookie cùng trang.
-2. **Khác địa chỉ** (ví dụ frontend tĩnh trên Vercel/Netlify): build với `VITE_API_URL=https://dia-chi-backend` và đặt `CLIENT_ORIGIN` bên backend là địa chỉ frontend. Cả hai bên phải dùng HTTPS vì cookie phiên là `SameSite=None; Secure`. Trang tĩnh cần cấu hình chuyển mọi đường dẫn về `index.html` giống `nginx.conf`.
+   - **Vercel**: `vercel.json` đã chuyển `/api` sang backend và đưa mọi đường dẫn khác về `index.html`. Sửa `destination` của `/api` thành địa chỉ backend (rewrite của Vercel không đọc được biến môi trường), để trống `VITE_API_URL`, và thêm địa chỉ Vercel vào `CLIENT_ORIGIN` bên backend.
+2. **Khác địa chỉ** (frontend gọi thẳng backend ở tên miền khác): build với `VITE_API_URL=https://dia-chi-backend` và đặt `CLIENT_ORIGIN` bên backend là địa chỉ frontend. Cả hai bên phải dùng HTTPS vì cookie phiên là `SameSite=None; Secure`. Trang tĩnh cần cấu hình chuyển mọi đường dẫn về `index.html` giống `nginx.conf`.
 
 Mọi biến đặt trong file `.env` (chép từ `.env.example`, không commit). Biến nào để trống thì dùng giá trị mặc định.
 
