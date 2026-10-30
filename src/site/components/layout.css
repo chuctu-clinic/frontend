@@ -16,13 +16,17 @@
 .site-header .header-actions { margin-left: auto; }
 .btn-login { background: var(--surface-card); color: var(--green-700); border-color: var(--line-strong); font-size: 18px; padding: 0 20px; }
 .btn-login:hover { background: var(--green-100); }
-@media (max-width: 1100px) {
-  .site-header .main-nav { margin-left: 0; }
-}
 
 /* Khi đã đăng nhập: nút tên người dùng thay cho nút Đăng nhập, menu rộng hơn */
 .site-header-user .main-nav { margin-left: 12px; }
 .site-header-user .main-nav a { padding: 0 12px; }
+
+/* Menu thu gọn: xuống hàng riêng, phải ghi đè flex-basis ở trên nếu không menu mở ra nằm chen cạnh logo */
+@media (max-width: 1100px) {
+  .site-header .main-nav,
+  .site-header-user .main-nav { flex: 1 1 100%; margin-left: 0; }
+  .site-header .header-actions { margin-left: 0; }
+}
 .user-btn {
   display: inline-flex;
   align-items: center;
