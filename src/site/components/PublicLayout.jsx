@@ -140,7 +140,22 @@ export function PublicLayout() {
         </div>
       </main>
       {loggedIn ? <UserFooter onLogout={handleLogout} /> : <Footer />}
+      <QuickContact />
     </>
+  );
+}
+
+/** Hai nút gọi điện và chỉ đường, luôn nằm ở góc dưới bên phải màn hình điện thoại và máy bảng (layout.css). */
+function QuickContact() {
+  return (
+    <nav className="quick-contact" aria-label="Liên hệ nhanh">
+      <a href={CLINIC.phoneHref} className="quick-btn" aria-label={`Gọi phòng khám ${CLINIC.phone}`}>
+        <Icon name="phone" size={28} strokeWidth={1.75} />
+      </a>
+      <a href={CLINIC.mapUrl} className="quick-btn quick-btn-map" target="_blank" rel="noreferrer" aria-label="Xem đường đi trên Google Maps">
+        <Icon name="map" size={28} strokeWidth={1.75} />
+      </a>
+    </nav>
   );
 }
 

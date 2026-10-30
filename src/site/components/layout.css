@@ -116,3 +116,34 @@
   .f-links-row { gap: 32px; }
   .f-bottom { padding: 20px 16px; }
 }
+
+/* Liên hệ nhanh: chỉ hiện trên điện thoại và máy bảng */
+.quick-contact { display: none; }
+@media (max-width: 1099px) {
+  /* Chừa chỗ để hai nút không che dòng cuối trang */
+  .f-bottom { padding-right: 88px; }
+  .quick-contact {
+    position: fixed;
+    z-index: 40;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+.quick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--green-700);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(42, 33, 24, 0.28);
+}
+.quick-btn-map { background: var(--gold-700); }
+@media print {
+  .quick-contact { display: none; }
+}
