@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { Alert, ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { isStaff, useSession } from '../../../shared/lib/session.jsx';
 import { useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { AuthShell, ClinicPhoto } from './AuthShell.jsx';
+import { AuthLink, AuthShell } from './AuthShell.jsx';
 import { AddressFields, dobError, DobField, FieldError, joinAddress, joinDob, phoneDigits, phoneError, PhoneField, PROVINCES, toPhone } from '../../components/fields.jsx';
 import { safeNext, withNext } from './Login.jsx';
 import { OtpDialog } from './OtpDialog.jsx';
@@ -74,7 +74,7 @@ export default function Register() {
     setError(null);
     if (Object.keys(validate(form)).length) {
       // Đưa con trỏ tới ô lỗi đầu tiên
-      setTimeout(() => document.querySelector('.a-card [aria-invalid="true"], .a-card .a-radios-invalid input')?.focus());
+      setTimeout(() => document.querySelector('.a-split-card [aria-invalid="true"], .a-split-card .a-radios-invalid input')?.focus());
       return;
     }
     setPending(true);
@@ -113,35 +113,22 @@ export default function Register() {
   const describe = (id, err) => (err ? `${id}-loi` : undefined);
 
   return (
-    <AuthShell
-      wide
-      switchText="Đã có tài khoản?"
-      switchLabel="Đăng nhập"
-      switchTo={withNext('/dang-nhap', next)}
-      aside={
-        <>
-          <div className="a-note-card">
-            <Icon name="lock" size={30} strokeWidth={1.75} />
-            <p>Phòng khám chỉ dùng thông tin của cô chú cho việc khám chữa bệnh, không chia sẻ cho bên nào khác.</p>
-          </div>
-          <ClinicPhoto short />
-        </>
-      }
-    >
-      <div>
+    <AuthShell wide note="Phòng khám chỉ dùng thông tin của cô chú cho việc khám chữa bệnh, không chia sẻ cho bên nào khác.">
+      <div className="a-split-head">
+        <p className="a-lead">Chào mừng cô chú đến với Chúc Từ</p>
         <h1 className="a-title">Tạo tài khoản</h1>
-        <p className="a-lead">
-          Cô chú điền giúp mấy ô dưới đây. Ô có dấu <span className="a-req">*</span> là bắt buộc.
+        <p className="a-hint">
+          Ô có dấu <span className="a-req">*</span> là bắt buộc.
         </p>
       </div>
 
-      <form className="a-form" onSubmit={submitForm} noValidate>
+      <form className="a-form a-form-grid" onSubmit={submitForm} noValidate>
         {isStaff(user) && (
           <Alert>
             Cô chú đang đăng nhập tài khoản nội bộ {user.fullName}. Tạo tài khoản khách sẽ đăng xuất tài khoản nội bộ.
           </Alert>
         )}
-        <div className="a-field">
+        <div className="a-field a-span-3">
           <label htmlFor="dk-hoten" className="a-label">
             Họ và tên <span className="a-req" aria-hidden="true">*</span>
           </label>
@@ -158,19 +145,23 @@ export default function Register() {
           <FieldError id="dk-hoten-loi">{fe.fullName}</FieldError>
         </div>
 
-        <PhoneField
-          id="dk-sdt"
-          label="Số điện thoại"
-          required
-          value={form.phone}
-          onChange={(v) => setValue('phone', v)}
-          error={fe.phone}
-          note="Phòng khám gửi mã xác nhận tới số này. Không cần đặt mật khẩu."
-        />
+        <div className="a-span-3">
+          <PhoneField
+            id="dk-sdt"
+            label="Số điện thoại"
+            required
+            value={form.phone}
+            onChange={(v) => setValue('phone', v)}
+            error={fe.phone}
+            note="Phòng khám gửi mã xác nhận tới số này. Không cần đặt mật khẩu."
+          />
+        </div>
 
-        <DobField id="dk-ns" required value={form.dob} onChange={(v) => setValue('dob', v)} error={fe.dob} />
+        <div className="a-span-4">
+          <DobField id="dk-ns" required value={form.dob} onChange={(v) => setValue('dob', v)} error={fe.dob} />
+        </div>
 
-        <div role="radiogroup" aria-labelledby="dk-gt-label" aria-describedby={describe('dk-gt', fe.gender)} className={`a-field ${fe.gender ? 'a-radios-invalid' : ''}`} style={{ gap: 10 }}>
+        <div role="radiogroup" aria-labelledby="dk-gt-label" aria-describedby={describe('dk-gt', fe.gender)} className={`a-field a-span-2 ${fe.gender ? 'a-radios-invalid' : ''}`}>
           <span id="dk-gt-label" className="a-label">
             Giới tính <span className="a-req" aria-hidden="true">*</span>
           </span>
@@ -202,22 +193,17 @@ export default function Register() {
         </div>
 
         {error && !Object.keys(server).length && <ErrorAlert error={error} />}
-        {error?.code === 'PHONE_TAKEN' && (
-          <Link className="a-btn-ghost a-btn-block" to={withNext('/dang-nhap', next, { sdt: form.phone })}>
-            <Icon name="login" strokeWidth={1.75} />
-            Đăng nhập với số điện thoại này
-          </Link>
-        )}
 
-        <button type="submit" className="a-btn-primary" disabled={pending} aria-busy={pending || undefined}>
+        <button type="submit" className="a-btn-primary a-span-3" disabled={pending} aria-busy={pending || undefined}>
           {pending && !otp ? <span className="spinner" aria-hidden="true" /> : <Icon name="userPlus" strokeWidth={1.75} />}
           Tạo tài khoản
         </button>
+        {/* Số đã đăng ký thì đăng nhập luôn bằng số đó */}
+        <AuthLink className="a-btn-ghost a-btn-block a-span-3" to={withNext('/dang-nhap', next, error?.code === 'PHONE_TAKEN' ? { sdt: form.phone } : {})}>
+          <Icon name="login" strokeWidth={1.75} />
+          {error?.code === 'PHONE_TAKEN' ? 'Đăng nhập với số điện thoại này' : 'Đã có tài khoản? Đăng nhập'}
+        </AuthLink>
       </form>
-
-      <p className="a-lead">
-        Đã có tài khoản? <Link to={withNext('/dang-nhap', next)}>Đăng nhập tại đây</Link>
-      </p>
 
       {otp && (
         <OtpDialog
