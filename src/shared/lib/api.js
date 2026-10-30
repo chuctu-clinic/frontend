@@ -4,6 +4,7 @@ export const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // Tài khoản tab này đang hiển thị. Cookie đăng nhập là chung cho mọi tab, nên server so khớp để từ chối
 // thao tác nếu tab khác vừa đăng nhập tài khoản khác hay đăng xuất (lỗi SESSION_CHANGED).
+// Bị từ chối quyền (403) có thể do Admin vừa đổi vai trò nên cũng kiểm tra lại phiên.
 let SESSION_USER = null;
 let onSessionChanged = null;
 export function setApiSession(userId, onChanged) {
@@ -37,7 +38,7 @@ async function request(method, path, body) {
   const data = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) {
     const err = new ApiError(res.status, data);
-    if (err.code === 'SESSION_CHANGED') onSessionChanged?.();
+    if (err.code === 'SESSION_CHANGED' || res.status === 403) onSessionChanged?.();
     throw err;
   }
   return data;
