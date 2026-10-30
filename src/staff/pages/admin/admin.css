@@ -68,9 +68,9 @@
 .a-cat { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; font-weight: 600; white-space: nowrap; background: var(--green-100); color: var(--green-700); }
 .a-cat.gold { background: var(--gold-100); color: var(--gold-700); }
 .a-cat.sand { background: var(--surface-200); color: var(--ink-700); }
-@media (max-width: 900px) {
-  .a-accounts.t-table,
-  .a-posts.t-table { min-width: 900px; }
+@media (max-width: 960px) {
+  .a-accounts.t-table { min-width: 860px; }
+  .a-posts.t-table { min-width: 880px; }
 }
 
 /* Hộp thoại không có thanh màu: biểu tượng tròn bên trái */
