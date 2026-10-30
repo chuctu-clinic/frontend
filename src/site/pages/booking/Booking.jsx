@@ -8,7 +8,7 @@ import { useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { Picker } from '../../components/Picker.jsx';
 import { ProfileDeleteDialog, ProfileDetailDialog, ProfileFormDialog } from '../account/ProfileDialogs.jsx';
-import { PatientStep } from './PatientStep.jsx';
+import { PatientStep, missingInfo } from './PatientStep.jsx';
 import '../account/account.css';
 import './booking.css';
 import { CLINIC_NAME, BookingFrame, BookingCrumbs, HelpBox, ClinicBox, dayLabel, SummaryBox } from './BookingFrame.jsx';
@@ -141,7 +141,7 @@ export default function Booking() {
   };
 
   const goStep3 = () => {
-    if (!patient || patient.isLocked) {
+    if (!patient || patient.isLocked || missingInfo(patient).length) {
       setErrors({ patientId: 'Cô chú vui lòng chọn người đi khám.' });
       return;
     }
