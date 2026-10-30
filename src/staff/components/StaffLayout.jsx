@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
-import { api } from '../../shared/lib/api.js';
-import { fmtTime } from '../../shared/lib/format.js';
 import { useDismiss } from '../../shared/lib/hooks.js';
 import { isAdmin, useSession } from '../../shared/lib/session.jsx';
 import { Icon } from '../../shared/ui/Icon.jsx';
@@ -22,8 +20,6 @@ const ADMIN_NAV = [
 // Trang lập phiếu kết quả và trang soạn bài rộng hết khung, không có cột menu (theo prototype)
 const WIDE = ['/noi-bo/phieu-kham/:appointmentId/ket-qua', '/noi-bo/quan-tri/bai-viet/moi', '/noi-bo/quan-tri/bai-viet/:id'];
 const EXTRA_WIDE = ['/noi-bo/quan-tri/bai-viet/moi', '/noi-bo/quan-tri/bai-viet/:id'];
-// Các trang có hàng đợi thu gọn dưới menu
-const WITH_MINI = ['/noi-bo/lich-trong-ngay', '/noi-bo/benh-nhan', '/noi-bo/benh-nhan/:id'];
 
 export function StaffLayout() {
   const { user, logout } = useSession();
@@ -33,7 +29,6 @@ export function StaffLayout() {
   const admin = isAdmin(user);
   const nav = admin ? ADMIN_NAV : STAFF_NAV;
   const wide = WIDE.some((p) => matchPath(p, pathname));
-  const mini = WITH_MINI.some((p) => matchPath(p, pathname));
   const extraWide = EXTRA_WIDE.some((p) => matchPath(p, pathname));
 
   useEffect(() => setMenuOpen(false), [pathname]);
@@ -85,7 +80,6 @@ export function StaffLayout() {
                   </NavLink>
                 ))}
               </nav>
-              {mini && <MiniQueue />}
             </div>
             <main id="noi-dung" className="t-main">
               <Outlet />
@@ -126,86 +120,5 @@ function UserMenu({ user, onLogout }) {
         </div>
       )}
     </div>
-  );
-}
-
-/** Hàng đợi thu gọn: số người trong phòng, đang chờ và 5 người kế tiếp (UC.10.5). */
-export function MiniQueue() {
-  const [data, setData] = useState(null);
-  const { pathname } = useLocation();
-  useEffect(() => {
-    let alive = true;
-    const load = () =>
-      api
-        .get('/staff/queue/mini')
-        .then((d) => alive && setData({ ...d, at: new Date() }))
-        .catch(() => {});
-    load();
-    const t = setInterval(load, 20_000);
-    return () => {
-      alive = false;
-      clearInterval(t);
-    };
-    // Tải lại khi đổi trang để thấy ngay người vừa check-in
-  }, [pathname]);
-  if (!data) return null;
-  return (
-    <section className="t-mini" aria-labelledby="t-mini-title">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <h2 id="t-mini-title" className="t-mini-title">
-          <Icon name="queue" size={22} strokeWidth={1.75} />
-          Hàng đợi
-        </h2>
-        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-500)', whiteSpace: 'nowrap' }}>lúc {fmtTime(data.at).replace(/^0/, '')}</span>
-      </div>
-      <div className="t-mini-stats">
-        <p className="t-mini-stat green">
-          Trong phòng
-          <strong>
-            {data.inRoom}/{data.capacity}
-          </strong>
-        </p>
-        <p className="t-mini-stat">
-          Đang chờ
-          <strong>{data.waiting}</strong>
-        </p>
-      </div>
-      {data.next?.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p className="t-eyebrow">{data.next.length} người kế tiếp</p>
-          <ol className="t-mini-list">
-            {data.next.map((k, i) => (
-              <li key={k.id} className={k.priorityGroup === 'PRIORITY' ? 'prio' : ''}>
-                <span className="t-mini-no">{i + 1}</span>
-                <span>{k.fullName}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-      <div className="t-mini-legend" role="group" aria-label="Chú thích màu nền">
-        <p className="t-eyebrow">Chú thích</p>
-        <div>
-          <span className="t-swatch prio" aria-hidden="true" />
-          <span>
-            <strong className="t-strong">Ưu tiên</strong>
-            <br />
-            Đặt trước, đến đúng khung giờ
-          </span>
-        </div>
-        <div>
-          <span className="t-swatch" aria-hidden="true" />
-          <span>
-            <strong className="t-strong">Thường</strong>
-            <br />
-            Các trường hợp còn lại
-          </span>
-        </div>
-      </div>
-      <Link to="/noi-bo/hang-doi" className="t-btn t-btn-ghost" style={{ borderColor: 'var(--green-600)', fontWeight: 700 }}>
-        Mở hàng đợi
-        <Icon name="arrowRight" size={20} />
-      </Link>
-    </section>
   );
 }

@@ -130,7 +130,6 @@
   .t-aside { display: contents; }
   .t-side { display: none; order: -1; flex: 1 1 100%; }
   .t-side.open { display: flex; }
-  .t-aside .t-mini { order: 9; flex: 1 1 100%; }
 }
 @media (max-width: 600px) {
   .t-logo span { display: none; }
@@ -555,26 +554,6 @@ button.t-check { cursor: pointer; }
 .t-field-btn { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 14px; background: var(--t-white); border: 2px solid var(--line-strong); border-radius: 12px; font: inherit; font-size: 16px; font-weight: 600; color: var(--ink-900); text-align: left; cursor: pointer; }
 .t-field-btn:hover { border-color: var(--ink-500); }
 .t-field-btn svg { color: var(--green-700); flex-shrink: 0; }
-
-/* ---------- Hàng đợi mini ---------- */
-.t-mini { background: var(--surface-card); border: 1px solid var(--line-soft); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-.t-mini-title { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-serif); font-size: 18px; line-height: 26px; font-weight: 700; color: var(--ink-900); }
-.t-mini-title svg { color: var(--green-700); }
-.t-mini-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.t-mini-stat { border-radius: 14px; padding: 10px 12px; background: var(--surface-200); color: var(--ink-700); font-size: 15px; line-height: 20px; }
-.t-mini-stat strong { display: block; font-size: 22px; line-height: 30px; font-weight: 700; color: var(--ink-900); }
-.t-mini-stat.green { background: var(--green-100); color: var(--green-700); }
-.t-mini-stat.green strong { color: var(--green-700); }
-.t-mini-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.t-mini-list li { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 2px 8px; border-radius: 12px; }
-.t-mini-list li.prio { background: var(--t-blue-100); }
-.t-mini-list li > span:last-child { flex: 1 1 auto; min-width: 0; font-weight: 600; color: var(--ink-900); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.t-mini-no { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 999px; color: #fff; font-size: 15px; font-weight: 700; flex-shrink: 0; background: #3b7145; }
-.prio .t-mini-no { background: #2f5f8f; }
-.t-mini-legend { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
-.t-mini-legend > div { display: flex; align-items: center; gap: 10px; font-size: 15px; line-height: 20px; color: var(--ink-700); }
-.t-swatch { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; background: var(--t-white); border: 1px solid var(--t-soft-line); }
-.t-swatch.prio { background: var(--t-blue-100); border-color: var(--t-blue-line); }
 
 /* ---------- Lịch trong ngày ---------- */
 .t-lookup { background: var(--gold-100); border-radius: 20px; padding: 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
