@@ -97,7 +97,7 @@ export default function Posts() {
     return () => clearTimeout(t);
   }, [q]);
 
-  const { data, loading, reload } = useAsync(() => api.get(`/admin/posts${qs({ q: query, category, status, page, limit: PER_PAGE })}`), [query, category, status, page]);
+  const { data, loading, reload, setData } = useAsync(() => api.get(`/admin/posts${qs({ q: query, category, status, page, limit: PER_PAGE })}`), [query, category, status, page]);
   const counts = data?.statusCounts || { PUBLISHED: 0, DRAFT: 0, HIDDEN: 0 };
   const all = counts.PUBLISHED + counts.DRAFT + counts.HIDDEN;
   const filtered = Boolean(query || category || status);
@@ -106,9 +106,17 @@ export default function Posts() {
     setMenu(null);
     setError(null);
     try {
-      await api.put(`/admin/posts/${p.id}`, { status: next });
+      const { post } = await api.put(`/admin/posts/${p.id}`, { status: next });
       setNotice(message);
-      reload({ silent: true });
+      // Đang lọc theo trạng thái thì bài phải rời khỏi danh sách
+      if (status) reload({ silent: true });
+      // Đổi ngay tại hàng: tải lại thì bài nhảy lên đầu (danh sách xếp theo giờ cập nhật), hàng cũ thành bài khác nên trông như chưa đổi
+      else
+        setData((d) => ({
+          ...d,
+          items: d.items.map((x) => (x.id === post.id ? { ...x, status: post.status, updatedAt: post.updatedAt } : x)),
+          statusCounts: { ...d.statusCounts, [p.status]: d.statusCounts[p.status] - 1, [post.status]: d.statusCounts[post.status] + 1 },
+        }));
     } catch (err) {
       setError(err);
     }
