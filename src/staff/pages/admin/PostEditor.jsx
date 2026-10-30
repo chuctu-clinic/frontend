@@ -118,6 +118,7 @@ export default function PostEditor() {
   const [notice, setNotice] = useState(location.state?.notice || null);
   const [editorKey, setEditorKey] = useState(0);
   const thumbRef = useRef(null);
+  const loadedRef = useRef(null);
 
   // Vừa tạo bài xong: trang chuyển từ /moi sang /:id nhưng vẫn là component này, nên nhận thông báo ở đây
   useEffect(() => {
@@ -125,6 +126,9 @@ export default function PostEditor() {
   }, [location.state]);
 
   useEffect(() => {
+    // Chỉ nạp một lần cho mỗi bài (StrictMode chạy effect hai lần; lần hai bản nháp đã bị xoá nên sẽ ghi đè form bằng bản trống)
+    if (loadedRef.current === draftKey(id)) return;
+    loadedRef.current = draftKey(id);
     // Quay lại từ trang Xem thử: dùng bản đang sửa dở
     const draft = readDraft(id);
     clearDraft(id);
@@ -279,7 +283,6 @@ export default function PostEditor() {
             />
             <FieldError id="bv-mota-loi">{errs.summary && 'Vui lòng nhập mô tả.'}</FieldError>
             <p id="bv-mota-note" className="t-muted a-desc-note">
-              <span>Hai, ba câu nói bài này về việc gì. Hiện dưới tiêu đề ở trang bài viết và trên thẻ bài ở trang chủ, trang tin tức.</span>
               <span aria-live="polite">
                 {form.summary.length}/{SUMMARY_MAX}
               </span>
@@ -315,7 +318,6 @@ export default function PostEditor() {
               </Suspense>
             </EditorBoundary>
             <FieldError id="bv-noidung-loi">{errs.content && 'Vui lòng nhập nội dung bài viết.'}</FieldError>
-            <p className="t-muted">Bài phải có đủ tiêu đề, mô tả, danh mục, tác giả, thời gian, ảnh thu nhỏ và nội dung trước khi công khai.</p>
           </div>
         </form>
 

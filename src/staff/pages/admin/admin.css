@@ -94,7 +94,6 @@
 .ed-loading { min-height: 440px; }
 .a-desc-input { min-height: 96px; padding: 12px 16px; resize: vertical; line-height: 28px; }
 .a-desc-note { display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; }
-.a-desc-note span:first-child { flex: 1 1 280px; min-width: 0; }
 .a-desc-note span:last-child { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ed-failed { min-height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; font-weight: 600; color: var(--alert-700); }
 .ed-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 8px; background: var(--surface-200); border-bottom: 1px solid #cdbd9f; }
