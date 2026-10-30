@@ -114,9 +114,22 @@ export default function Posts() {
       else
         setData((d) => ({
           ...d,
-          items: d.items.map((x) => (x.id === post.id ? { ...x, status: post.status, updatedAt: post.updatedAt } : x)),
+          items: d.items.map((x) => (x.id === post.id ? { ...x, status: post.status, pinned: post.pinned, updatedAt: post.updatedAt } : x)),
           statusCounts: { ...d.statusCounts, [p.status]: d.statusCounts[p.status] - 1, [post.status]: d.statusCounts[post.status] + 1 },
         }));
+    } catch (err) {
+      setError(err);
+    }
+  };
+
+  const togglePin = async (p) => {
+    setMenu(null);
+    setError(null);
+    try {
+      const { post } = await api.post(`/admin/posts/${p.id}/${p.pinned ? 'unpin' : 'pin'}`);
+      setNotice(post.pinned ? `Đã ghim bài “${p.title}” lên đầu trang Bài viết.` : `Đã bỏ ghim bài “${p.title}”.`);
+      // Mỗi lần chỉ một bài được ghim nên các hàng khác đều bỏ ghim
+      setData((d) => ({ ...d, items: d.items.map((x) => ({ ...x, pinned: x.id === post.id ? post.pinned : post.pinned ? false : x.pinned })) }));
     } catch (err) {
       setError(err);
     }
@@ -241,6 +254,18 @@ export default function Posts() {
                       <span style={{ display: 'block', color: 'var(--ink-500)' }}>{fmtTime(p.updatedAt)}</span>
                     </div>
                     <div role="cell" className="t-td a-td-action">
+                      {p.status === 'PUBLISHED' && !p.slug && (
+                        <button
+                          type="button"
+                          className="t-kebab a-pin"
+                          aria-pressed={p.pinned}
+                          aria-label={`${p.pinned ? 'Bỏ ghim' : 'Ghim'} bài ${p.title}`}
+                          title={p.pinned ? 'Bỏ ghim' : 'Ghim bài'}
+                          onClick={() => togglePin(p)}
+                        >
+                          <Icon name="pushpin" size={22} />
+                        </button>
+                      )}
                       <RowMenu
                         p={p}
                         open={menu === p.id}

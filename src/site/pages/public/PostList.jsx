@@ -97,7 +97,7 @@ export default function PostList() {
   const [params, setParams] = useSearchParams();
   const category = params.get('chuyen-muc') || '';
   const page = Number(params.get('trang') || 1);
-  const { data, loading } = useAsync(() => api.get(`/posts${qs({ category, page, limit: 9 })}`), [category, page]);
+  const { data, loading } = useAsync(() => api.get(`/posts${qs({ category, page, limit: 9, featured: 1 })}`), [category, page]);
 
   const set = (next) => setParams(Object.fromEntries(Object.entries({ 'chuyen-muc': category, trang: page, ...next }).filter(([, v]) => v && v !== 1)));
   const goPage = (p) => {
@@ -105,10 +105,9 @@ export default function PostList() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
-  const items = data?.items || [];
-  // Trang đầu: bài mới nhất làm bài nổi bật
-  const featured = page === 1 ? items[0] : null;
-  const rest = featured ? items.slice(1) : items;
+  // Bài nổi bật (bài ghim, chưa ghim thì bài mới nhất) giữ nguyên ở mọi trang, chỉ 9 bài bên dưới đổi theo trang
+  const featured = data?.featured;
+  const rest = data?.items || [];
   const currentLabel = CATEGORIES.find(([v]) => v === category)?.[1] || 'Tất cả';
 
   return (
@@ -142,7 +141,7 @@ export default function PostList() {
           <Loading />
         </div>
       )}
-      {data && items.length === 0 && (
+      {data && !featured && rest.length === 0 && (
         <section className="i-section">
           <div className="h-wrap">
             <Empty icon="news" title="Chưa có bài viết trong chuyên mục này" />
@@ -171,7 +170,7 @@ export default function PostList() {
       {data && (
         <section style={{ padding: rest.length ? '0 24px 72px' : '32px 24px 72px' }}>
           <div className="h-wrap">
-            <Pages page={page} total={data.total} limit={data.limit} onPage={goPage} />
+            <Pages page={page} total={data.total - (featured ? 1 : 0)} limit={data.limit} onPage={goPage} />
           </div>
         </section>
       )}
