@@ -42,7 +42,6 @@
 
 .k-form-actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding-top: 8px; border-top: 1px solid var(--line-soft); }
 .k-btn { width: auto; padding: 0 32px; }
-.k-btn-ghost { min-height: 60px; padding: 0 28px; font-size: 20px; }
 
 .k-readonly-note { display: flex; gap: 8px; align-items: center; font-size: 16px; line-height: 24px; color: var(--ink-500); }
 .a-phone.a-phone-ro { background: var(--surface-200); border-color: #b0a083; }
@@ -95,7 +94,6 @@
   .k-card { padding: 24px 18px; }
   .k-gold { padding: 22px; }
   .k-btn,
-  .k-btn-ghost,
   .k-head-row .a-btn-primary { width: 100%; }
   .k-pcard-actions button { font-size: 16px; flex-direction: column; gap: 2px; }
 }

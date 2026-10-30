@@ -66,7 +66,7 @@ export default function Home() {
   useDocumentTitle('');
   const { user } = useSession();
   const loggedIn = user?.role === 'USER';
-  const posts = useAsync(() => api.get('/posts?limit=3'), []);
+  const posts = useAsync(() => api.get('/posts?limit=6'), []);
   const bookTo = '/dat-lich';
 
   return (
@@ -233,12 +233,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Tin tức */}
+      {/* Tin mới nhất */}
       {posts.data?.items?.length > 0 && (
         <section className="h-section h-alt" aria-labelledby="tin-tuc">
           <div className="h-wrap h-stack">
             <div className="h-head-row">
-              <SectionTitle id="tin-tuc">Tin tức</SectionTitle>
+              <SectionTitle id="tin-tuc">Tin mới nhất</SectionTitle>
               <Link to="/tin-tuc" className="h-link h-link-lg">
                 Xem tất cả bài viết
                 <Icon name="arrowSoft" size={22} strokeWidth={SI} />

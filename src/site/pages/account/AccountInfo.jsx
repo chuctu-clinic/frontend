@@ -81,13 +81,6 @@ export default function AccountInfo() {
     }
   };
 
-  const reset = () => {
-    setForm(fromUser(data.user));
-    setError(null);
-    setTried(false);
-    setSaved(false);
-  };
-
   const u = data?.user;
 
   return (
@@ -195,9 +188,6 @@ export default function AccountInfo() {
                 <button type="submit" className="a-btn-primary k-btn" disabled={pending} aria-busy={pending || undefined}>
                   {pending ? <span className="spinner" aria-hidden="true" /> : <Icon name="check" strokeWidth={1.75} />}
                   Lưu thay đổi
-                </button>
-                <button type="button" className="a-btn-ghost k-btn-ghost" onClick={reset}>
-                  Bỏ thay đổi
                 </button>
               </div>
             </form>
