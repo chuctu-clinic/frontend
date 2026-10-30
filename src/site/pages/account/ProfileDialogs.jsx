@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { GENDERS, RELATIONSHIPS, fmtDate } from '../../../shared/lib/format.js';
+import { CLINIC, GENDERS, RELATIONSHIPS, fmtDate } from '../../../shared/lib/format.js';
+import { useSession } from '../../../shared/lib/session.jsx';
 import { Dialog } from '../../components/Dialog.jsx';
 import { FieldError } from '../../components/fields.jsx';
 import { Picker } from '../../components/Picker.jsx';
@@ -22,9 +23,11 @@ const isoDate = (d) => (d ? String(d).slice(0, 10) : '');
 
 /** Thêm hồ sơ mới (profile = null) hoặc sửa hồ sơ có sẵn. onSaved(patient) sau khi lưu xong. */
 export function ProfileFormDialog({ profile, onClose, onSaved }) {
+  const { setUser } = useSession();
   const editing = Boolean(profile);
   const isSelf = profile?.relationship === 'BAN_THAN';
   const [form, setForm] = useState(() => patientForm(profile));
+  const [version, setVersion] = useState(profile?.updatedAt);
   const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
@@ -44,9 +47,18 @@ export function ProfileFormDialog({ profile, onClose, onSaved }) {
     setPending(true);
     try {
       const body = patientBody(form);
-      const res = editing ? await api.patch(`/me/patients/${profile.id}`, body) : await api.post('/me/patients', body);
+      const res = editing ? await api.patch(`/me/patients/${profile.id}`, { ...body, expectedUpdatedAt: version }) : await api.post('/me/patients', body);
+      // Hồ sơ chính chủ đổi thì tài khoản đổi theo: cập nhật tên trên đầu trang
+      if (res.user) setUser(res.user);
       onSaved(res.patient);
     } catch (err) {
+      // Vừa có người khác đổi hồ sơ: nạp lại để cô chú xem thông tin mới rồi mới lưu
+      if (err.code === 'STALE') {
+        const { patient } = await api.get(`/me/patients/${profile.id}`);
+        setForm(patientForm(patient));
+        setVersion(patient.updatedAt);
+        setTried(false);
+      }
       setError(err);
     } finally {
       setPending(false);
@@ -73,8 +85,16 @@ export function ProfileFormDialog({ profile, onClose, onSaved }) {
       <p className="a-lead">
         {editing ? 'Cô chú sửa các thông tin cần thiết rồi bấm Lưu thay đổi.' : 'Lập hồ sơ cho người thân để lần sau đặt lịch khỏi nhập lại.'} Ô có dấu{' '}
         <span className="a-req">*</span> là bắt buộc.
+        {isSelf && ' Thông tin tài khoản sẽ cập nhật theo hồ sơ này.'}
       </p>
-      <PatientFields id="hs" form={form} setForm={setForm} errors={fe} phoneNote={isSelf ? undefined : RELATIVE_PHONE_NOTE} />
+      <PatientFields
+        id="hs"
+        form={form}
+        setForm={setForm}
+        errors={fe}
+        phoneReadOnly={isSelf}
+        phoneNote={isSelf ? `Số đăng nhập của tài khoản nên không sửa được. Cần đổi, cô chú gọi phòng khám ${CLINIC.phone}.` : RELATIVE_PHONE_NOTE}
+      />
       <div className="a-field">
         <label htmlFor="hs-qh" className="a-label">
           Quan hệ với cô chú <span className="a-req">*</span>

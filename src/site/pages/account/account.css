@@ -44,9 +44,6 @@
 .k-btn { width: auto; padding: 0 32px; }
 
 .k-readonly-note { display: flex; gap: 8px; align-items: center; font-size: 16px; line-height: 24px; color: var(--ink-500); }
-.a-phone.a-phone-ro { background: var(--surface-200); border-color: #b0a083; }
-.a-phone.a-phone-ro .a-phone-pre { background: #eadfc9; border-right-color: #b0a083; color: var(--ink-700); }
-.a-phone.a-phone-ro input { color: var(--ink-700); }
 
 /* Hồ sơ khám bệnh */
 .k-head-row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }

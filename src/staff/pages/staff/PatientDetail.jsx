@@ -29,6 +29,7 @@ function editErrors(form) {
 /** Sửa thông tin hồ sơ: đủ các ô như lúc người dùng tạo hồ sơ (UC.9.5). Mã bệnh nhân không đổi. */
 function EditPatientDialog({ patient, onClose, onSaved }) {
   const [form, setForm] = useState(() => editForm(patient));
+  const [version, setVersion] = useState(patient.updatedAt);
   const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
@@ -47,9 +48,16 @@ function EditPatientDialog({ patient, onClose, onSaved }) {
     setError(null);
     try {
       const { relationship, ...body } = patientBody(form);
-      const res = await api.patch(`/staff/patients/${patient.id}`, body);
+      const res = await api.patch(`/staff/patients/${patient.id}`, { ...body, expectedUpdatedAt: version });
       onSaved(res.patient);
     } catch (err) {
+      // Vừa có người khác đổi hồ sơ: nạp lại để xem thông tin mới rồi mới lưu
+      if (err.code === 'STALE') {
+        const fresh = (await api.get(`/staff/patients/${patient.id}`)).patient;
+        setForm(editForm(fresh));
+        setVersion(fresh.updatedAt);
+        setTried(false);
+      }
       setError(err);
       setPending(false);
       focusFirstError('.t-dialog');
@@ -62,7 +70,15 @@ function EditPatientDialog({ patient, onClose, onSaved }) {
         <p className="t-text">
           Mã bệnh nhân <strong className="t-strong">{patient.patientCode}</strong> được cấp một lần và không đổi. Ô có dấu <span className="t-req">*</span> là bắt buộc.
         </p>
-        <PatientFields id="sua" form={form} setForm={setForm} errors={fe} />
+        {/* Hồ sơ chính chủ: tài khoản đổi theo; số đăng nhập chỉ đổi ở Quản lý tài khoản */}
+        <PatientFields
+          id="sua"
+          form={form}
+          setForm={setForm}
+          errors={fe}
+          phoneReadOnly={patient.relationship === 'BAN_THAN'}
+          phoneNote={patient.relationship === 'BAN_THAN' ? 'Số đăng nhập của tài khoản, đổi ở Quản lý tài khoản.' : undefined}
+        />
         {error && !Object.keys(server).length && <ErrorAlert error={error} />}
         <div className="t-actions" style={{ paddingTop: 8, borderTop: '1px solid var(--line-soft)' }}>
           <button type="submit" className="t-btn t-btn-primary" style={{ padding: '0 26px' }} disabled={pending}>

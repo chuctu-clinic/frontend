@@ -368,6 +368,10 @@
 .a-phone:has(input[aria-invalid='true']) .a-phone-pre { border-right-color: var(--alert-700); }
 .a-phone:has(input[aria-invalid='true']):focus-within { box-shadow: 0 0 0 4px rgba(144, 55, 42, 0.18); }
 .a-phone:has(input[aria-invalid='true']):focus-within .a-phone-pre { background: var(--alert-100); color: var(--alert-700); }
+/* Ô không sửa được: số đăng nhập của tài khoản */
+.a-phone.a-phone-ro { background: var(--surface-200); border-color: #b0a083; }
+.a-phone.a-phone-ro .a-phone-pre { background: #eadfc9; border-right-color: #b0a083; color: var(--ink-700); }
+.a-phone.a-phone-ro input { color: var(--ink-700); }
 
 .a-row { display: flex; flex-wrap: wrap; gap: 14px; }
 .a-row > * { flex: 1 1 140px; min-width: 0; }

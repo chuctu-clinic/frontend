@@ -68,6 +68,7 @@ export default function AccountInfo() {
         dob: joinDob(form.dob),
         gender: form.gender,
         address: joinAddress(form.address),
+        expectedUpdatedAt: data.user.infoUpdatedAt,
       });
       setData(res);
       setUser(res.user);
@@ -75,6 +76,11 @@ export default function AccountInfo() {
       setTried(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
+      // Vừa có người khác đổi thông tin: nạp lại để cô chú xem thông tin mới rồi mới lưu
+      if (err.code === 'STALE') {
+        setData(await api.get('/me'));
+        setTried(false);
+      }
       setError(err);
     } finally {
       setPending(false);

@@ -73,7 +73,7 @@ export const focusFirstError = (scope) =>
  * Hai nhóm "Thông tin người khám" và "Thông tin khác (Không bắt buộc)".
  * Quan hệ với người khám do nơi dùng tự đặt (trang đặt lịch để ở nhóm Thông tin người đặt).
  */
-export function PatientFields({ id, form, setForm, errors: fe, phoneNote }) {
+export function PatientFields({ id, form, setForm, errors: fe, phoneNote, phoneReadOnly }) {
   const [moreOpen, setMoreOpen] = useState(true);
   const setValue = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const inv = (k) => (fe[k] ? 'true' : 'false');
@@ -98,7 +98,7 @@ export function PatientFields({ id, form, setForm, errors: fe, phoneNote }) {
             <FieldError id={`${id}-ten-loi`}>{fe.fullName}</FieldError>
           </div>
           <div style={{ flex: '1 1 300px', minWidth: 0 }}>
-            <PhoneField id={`${id}-sdt`} label="Số điện thoại" required value={form.phone} onChange={(v) => setValue('phone', v)} error={fe.phone} note={phoneNote} />
+            <PhoneField id={`${id}-sdt`} label="Số điện thoại" required value={form.phone} onChange={(v) => setValue('phone', v)} error={fe.phone} note={phoneNote} readOnly={phoneReadOnly} />
           </div>
         </div>
         <DobField id={`${id}-ns`} required value={form.dob} onChange={(v) => setValue('dob', v)} error={fe.dob} />

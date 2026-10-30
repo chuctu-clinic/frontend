@@ -18,6 +18,7 @@ export function AccountDialog({ account, onClose, onSaved }) {
     role: 'USER',
     tempPassword: '',
   });
+  const [version, setVersion] = useState(account?.infoUpdatedAt);
   const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
@@ -38,9 +39,16 @@ export function AccountDialog({ account, onClose, onSaved }) {
       const body = { fullName: form.fullName.trim(), phone: normalizePhone(form.phone) };
       const res = isAdd
         ? await api.post('/admin/accounts', { ...body, role: form.role, tempPassword: needsPassword ? form.tempPassword : undefined })
-        : await api.patch(`/admin/accounts/${account.id}`, body);
+        : await api.patch(`/admin/accounts/${account.id}`, { ...body, expectedUpdatedAt: version });
       onSaved(res.account, isAdd);
     } catch (err) {
+      // Vừa có người khác đổi thông tin: nạp lại để xem thông tin mới rồi mới lưu
+      if (err.code === 'STALE') {
+        const fresh = (await api.get(`/admin/accounts/${account.id}`)).account;
+        setForm((f) => ({ ...f, fullName: fresh.fullName, phone: String(fresh.phone).replace(/^0/, '') }));
+        setVersion(fresh.infoUpdatedAt);
+        setTried(false);
+      }
       setError(err);
       setPending(false);
     }
@@ -107,7 +115,7 @@ export function AccountDialog({ account, onClose, onSaved }) {
           )}
         </>
       )}
-      {error && !error.fields && <ErrorAlert error={error} />}
+      {error && !Object.keys(error.fields).length && <ErrorAlert error={error} />}
       <div className="a-modal-actions">
         <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 28px' }} onClick={onClose}>
           Huỷ

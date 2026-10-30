@@ -21,7 +21,7 @@ export function FieldError({ id, children }) {
 export { phoneDigits, toPhone, phoneInputError as phoneError };
 
 /** Ô số điện thoại có tiền tố +84 cố định. */
-export function PhoneField({ id, label, required, value, onChange, error, note, autoFocus }) {
+export function PhoneField({ id, label, required, value, onChange, error, note, autoFocus, readOnly }) {
   const errId = `${id}-loi`;
   const noteId = `${id}-note`;
   return (
@@ -37,7 +37,7 @@ export function PhoneField({ id, label, required, value, onChange, error, note, 
           </>
         )}
       </label>
-      <div className="a-phone">
+      <div className={`a-phone ${readOnly ? 'a-phone-ro' : ''}`}>
         <span className="a-phone-pre" aria-hidden="true">
           +84
         </span>
@@ -52,6 +52,7 @@ export function PhoneField({ id, label, required, value, onChange, error, note, 
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={[error && errId, note && noteId].filter(Boolean).join(' ') || undefined}
           autoFocus={autoFocus}
+          readOnly={readOnly}
         />
       </div>
       <FieldError id={errId}>{error}</FieldError>
