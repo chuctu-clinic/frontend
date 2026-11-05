@@ -85,6 +85,40 @@ export function PlainDialog({ labelledBy, width = 560, alert, onClose, onSubmit,
   );
 }
 
+/** Hộp thoại báo đã làm xong một việc (thay cho dòng thông báo trên trang). */
+export function NoticeDialog({ children, title = 'Thành công', width = 520, actions, onClose }) {
+  const titleId = useId();
+  return (
+    <PlainDialog labelledBy={titleId} width={width} onClose={onClose}>
+      <div className="a-modal-head">
+        <span className="a-modal-icon">
+          <Icon name="checkCircle" size={30} strokeWidth={1.75} />
+        </span>
+        <div style={{ minWidth: 0 }}>
+          <h2 id={titleId} className="t-h2" style={{ marginBottom: 10 }}>
+            {title}
+          </h2>
+          <div className="t-text" role="status">
+            {children}
+          </div>
+        </div>
+      </div>
+      <div className="a-modal-actions">
+        {actions && (
+          <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 24px' }} onClick={onClose}>
+            Đóng
+          </button>
+        )}
+        {actions || (
+          <button type="button" className="t-btn t-btn-primary" style={{ padding: '0 32px' }} onClick={onClose}>
+            Đóng
+          </button>
+        )}
+      </div>
+    </PlainDialog>
+  );
+}
+
 /** Khối tóm tắt phiếu khám trong hộp thoại. */
 export function Summary({ items }) {
   return (

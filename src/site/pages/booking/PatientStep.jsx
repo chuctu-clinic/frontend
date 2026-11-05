@@ -14,6 +14,9 @@ import { ProfileChip, ProfileLines } from '../account/Profiles.jsx';
 
 const isSelf = (p) => p.relationship === 'BAN_THAN';
 
+/** Hồ sơ chính chủ phải đủ ngày sinh, giới tính, địa chỉ mới đặt được lịch (tài khoản do Admin tạo có thể còn thiếu). */
+export const missingInfo = (p) => (p && isSelf(p) ? [!p.dob && 'ngày sinh', !p.gender && 'giới tính', !p.address && 'địa chỉ'].filter(Boolean) : []);
+
 function FieldErr({ children }) {
   if (!children) return null;
   return (
@@ -297,6 +300,7 @@ export function PatientStep({ loading, profiles, max, user, who, setWho, patient
   const self = profiles.find(isSelf);
   const relatives = profiles.filter((p) => !isSelf(p));
   const patient = profiles.find((p) => p.id === patientId);
+  const missing = missingInfo(patient);
 
   const switchTo = (next) => {
     setWho(next);
@@ -362,8 +366,18 @@ export function PatientStep({ loading, profiles, max, user, who, setWho, patient
               )}
             </span>
           </p>
+          {missing.length > 0 && (
+            <div className="k-locked" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
+              <Icon name="alert" size={22} strokeWidth={1.75} />
+              <span style={{ flex: '1 1 240px' }}>Hồ sơ của cô chú còn thiếu {missing.join(', ')}. Cô chú bổ sung rồi mới đặt lịch được.</span>
+              <button type="button" className="a-btn-ghost" onClick={() => onAction('form', patient)}>
+                <Icon name="edit" strokeWidth={1.75} />
+                Bổ sung thông tin
+              </button>
+            </div>
+          )}
           <FieldErr>{error}</FieldErr>
-          <Nav onBack={onBack} onNext={onNext} />
+          <Nav onBack={onBack} onNext={onNext} disabled={missing.length > 0} />
         </>
       )}
     </div>

@@ -5,12 +5,12 @@ import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { ROLE_LABELS } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDismiss, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { Notice, TPicker } from '../../components/fields.jsx';
+import { useAsync, useDismiss, useDocumentTitle, useMenuPlacement } from '../../../shared/lib/hooks.js';
+import { TPicker } from '../../components/fields.jsx';
 import { Pager } from '../../components/Pager.jsx';
-import { PlainDialog } from '../../components/dialogs.jsx';
+import { NoticeDialog, PlainDialog } from '../../components/dialogs.jsx';
 import './admin.css';
-import { AccountDialog, RolePasswordDialog } from './AccountDialogs.jsx';
+import { AccountDialog, ResetPasswordDialog, RolePasswordDialog } from './AccountDialogs.jsx';
 import { StatusIcon, StatusLegend } from './StatusIcon.jsx';
 
 const PER_PAGE = 10;
@@ -30,8 +30,9 @@ const ACCOUNT_STATUS = {
   locked: { icon: 'lock', tone: 'red', label: 'Đã khoá', note: 'Đã khoá, không đăng nhập được' },
 };
 
-function RowMenu({ a, self, open, up, onToggle, onEdit, onLock, onUnlock }) {
+function RowMenu({ a, self, open, onToggle, onEdit, onResetPassword, onLock, onUnlock }) {
   const ref = useDismiss(open, onToggle);
+  const { menuRef, up } = useMenuPlacement(open, ref);
   return (
     <div className="t-menu-wrap" ref={ref}>
       <button type="button" className="t-kebab" aria-haspopup="menu" aria-expanded={open} aria-label={`Thao tác cho ${a.fullName}`} onClick={onToggle}>
@@ -42,11 +43,17 @@ function RowMenu({ a, self, open, up, onToggle, onEdit, onLock, onUnlock }) {
         </svg>
       </button>
       {open && (
-        <div role="menu" aria-label={`Thao tác cho ${a.fullName}`} className={`t-menu ${up ? 'up' : 'down'}`} style={{ width: 200 }}>
+        <div ref={menuRef} role="menu" aria-label={`Thao tác cho ${a.fullName}`} className={`t-menu ${up ? 'up' : 'down'}`} style={{ width: 240 }}>
           {a.isActive && (
             <button type="button" role="menuitem" className="t-menu-item" onClick={onEdit}>
               <Icon name="edit" size={22} />
               Sửa
+            </button>
+          )}
+          {a.isActive && !self && STAFF.includes(a.role) && (
+            <button type="button" role="menuitem" className="t-menu-item" onClick={onResetPassword}>
+              <Icon name="lockSoft" size={22} />
+              Đặt lại mật khẩu
             </button>
           )}
           {a.isActive && !self && (
@@ -110,8 +117,9 @@ export default function Accounts() {
       setDialog({ type: 'roleOk', account: res.account });
       reload({ silent: true });
     } catch (err) {
-      if (err.code === 'PASSWORD_REQUIRED') setDialog({ type: 'rolePw', account: a, role: next });
-      else setError(err);
+      if (err.code === 'PASSWORD_REQUIRED' || err.code === 'EMAIL_REQUIRED') {
+        setDialog({ type: 'rolePw', account: a, role: next, needsPassword: err.code === 'PASSWORD_REQUIRED' });
+      } else setError(err);
       reload({ silent: true });
     }
   };
@@ -146,7 +154,7 @@ export default function Accounts() {
         </button>
       </div>
 
-      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
       <ErrorAlert error={error} />
 
       <div className="t-card" style={{ padding: 20, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end' }}>
@@ -197,7 +205,7 @@ export default function Accounts() {
                 ))}
               </div>
               <div role="rowgroup" className="t-tbody">
-                {data.items.map((a, i) => {
+                {data.items.map((a) => {
                   const self = a.id === user.id;
                   return (
                     <div key={a.id} role="row" className={`t-tr ${a.isActive ? '' : 'a-tr-locked'}`} style={menu === a.id ? { position: 'relative', zIndex: 30 } : undefined}>
@@ -242,11 +250,14 @@ export default function Accounts() {
                           a={a}
                           self={self}
                           open={menu === a.id}
-                          up={data.items.length >= 4 && i >= data.items.length - 2}
                           onToggle={() => setMenu((m) => (m === a.id ? null : a.id))}
                           onEdit={() => {
                             setMenu(null);
                             setDialog({ type: 'form', account: a });
+                          }}
+                          onResetPassword={() => {
+                            setMenu(null);
+                            setDialog({ type: 'resetPw', account: a });
                           }}
                           onLock={() => {
                             setMenu(null);
@@ -276,6 +287,7 @@ export default function Accounts() {
       {dialog?.type === 'form' && (
         <AccountDialog
           account={dialog.account}
+          self={dialog.account?.id === user.id}
           onClose={() => setDialog(null)}
           onSaved={(acc, isAdd) => {
             setDialog(null);
@@ -296,10 +308,21 @@ export default function Accounts() {
         <RolePasswordDialog
           account={dialog.account}
           role={dialog.role}
+          needsPassword={dialog.needsPassword}
           onClose={() => setDialog(null)}
           onDone={(acc) => {
             setDialog({ type: 'roleOk', account: acc });
             reload({ silent: true });
+          }}
+        />
+      )}
+      {dialog?.type === 'resetPw' && (
+        <ResetPasswordDialog
+          account={dialog.account}
+          onClose={() => setDialog(null)}
+          onDone={() => {
+            setNotice(`Đã đặt lại mật khẩu cho ${dialog.account.fullName}. Người này đăng nhập bằng mật khẩu tạm rồi đổi mật khẩu mới.`);
+            setDialog(null);
           }}
         />
       )}

@@ -3,11 +3,10 @@ import { Link } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { fmtTime, shortTime, slotLabel, todayVN } from '../../../shared/lib/format.js';
+import { fmtTime, shortTime, todayVN } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { Notice } from '../../components/fields.jsx';
-import { Summary, TDialog } from '../../components/dialogs.jsx';
-import { longDay, nowMinutesVN } from '../../components/appointments/time.js';
+import { NoticeDialog, Summary, TDialog } from '../../components/dialogs.jsx';
+import { longDay } from '../../components/appointments/time.js';
 
 const clock = (value) => fmtTime(value).replace(/^0/, '');
 const minutesOf = (hhmm) => {
@@ -22,77 +21,6 @@ function waitNote(w) {
   return minutesOf(clock(w.checkInTime)) < minutesOf(w.slotStart) ? `Đến sớm trước khung ${shortTime(w.slotStart)}` : `Đến sau khung ${shortTime(w.slotStart)}`;
 }
 
-/** Sơ đồ ghế theo khung giờ: mỗi ô là một người đã check-in vào khung đó (UC.10.5). */
-export function SlotMap({ slotMap, waiting = [] }) {
-  const now = nowMinutesVN();
-  const order = new Map(waiting.map((w, i) => [w.ticketCode, { no: i + 1, prio: w.priorityGroup === 'PRIORITY' }]));
-  const rank = { COMPLETED: 0, IN_ROOM: 1, WAITING: 2 };
-  return (
-    <>
-      <div className="t-slots">
-        {slotMap.map((s) => {
-          const start = minutesOf(s.start);
-          const past = start + 60 <= now;
-          const running = start <= now && now < start + 60;
-          const people = [...s.checkins].sort((a, b) => rank[a.status] - rank[b.status] || (order.get(a.ticketCode)?.no ?? 0) - (order.get(b.ticketCode)?.no ?? 0));
-          return (
-            <div key={s.start} className={`t-slot ${running ? 'now' : ''}`}>
-              <div className="t-slot-label">
-                <p>{slotLabel(s.start)}</p>
-                <p>{past ? 'Đã qua' : running ? 'Đang diễn ra' : 'Sắp tới'}</p>
-              </div>
-              <div role="group" aria-label={`Khung ${shortTime(s.start)}, ${people.length} người đã check-in`} className="t-slot-boxes">
-                {people.length === 0 && <span style={{ fontSize: 15, lineHeight: '22px', color: 'var(--line-strong)' }}>Chưa có ai check-in</span>}
-                {people.map((c) => {
-                  const o = order.get(c.ticketCode);
-                  const kind = c.status === 'COMPLETED' ? 'done' : c.status === 'IN_ROOM' ? 'in' : o?.prio ? 'prio' : 'wait';
-                  const label = { done: 'đã hoàn thành', in: 'đang trong phòng khám', wait: 'đang chờ', prio: 'đang chờ (nền xanh dương)' }[kind];
-                  const aria = `${c.fullName || 'Bệnh nhân'}, ${label}${o ? `, thứ tự ${o.no}` : ''}`;
-                  return (
-                    <span key={c.id} role="img" aria-label={aria} title={aria} className={`t-box ${kind}`}>
-                      {kind === 'done' ? '✓' : kind === 'in' ? '▶' : o?.no}
-                    </span>
-                  );
-                })}
-              </div>
-              <div className="t-slot-count">
-                <p>{people.length} người</p>
-                {s.notArrived > 0 && <p>{past ? `vắng ${s.notArrived}` : `chưa đến ${s.notArrived}`}</p>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <ul aria-label="Chú thích" className="t-key">
-        <li>
-          <span aria-hidden="true" className="t-box sm done">
-            ✓
-          </span>
-          Đã hoàn thành
-        </li>
-        <li>
-          <span aria-hidden="true" className="t-box sm in">
-            ▶
-          </span>
-          Trong phòng khám
-        </li>
-        <li>
-          <span aria-hidden="true" className="t-box sm wait">
-            1
-          </span>
-          Đang chờ, số là thứ tự
-        </li>
-        <li>
-          <span aria-hidden="true" className="t-box sm prio">
-            1
-          </span>
-          Đang chờ, nền xanh dương
-        </li>
-      </ul>
-    </>
-  );
-}
-
 /** Hàng đợi khám: 5 ghế, hàng chờ Ưu tiên / Thường, hoàn tác vào khám (UC.10.1 – UC.10.5). */
 export default function Queue() {
   useDocumentTitle('Hàng đợi khám');
@@ -100,6 +28,7 @@ export default function Queue() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [undoTarget, setUndoTarget] = useState(null);
+  const [jumpTarget, setJumpTarget] = useState(null);
   const [notice, setNotice] = useState(null);
 
   // Tự làm mới để thấy người vừa check-in ở quầy khác
@@ -147,6 +76,27 @@ export default function Queue() {
     }
   };
 
+  /** Mời đúng một người vào khám trước những người đứng trên (trường hợp ngoại lệ). */
+  const jump = async () => {
+    setBusy(true);
+    setActionError(null);
+    try {
+      await api.post(`/staff/appointments/${jumpTarget.appointmentId}/enter`);
+      const next = await reload({ silent: true });
+      const seat = next?.seats.find((s) => s.id === jumpTarget.id)?.seatNo;
+      setNotice(
+        <>
+          Đã mời <span className="t-notice-name">{jumpTarget.patient?.fullName}</span> vào khám trước{seat ? ` ở ghế số ${seat}` : ''}.
+        </>,
+      );
+      setJumpTarget(null);
+    } catch (err) {
+      setActionError(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const freeSeats = data ? data.capacity - data.inRoomCount : 0;
 
   return (
@@ -161,13 +111,19 @@ export default function Queue() {
             Người đã check-in xếp hàng ở đây. Mỗi lượt {data?.capacity ?? 5} người vào khám, khoảng 30 phút. Ai có phiếu đặt trước và đến đúng khung giờ thì được xếp lên trước.
           </p>
         </div>
-        <Link to="/noi-bo/lich-trong-ngay" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }}>
-          <Icon name="calendar" strokeWidth={1.75} />
-          Check-in ở Lịch trong ngày
-        </Link>
+        <div className="t-actions" style={{ gap: 12 }}>
+          <Link to="/noi-bo/man-hinh-cho" target="_blank" rel="noopener" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }}>
+            <Icon name="external" strokeWidth={1.75} />
+            Mở màn hình chờ
+          </Link>
+          <Link to="/noi-bo/lich-trong-ngay" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }}>
+            <Icon name="calendar" strokeWidth={1.75} />
+            Check-in ở Lịch trong ngày
+          </Link>
+        </div>
       </div>
 
-      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
       <ErrorAlert error={error || actionError} />
       {loading && !data && <Loading />}
 
@@ -177,14 +133,14 @@ export default function Queue() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div className="t-titlerow">
                 <h2 id="hd-phong" className="t-h2">
-                  Trong phòng khám
+                  Đang khám
                 </h2>
                 <span className="t-count green">
                   {data.inRoomCount}/{data.capacity} người
                 </span>
               </div>
               <p className="t-text">
-                Bấm Ghi nhận lượt khám để điền phiếu kết quả. Lưu phiếu xong thì người đó chuyển sang Đã hoàn thành, rời hàng đợi và ghế trống để mời người kế tiếp.
+                Bấm Kết quả khám để điền phiếu kết quả. Lưu phiếu xong thì người đó chuyển sang Đã hoàn thành, rời hàng đợi và ghế trống để mời người kế tiếp.
               </p>
             </div>
             <div className="t-seats">
@@ -204,11 +160,12 @@ export default function Queue() {
                       <p className="t-seat-sub">Vào khám lúc {clock(s.enteredAt)}</p>
                     </div>
                     <div className="t-seat-acts">
-                      <Link to={`/noi-bo/phieu-kham/${s.appointmentId}/ket-qua`} className="t-btn t-btn-primary t-btn-bold">
-                        Ghi nhận lượt khám
+                      <Link to={`/noi-bo/phieu-kham/${s.appointmentId}/ket-qua`} state={{ back: '/noi-bo/hang-doi' }} className="t-btn t-btn-primary t-btn-bold">
+                        Kết quả khám
                       </Link>
                       <button type="button" className="t-btn t-btn-ghost" onClick={() => setUndoTarget(s)}>
-                        Hoàn tác vào khám
+                        <Icon name="undo" strokeWidth={1.75} />
+                        Hoàn tác
                       </button>
                     </div>
                   </div>
@@ -254,6 +211,20 @@ export default function Queue() {
                         </p>
                       </div>
                       <p className="t-wait-note">{waitNote(w)}</p>
+                      {i > 0 && freeSeats > 0 && (
+                        <button
+                          type="button"
+                          className="t-btn t-btn-ghost"
+                          style={{ padding: '0 16px', minHeight: 44 }}
+                          disabled={busy}
+                          onClick={() => {
+                            setActionError(null);
+                            setJumpTarget({ ...w, position: i + 1 });
+                          }}
+                        >
+                          Mời trước
+                        </button>
+                      )}
                     </div>
                   </li>
                 );
@@ -261,16 +232,34 @@ export default function Queue() {
             </ol>
           </section>
 
-          <section aria-labelledby="hd-khung" className="t-card t-card-pad" style={{ gap: 14 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <h2 id="hd-khung" className="t-h2">
-                Sơ đồ ghế theo khung giờ hôm nay
-              </h2>
-              <p className="t-text">Mỗi ô là một người đã check-in vào khung giờ đó.</p>
-            </div>
-            <SlotMap slotMap={data.slotMap} waiting={data.waiting} />
-          </section>
         </>
+      )}
+
+      {jumpTarget && (
+        <TDialog title="Mời vào khám trước?" tone="gold" width={560} alert onClose={() => setJumpTarget(null)}>
+          <div className="t-dialog-body" style={{ gap: 20 }}>
+            <Summary
+              items={[
+                ['Bệnh nhân', jumpTarget.patient?.fullName],
+                ['Mã phiếu khám', jumpTarget.ticketCode],
+                ['Đang đứng thứ', String(jumpTarget.position), null, false],
+              ]}
+            />
+            <p className="t-text">
+              Người này sẽ vào khám <strong className="t-strong">trước {jumpTarget.position - 1} người</strong> đang đứng trên trong hàng chờ. Chỉ dùng khi có lý do, ví dụ người đầu
+              hàng đang vắng mặt hoặc có ca cần ưu tiên.
+            </p>
+            <ErrorAlert error={actionError} />
+            <div className="t-actions" style={{ gap: 12 }}>
+              <button type="button" className="t-btn t-btn-primary t-btn-bold" style={{ flex: '1 1 220px', minHeight: 48 }} disabled={busy} onClick={jump}>
+                Xác nhận mời trước
+              </button>
+              <button type="button" className="t-btn t-btn-ghost" style={{ flex: '1 1 160px', minHeight: 48 }} onClick={() => setJumpTarget(null)}>
+                Giữ thứ tự
+              </button>
+            </div>
+          </div>
+        </TDialog>
       )}
 
       {undoTarget && (

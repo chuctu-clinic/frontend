@@ -4,14 +4,53 @@ import { Icon } from '../../../shared/ui/Icon.jsx';
 import { Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { fmtDate } from '../../../shared/lib/format.js';
-import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
+import { useAsync, useDismiss, useDocumentTitle, useMenuPlacement } from '../../../shared/lib/hooks.js';
+import { isAdmin, useSession } from '../../../shared/lib/session.jsx';
 import { Pager } from '../../components/Pager.jsx';
-import { TDialog } from '../../components/dialogs.jsx';
+import { NoticeDialog, TDialog } from '../../components/dialogs.jsx';
 import { NewPatientFields } from '../../components/appointments/NewPatientFields.jsx';
 import { TPicker } from '../../components/fields.jsx';
+import { LockPatientDialog } from '../../components/patients/LockPatientDialog.jsx';
 
 const PER_PAGE = 10;
 const GRID = { gridTemplateColumns: '170px minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1.3fr) 150px' };
+
+/** Nút ⋮ ở cột Thao tác: Xem hồ sơ; Admin có thêm Khoá / Mở khoá hồ sơ. */
+function RowMenu({ p, admin, open, onToggle, onLock }) {
+  const ref = useDismiss(open, onToggle);
+  const { menuRef, up } = useMenuPlacement(open, ref);
+  return (
+    <div className="t-menu-wrap" ref={ref}>
+      <button type="button" className="t-kebab" aria-haspopup="menu" aria-expanded={open} aria-label={`Thao tác cho ${p.fullName}`} onClick={onToggle}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="5" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="12" cy="19" r="2" />
+        </svg>
+      </button>
+      {open && (
+        <div ref={menuRef} role="menu" aria-label={`Thao tác cho ${p.fullName}`} className={`t-menu ${up ? 'up' : 'down'}`} style={{ width: 240 }}>
+          <Link role="menuitem" className="t-menu-item" to={`/noi-bo/benh-nhan/${p.id}`}>
+            <Icon name="user" size={22} />
+            Xem hồ sơ
+          </Link>
+          {admin &&
+            (p.isLocked ? (
+              <button type="button" role="menuitem" className="t-menu-item green" onClick={onLock}>
+                <Icon name="unlock" size={22} />
+                Mở khoá hồ sơ
+              </button>
+            ) : (
+              <button type="button" role="menuitem" className="t-menu-item danger" onClick={onLock}>
+                <Icon name="lock" size={22} />
+                Khoá hồ sơ
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Danh sách và tìm kiếm bệnh nhân; thêm hồ sơ mới (UC.9.1, UC.9.2, UC.9.4). */
 export default function Patients() {
@@ -23,6 +62,11 @@ export default function Patients() {
   const [query, setQuery] = useState(q);
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState(null);
+  const [menu, setMenu] = useState(null);
+  const [lockTarget, setLockTarget] = useState(null);
+  const [notice, setNotice] = useState(null);
+  const { user } = useSession();
+  const admin = isAdmin(user);
 
   useEffect(() => {
     const t = setTimeout(() => setQuery(q.trim()), 300);
@@ -55,25 +99,30 @@ export default function Patients() {
       </div>
 
       {created && (
-        <div role="status" className="t-notice" style={{ padding: '22px 24px', flexWrap: 'wrap', alignItems: 'center', gap: '18px 20px', fontWeight: 400 }}>
-          <div style={{ flex: '999 1 320px', minWidth: 0 }}>
-            <p style={{ fontWeight: 700 }}>
-              Đã tạo hồ sơ cho <span className="t-notice-name">{created.fullName}</span> — mã bệnh nhân <span className="t-notice-name">{created.patientCode}</span>
-            </p>
-            <p className="t-text" style={{ marginTop: 4 }}>
-              Bước tiếp theo: đặt lịch khám cho bệnh nhân này để có mã phiếu khám và giờ khám dự kiến.
-            </p>
-          </div>
-          <div className="t-actions" style={{ gap: 12 }}>
-            <Link to={`/noi-bo/lich-trong-ngay?dat=${created.id}`} className="t-btn t-btn-primary" style={{ padding: '0 22px' }}>
-              <Icon name="calendarPlus" strokeWidth={1.75} />
-              Đặt lịch khám cho bệnh nhân này
-            </Link>
-            <Link to={`/noi-bo/benh-nhan/${created.id}`} className="t-btn t-btn-ghost" style={{ padding: '0 20px' }}>
-              Xem hồ sơ
-            </Link>
-          </div>
-        </div>
+        <NoticeDialog
+          title="Đã tạo hồ sơ"
+          width={640}
+          onClose={() => setCreated(null)}
+          actions={
+            <>
+              <Link to={`/noi-bo/benh-nhan/${created.id}`} className="t-btn t-btn-ghost" style={{ padding: '0 20px' }}>
+                Xem hồ sơ
+              </Link>
+              <Link to={`/noi-bo/lich-trong-ngay?dat=${created.id}`} className="t-btn t-btn-primary" style={{ padding: '0 22px' }}>
+                <Icon name="calendarPlus" strokeWidth={1.75} />
+                Đặt lịch khám cho bệnh nhân này
+              </Link>
+            </>
+          }
+        >
+          <p>
+            Đã tạo hồ sơ cho <strong className="t-strong">{created.fullName}</strong> — mã bệnh nhân <strong className="t-strong">{created.patientCode}</strong>.
+          </p>
+          {created.userId && (
+            <p style={{ marginTop: 8 }}>Số điện thoại này đã có tài khoản website nên hồ sơ được nối vào tài khoản đó. Bệnh nhân sẽ thấy phiếu khám khi đăng nhập.</p>
+          )}
+          <p style={{ marginTop: 8 }}>Bước tiếp theo: đặt lịch khám cho bệnh nhân này để có mã phiếu khám và giờ khám dự kiến.</p>
+        </NoticeDialog>
       )}
 
       <div className="t-card" style={{ padding: 20, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
@@ -109,8 +158,8 @@ export default function Patients() {
           <div className="t-scroll">
             <div role="table" aria-label="Danh sách hồ sơ bệnh nhân" className="t-table">
               <div role="row" className="t-tr t-thead" style={GRID}>
-                {['Mã bệnh nhân', 'Bệnh nhân', 'Trạng thái', 'Lần khám gần nhất', 'Thao tác'].map((h) => (
-                  <div key={h} role="columnheader" className="t-th" style={{ padding: '14px 12px' }}>
+                {['Mã bệnh nhân', 'Bệnh nhân', 'Trạng thái', 'Lần khám gần nhất', 'Thao tác'].map((h, i) => (
+                  <div key={h} role="columnheader" className="t-th" style={{ padding: '14px 12px', textAlign: i >= 2 ? 'center' : undefined }}>
                     {h}
                   </div>
                 ))}
@@ -127,7 +176,7 @@ export default function Patients() {
                         Năm sinh {p.birthYear || '—'} · {p.phone || '—'}
                       </span>
                     </div>
-                    <div role="cell" className="t-td" style={{ padding: '16px 12px' }}>
+                    <div role="cell" className="t-td" style={{ padding: '16px 12px', textAlign: 'center' }}>
                       {p.isLocked ? (
                         <span className="t-chip t-chip-locked t-chip-sm">
                           <Icon name="lock" size={18} strokeWidth={2.25} />
@@ -140,13 +189,20 @@ export default function Patients() {
                         </span>
                       )}
                     </div>
-                    <div role="cell" className="t-td t-text" style={{ padding: '16px 12px' }}>
+                    <div role="cell" className="t-td t-text" style={{ padding: '16px 12px', textAlign: 'center' }}>
                       {p.lastVisitDate ? fmtDate(p.lastVisitDate) : 'Chưa khám'}
                     </div>
-                    <div role="cell" className="t-td" style={{ padding: '16px 12px' }}>
-                      <Link to={`/noi-bo/benh-nhan/${p.id}`} className="t-btn t-btn-ghost t-btn-sm">
-                        Xem hồ sơ
-                      </Link>
+                    <div role="cell" className="t-td" style={{ padding: '10px 12px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: menu === p.id ? 'relative' : undefined, zIndex: menu === p.id ? 30 : undefined }}>
+                      <RowMenu
+                        p={p}
+                        admin={admin}
+                        open={menu === p.id}
+                        onToggle={() => setMenu((m) => (m === p.id ? null : p.id))}
+                        onLock={() => {
+                          setMenu(null);
+                          setLockTarget(p);
+                        }}
+                      />
                     </div>
                   </div>
                 ))}
@@ -164,6 +220,19 @@ export default function Patients() {
         )}
         {data && <Pager page={page} total={data.total} perPage={PER_PAGE} unit="hồ sơ" onPage={(p) => set({ trang: p })} />}
       </div>
+
+      {lockTarget && (
+        <LockPatientDialog
+          patient={lockTarget}
+          onClose={() => setLockTarget(null)}
+          onDone={(patient) => {
+            setLockTarget(null);
+            setNotice(patient.isLocked ? `Đã khoá hồ sơ ${patient.fullName} (${patient.patientCode}).` : `Đã mở khoá hồ sơ ${patient.fullName} (${patient.patientCode}).`);
+            reload({ silent: true });
+          }}
+        />
+      )}
+      {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
 
       {creating && (
         <TDialog title="Thêm hồ sơ mới" width={600} onClose={() => setCreating(false)}>

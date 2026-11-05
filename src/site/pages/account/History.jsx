@@ -2,7 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { CLINIC, RELATIONSHIPS, fmtDate } from '../../../shared/lib/format.js';
+import { RELATIONSHIPS, fmtDate } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { dobText } from './ProfileDialogs.jsx';
 import '../auth/auth.css';
@@ -104,11 +104,6 @@ export default function History() {
                       </Link>
                     </div>
                   )}
-
-                  <p className="r-note">
-                    Chỉ các lượt khám thuộc hồ sơ trong tài khoản của cô chú mới hiện ở đây. Thấy thiếu hoặc sai, cô chú báo cho phòng khám qua số{' '}
-                    <a href={CLINIC.phoneHref}>{CLINIC.phone}</a>.
-                  </p>
                 </div>
               )}
             </>

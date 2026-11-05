@@ -93,15 +93,17 @@ export function Ticket({ appt, meta }) {
             </div>
           ))}
         </dl>
-        <p className="bk-counter">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
-            <path d="M12 8v4M12 16h.01" />
-          </svg>
-          <span>
-            Cô chú trình phiếu khám này tại <strong>quầy tiếp nhận</strong> để được hướng dẫn.
-          </span>
-        </p>
+        {appt.status === 'BOOKED' && (
+          <p className="bk-counter">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+            <span>
+              Cô chú trình phiếu khám này tại <strong>quầy tiếp nhận</strong> để được hướng dẫn.
+            </span>
+          </p>
+        )}
       </div>
     </section>
   );

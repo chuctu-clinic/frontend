@@ -6,9 +6,8 @@ import { api } from '../../../shared/lib/api.js';
 import { GENDERS, ageFrom, fmtDate, shortTime, todayVN } from '../../../shared/lib/format.js';
 import { isAdmin, useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { Notice } from '../../components/fields.jsx';
 import { PatientFields, focusFirstError, patientBody, patientForm, validatePatient } from '../../../site/components/PatientFields.jsx';
-import { TDialog } from '../../components/dialogs.jsx';
+import { NoticeDialog, TDialog } from '../../components/dialogs.jsx';
 import { EditRecordDialog } from '../../components/records/EditRecordDialog.jsx';
 import { HistoryTable } from '../../components/records/HistoryTable.jsx';
 import { ResultDialog } from '../../components/records/ResultSheet.jsx';
@@ -29,6 +28,7 @@ function editErrors(form) {
 /** Sửa thông tin hồ sơ: đủ các ô như lúc người dùng tạo hồ sơ (UC.9.5). Mã bệnh nhân không đổi. */
 function EditPatientDialog({ patient, onClose, onSaved }) {
   const [form, setForm] = useState(() => editForm(patient));
+  const [version, setVersion] = useState(patient.updatedAt);
   const [tried, setTried] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
@@ -47,9 +47,16 @@ function EditPatientDialog({ patient, onClose, onSaved }) {
     setError(null);
     try {
       const { relationship, ...body } = patientBody(form);
-      const res = await api.patch(`/staff/patients/${patient.id}`, body);
+      const res = await api.patch(`/staff/patients/${patient.id}`, { ...body, expectedUpdatedAt: version });
       onSaved(res.patient);
     } catch (err) {
+      // Vừa có người khác đổi hồ sơ: nạp lại để xem thông tin mới rồi mới lưu
+      if (err.code === 'STALE') {
+        const fresh = (await api.get(`/staff/patients/${patient.id}`)).patient;
+        setForm(editForm(fresh));
+        setVersion(fresh.updatedAt);
+        setTried(false);
+      }
       setError(err);
       setPending(false);
       focusFirstError('.t-dialog');
@@ -62,7 +69,15 @@ function EditPatientDialog({ patient, onClose, onSaved }) {
         <p className="t-text">
           Mã bệnh nhân <strong className="t-strong">{patient.patientCode}</strong> được cấp một lần và không đổi. Ô có dấu <span className="t-req">*</span> là bắt buộc.
         </p>
-        <PatientFields id="sua" form={form} setForm={setForm} errors={fe} />
+        {/* Hồ sơ chính chủ: tài khoản đổi theo; số đăng nhập chỉ đổi ở Quản lý tài khoản */}
+        <PatientFields
+          id="sua"
+          form={form}
+          setForm={setForm}
+          errors={fe}
+          phoneReadOnly={patient.relationship === 'BAN_THAN'}
+          phoneNote={patient.relationship === 'BAN_THAN' ? 'Số đăng nhập của tài khoản, đổi ở Quản lý tài khoản.' : undefined}
+        />
         {error && !Object.keys(server).length && <ErrorAlert error={error} />}
         <div className="t-actions" style={{ paddingTop: 8, borderTop: '1px solid var(--line-soft)' }}>
           <button type="submit" className="t-btn t-btn-primary" style={{ padding: '0 26px' }} disabled={pending}>
@@ -73,50 +88,6 @@ function EditPatientDialog({ patient, onClose, onSaved }) {
           </button>
         </div>
       </form>
-    </TDialog>
-  );
-}
-
-/** Admin khoá hoặc mở khoá hồ sơ (UC.9.8). */
-function LockDialog({ patient, onClose, onDone }) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState(null);
-  const locking = !patient.isLocked;
-  const submit = async () => {
-    setPending(true);
-    setError(null);
-    try {
-      const res = await api.post(`/admin/patients/${patient.id}/${locking ? 'lock' : 'unlock'}`);
-      onDone(res.patient);
-    } catch (err) {
-      setError(err);
-      setPending(false);
-    }
-  };
-  return (
-    <TDialog title={locking ? 'Khoá hồ sơ bệnh nhân?' : 'Mở khoá hồ sơ?'} tone={locking ? 'red' : 'green'} width={600} onClose={onClose}>
-      <div className="t-dialog-body">
-        <p className="t-text">
-          {locking ? (
-            <>
-              Sau khi khoá, hồ sơ <strong className="t-strong">không chọn được khi đặt lịch</strong>, <strong className="t-strong">không ghi nhận lượt khám mới</strong> và không sửa được.
-              Các phiếu khám đã đặt vẫn giữ nguyên, lịch sử khám vẫn xem được.
-            </>
-          ) : (
-            'Hồ sơ sẽ dùng lại được: đặt lịch, ghi nhận lượt khám và sửa thông tin.'
-          )}
-        </p>
-        <ErrorAlert error={error} />
-        <div className="t-actions">
-          <button type="button" className={`t-btn ${locking ? 't-btn-danger' : 't-btn-primary'} t-btn-grow`} disabled={pending} onClick={submit}>
-            <Icon name={locking ? 'lock' : 'unlock'} />
-            {locking ? 'Khoá hồ sơ' : 'Mở khoá'}
-          </button>
-          <button type="button" className="t-btn t-btn-ghost" onClick={onClose}>
-            Quay lại
-          </button>
-        </div>
-      </div>
     </TDialog>
   );
 }
@@ -164,7 +135,7 @@ export default function PatientDetail() {
         <Icon name="arrowLeft" size={22} />
         Quay lại danh sách hồ sơ
       </Link>
-      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
 
       <div className="t-panel" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: '20px 24px', alignItems: 'center' }}>
         <span className="t-avatar">
@@ -196,12 +167,6 @@ export default function PatientDetail() {
               Sửa thông tin
             </button>
           )}
-          {isAdmin(user) && (
-            <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 18px' }} onClick={() => setDialog({ type: 'lock' })}>
-              <Icon name={p.isLocked ? 'unlock' : 'lock'} size={20} />
-              {p.isLocked ? 'Mở khoá hồ sơ' : 'Khoá hồ sơ'}
-            </button>
-          )}
         </div>
       </div>
 
@@ -215,7 +180,7 @@ export default function PatientDetail() {
             <p style={{ lineHeight: '26px', color: 'var(--ink-900)' }}>
               Không chọn được khi đặt lịch khám, không ghi nhận lượt khám mới, không sửa thông tin và không sửa phiếu kết quả. Lịch sử khám vẫn xem được.{' '}
               {isAdmin(user) ? (
-                'Bấm Mở khoá hồ sơ để dùng lại.'
+                'Muốn dùng lại thì mở khoá ở danh sách Hồ sơ bệnh nhân (nút ⋮ ở cột Thao tác).'
               ) : (
                 <>
                   Hồ sơ do Admin khoá, muốn dùng lại thì liên hệ <strong>Admin</strong> để mở khoá.
@@ -284,7 +249,7 @@ export default function PatientDetail() {
                       </div>
                       <div role="cell" className="t-td" style={{ padding: '10px 16px' }}>
                         {a.status === 'IN_PROGRESS' ? (
-                          <Link to={`/noi-bo/phieu-kham/${a.id}/ket-qua`} className="t-btn t-btn-primary" style={{ padding: '0 14px' }}>
+                          <Link to={`/noi-bo/phieu-kham/${a.id}/ket-qua`} state={{ back: `/noi-bo/benh-nhan/${p.id}` }} className="t-btn t-btn-primary" style={{ padding: '0 14px' }}>
                             Ghi nhận lượt khám
                           </Link>
                         ) : (
@@ -334,17 +299,6 @@ export default function PatientDetail() {
             setData((d) => ({ ...d, patient }));
             setDialog(null);
             setNotice('Đã lưu thông tin hồ sơ.');
-          }}
-        />
-      )}
-      {dialog?.type === 'lock' && (
-        <LockDialog
-          patient={p}
-          onClose={() => setDialog(null)}
-          onDone={(patient) => {
-            setData((d) => ({ ...d, patient }));
-            setDialog(null);
-            setNotice(patient.isLocked ? 'Đã khoá hồ sơ.' : 'Đã mở khoá hồ sơ.');
           }}
         />
       )}

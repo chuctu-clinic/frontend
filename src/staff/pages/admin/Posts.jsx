@@ -5,10 +5,10 @@ import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { fmtDate, fmtTime } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDismiss, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { Notice, TPicker } from '../../components/fields.jsx';
+import { useAsync, useDismiss, useDocumentTitle, useMenuPlacement } from '../../../shared/lib/hooks.js';
+import { TPicker } from '../../components/fields.jsx';
 import { Pager } from '../../components/Pager.jsx';
-import { PlainDialog } from '../../components/dialogs.jsx';
+import { NoticeDialog, PlainDialog } from '../../components/dialogs.jsx';
 import './admin.css';
 import { StatusIcon, StatusLegend } from './StatusIcon.jsx';
 
@@ -28,8 +28,9 @@ const POST_STATUS = {
   DRAFT: { icon: 'edit', tone: 'gray', label: 'Bản nháp', note: 'Bản nháp, chưa đăng' },
 };
 
-function RowMenu({ p, open, up, onToggle, onHide, onPublish, onDelete }) {
+function RowMenu({ p, open, onToggle, onHide, onPublish, onDelete }) {
   const ref = useDismiss(open, onToggle);
+  const { menuRef, up } = useMenuPlacement(open, ref);
   const fixedPage = Boolean(p.slug);
   return (
     <div className="t-menu-wrap" ref={ref}>
@@ -41,7 +42,7 @@ function RowMenu({ p, open, up, onToggle, onHide, onPublish, onDelete }) {
         </svg>
       </button>
       {open && (
-        <div role="menu" aria-label={`Thao tác cho bài ${p.title}`} className={`t-menu ${up ? 'up' : 'down'}`} style={{ width: 240 }}>
+        <div ref={menuRef} role="menu" aria-label={`Thao tác cho bài ${p.title}`} className={`t-menu ${up ? 'up' : 'down'}`} style={{ width: 240 }}>
           <Link role="menuitem" className="t-menu-item" to={`/noi-bo/quan-tri/bai-viet/${p.id}/xem-thu`} state={{ from: 'list' }}>
             <Icon name="eye" size={22} />
             Xem bài viết
@@ -97,7 +98,7 @@ export default function Posts() {
     return () => clearTimeout(t);
   }, [q]);
 
-  const { data, loading, reload } = useAsync(() => api.get(`/admin/posts${qs({ q: query, category, status, page, limit: PER_PAGE })}`), [query, category, status, page]);
+  const { data, loading, reload, setData } = useAsync(() => api.get(`/admin/posts${qs({ q: query, category, status, page, limit: PER_PAGE })}`), [query, category, status, page]);
   const counts = data?.statusCounts || { PUBLISHED: 0, DRAFT: 0, HIDDEN: 0 };
   const all = counts.PUBLISHED + counts.DRAFT + counts.HIDDEN;
   const filtered = Boolean(query || category || status);
@@ -106,9 +107,30 @@ export default function Posts() {
     setMenu(null);
     setError(null);
     try {
-      await api.put(`/admin/posts/${p.id}`, { status: next });
+      const { post } = await api.put(`/admin/posts/${p.id}`, { status: next });
       setNotice(message);
-      reload({ silent: true });
+      // Đang lọc theo trạng thái thì bài phải rời khỏi danh sách
+      if (status) reload({ silent: true });
+      // Đổi ngay tại hàng: tải lại thì bài nhảy lên đầu (danh sách xếp theo giờ cập nhật), hàng cũ thành bài khác nên trông như chưa đổi
+      else
+        setData((d) => ({
+          ...d,
+          items: d.items.map((x) => (x.id === post.id ? { ...x, status: post.status, pinned: post.pinned, updatedAt: post.updatedAt } : x)),
+          statusCounts: { ...d.statusCounts, [p.status]: d.statusCounts[p.status] - 1, [post.status]: d.statusCounts[post.status] + 1 },
+        }));
+    } catch (err) {
+      setError(err);
+    }
+  };
+
+  const togglePin = async (p) => {
+    setMenu(null);
+    setError(null);
+    try {
+      const { post } = await api.post(`/admin/posts/${p.id}/${p.pinned ? 'unpin' : 'pin'}`);
+      setNotice(post.pinned ? `Đã ghim bài “${p.title}” lên đầu trang Bài viết.` : `Đã bỏ ghim bài “${p.title}”.`);
+      // Mỗi lần chỉ một bài được ghim nên các hàng khác đều bỏ ghim
+      setData((d) => ({ ...d, items: d.items.map((x) => ({ ...x, pinned: x.id === post.id ? post.pinned : post.pinned ? false : x.pinned })) }));
     } catch (err) {
       setError(err);
     }
@@ -142,7 +164,7 @@ export default function Posts() {
         </Link>
       </div>
 
-      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
       <ErrorAlert error={error} />
 
       <div className="t-card" style={{ padding: 20, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end' }}>
@@ -203,7 +225,7 @@ export default function Posts() {
                 ))}
               </div>
               <div role="rowgroup" className="t-tbody">
-                {data.items.map((p, i) => (
+                {data.items.map((p) => (
                   <div key={p.id} role="row" className="t-tr" style={menu === p.id ? { position: 'relative', zIndex: 30 } : undefined}>
                     <div role="cell" className="t-td" style={{ paddingLeft: 16 }}>
                       <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
@@ -233,10 +255,21 @@ export default function Posts() {
                       <span style={{ display: 'block', color: 'var(--ink-500)' }}>{fmtTime(p.updatedAt)}</span>
                     </div>
                     <div role="cell" className="t-td a-td-action">
+                      {p.status === 'PUBLISHED' && !p.slug && (
+                        <button
+                          type="button"
+                          className="t-kebab a-pin"
+                          aria-pressed={p.pinned}
+                          aria-label={`${p.pinned ? 'Bỏ ghim' : 'Ghim'} bài ${p.title}`}
+                          title={p.pinned ? 'Bỏ ghim' : 'Ghim bài'}
+                          onClick={() => togglePin(p)}
+                        >
+                          <Icon name="pushpin" size={22} />
+                        </button>
+                      )}
                       <RowMenu
                         p={p}
                         open={menu === p.id}
-                        up={data.items.length >= 4 && i >= data.items.length - 2}
                         onToggle={() => setMenu((m) => (m === p.id ? null : p.id))}
                         onHide={() =>
                           setPostStatus(p, 'HIDDEN', `Đã ẩn bài “${p.title}”. Bài không còn hiển thị trên website, vẫn được giữ lại để công khai lại sau.`)

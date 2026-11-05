@@ -4,8 +4,8 @@ import { fmtDate, ROLE_LABELS } from '../../../shared/lib/format.js';
 import { useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { useSession } from '../../../shared/lib/session.jsx';
 import { Icon } from '../../../shared/ui/Icon.jsx';
-import { TDialog } from '../../components/dialogs.jsx';
-import { AccountNameHint, FieldError, Notice, PasswordField } from '../../components/fields.jsx';
+import { NoticeDialog, TDialog } from '../../components/dialogs.jsx';
+import { AccountNameHint, FieldError, PasswordField } from '../../components/fields.jsx';
 import { passwordErrors } from '../../lib/password.js';
 
 const EMPTY = { currentPassword: '', newPassword: '', confirm: '' };
@@ -204,7 +204,7 @@ function InfoForm({ user, setUser }) {
         <h2 id="tk-title" className="t-h2">
           Thông tin cá nhân
         </h2>
-        {done && <Notice>Đã lưu thay đổi thông tin tài khoản.</Notice>}
+        {done && <NoticeDialog onClose={() => setDone(false)}>Đã lưu thay đổi thông tin tài khoản.</NoticeDialog>}
         <div className="t-field">
           <label htmlFor="tk-ten" className="t-label">
             Họ và tên <span className="t-req">*</span>
@@ -311,7 +311,7 @@ function PasswordForm({ user, setUser }) {
       <h2 id="mk-title" className="t-h2">
         Đổi mật khẩu
       </h2>
-      {done && <Notice>Đã đổi mật khẩu. Lần đăng nhập sau dùng mật khẩu mới.</Notice>}
+      {done && <NoticeDialog onClose={() => setDone(false)}>Đã đổi mật khẩu. Lần đăng nhập sau dùng mật khẩu mới.</NoticeDialog>}
       <PasswordField key={`mk-cu-${round}`} id="mk-cu" label="Mật khẩu hiện tại" value={form.currentPassword} onChange={set('currentPassword')} error={fe.currentPassword} />
       <PasswordField key={`mk-moi-${round}`} id="mk-moi" label="Mật khẩu mới" value={form.newPassword} onChange={set('newPassword')} error={fe.newPassword} />
       <PasswordField key={`mk-nhap-${round}`} id="mk-nhap" label="Nhập lại mật khẩu mới" value={form.confirm} onChange={set('confirm')} error={fe.confirm} />

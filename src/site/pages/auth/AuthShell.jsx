@@ -1,55 +1,40 @@
-import { Link } from 'react-router-dom';
-import { Brand } from '../../../shared/ui/Brand.jsx';
+import { flushSync } from 'react-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { CLINIC } from '../../../shared/lib/format.js';
 import './auth.css';
 
-/**
- * Khung chung cho trang đăng nhập/tạo tài khoản theo prototype: đầu trang rút gọn
- * (logo + nút sang trang còn lại), cột ảnh bên trái, biểu mẫu bên phải, chân trang một dòng.
- */
-export function AuthShell({ switchText, switchLabel, switchTo, aside, wide, children }) {
+/** Liên kết giữa đăng nhập và tạo tài khoản: khung trang biến đổi mượt sang trang kia (auth.css); trình duyệt chưa hỗ trợ thì đổi trang như thường. */
+export function AuthLink({ to, ...props }) {
+  const navigate = useNavigate();
+  const go = (e) => {
+    const plainClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+    if (!plainClick || !document.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    e.preventDefault();
+    document.startViewTransition(() => flushSync(() => navigate(to)));
+  };
+  return <Link to={to} onClick={go} {...props} />;
+}
+
+/** Khung chung cho trang đăng nhập/tạo tài khoản: logo lớn bên trái, khối màu bo góc chứa thẻ biểu mẫu bên phải. */
+export function AuthShell({ wide, note, children }) {
   return (
-    <div className="auth">
+    <div className={`auth a-split ${wide ? 'a-split-wide' : ''}`}>
       <a className="skip-link" href="#noi-dung">
         Bỏ qua, tới nội dung chính
       </a>
-      <header className="a-header">
-        <div className="a-header-row">
-          <Brand />
-          <div className="a-header-switch">
-            <span>{switchText}</span>
-            <Link className="a-btn-ghost" to={switchTo}>
-              {switchLabel}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main id="noi-dung" className="a-main">
-        <div className={`a-grid ${wide ? 'a-grid-top' : ''}`}>
-          <div className={`a-aside ${wide ? 'a-aside-narrow' : ''}`}>{aside}</div>
-          <div className={`a-card ${wide ? 'a-card-wide' : ''}`}>{children}</div>
-        </div>
-      </main>
-
-      <footer className="a-footer">
-        <div className="a-footer-row">
-          <span>
-            © {new Date().getFullYear()} Phòng khám {CLINIC.short} · {CLINIC.address}
-          </span>
+      <div className="a-split-brand">
+        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" width="1292" height="1218" />
+        <span className="a-split-name">{CLINIC.short}</span>
+        <span className="a-split-tag">Y học cổ truyền từ thiện</span>
+        {note && <p className="a-split-note">{note}</p>}
+      </div>
+      <main id="noi-dung" className="a-split-panel">
+        <div className={`a-split-card ${wide ? 'a-split-card-wide' : ''}`}>{children}</div>
+        <div className="a-split-links">
+          <Link to="/">Về trang chủ</Link>
           <Link to="/lien-he">Cần giúp đỡ? Liên hệ phòng khám</Link>
         </div>
-      </footer>
+      </main>
     </div>
-  );
-}
-
-export function ClinicPhoto({ framed, short }) {
-  return (
-    <img
-      className={`a-photo ${framed ? 'a-photo-framed' : ''} ${short ? 'a-photo-short' : ''}`}
-      src="/mat-tien.jpg"
-      alt="Mặt tiền Phòng khám Chúc Từ"
-    />
   );
 }

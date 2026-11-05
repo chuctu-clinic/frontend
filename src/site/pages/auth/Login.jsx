@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { Alert, ErrorAlert } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { isStaff, useSession } from '../../../shared/lib/session.jsx';
 import { useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { AuthShell, ClinicPhoto } from './AuthShell.jsx';
+import { AuthLink, AuthShell } from './AuthShell.jsx';
 import { PhoneField, phoneDigits, phoneError, toPhone } from '../../components/fields.jsx';
 import { OtpDialog } from './OtpDialog.jsx';
 
@@ -81,14 +81,10 @@ export default function Login() {
   };
 
   return (
-    <AuthShell switchText="Chưa có tài khoản?" switchLabel="Tạo tài khoản" switchTo={withNext('/dang-ky', next)} aside={<ClinicPhoto framed />}>
-      <div>
+    <AuthShell>
+      <div className="a-split-head">
+        <p className="a-lead">{forBooking ? 'Cô chú đăng nhập để đặt lịch khám' : 'Chào mừng cô chú đến với Chúc Từ'}</p>
         <h1 className="a-title">Đăng nhập</h1>
-        <p className="a-lead">
-          {forBooking
-            ? 'Cô chú đăng nhập để đặt lịch khám. Chỉ cần số điện thoại đã đăng ký rồi bấm Đăng nhập.'
-            : 'Cô chú chỉ cần nhập số điện thoại đã đăng ký rồi bấm Đăng nhập.'}
-        </p>
       </div>
 
       <form className="a-form" onSubmit={submitPhone} noValidate>
@@ -110,10 +106,10 @@ export default function Login() {
           <>
             <ErrorAlert error={error} />
             {error.status === 404 && (
-              <Link className="a-btn-ghost a-btn-block" to={withNext('/dang-ky', next, { sdt: digits })}>
+              <AuthLink className="a-btn-ghost a-btn-block" to={withNext('/dang-ky', next, { sdt: digits })}>
                 <Icon name="userPlus" strokeWidth={1.75} />
                 Tạo tài khoản với số này
-              </Link>
+              </AuthLink>
             )}
           </>
         )}
@@ -124,9 +120,16 @@ export default function Login() {
         </button>
       </form>
 
-      <p className="a-lead">
-        Chưa có tài khoản? <Link to={withNext('/dang-ky', next)}>Tạo tài khoản mới</Link>
-      </p>
+      {/* Số chưa đăng ký thì đã có nút "Tạo tài khoản với số này" ở trên */}
+      {error?.status !== 404 && (
+        <>
+          <p className="a-split-or">Chưa có tài khoản?</p>
+          <AuthLink className="a-btn-ghost a-btn-block" to={withNext('/dang-ky', next)}>
+            <Icon name="userPlus" strokeWidth={1.75} />
+            Tạo tài khoản mới
+          </AuthLink>
+        </>
+      )}
 
       {otp && (
         <OtpDialog

@@ -5,6 +5,7 @@ import { api } from '../../../shared/lib/api.js';
 import { fmtDate } from '../../../shared/lib/format.js';
 import { TSheet } from '../dialogs.jsx';
 import { fmtLeft, fmtStamp } from '../../lib/format.js';
+import { focusFirstError } from '../../../site/components/PatientFields.jsx';
 import { fromRecord, toPayload, validateRecord, editState } from './recordForm.js';
 import { RecordFields } from './RecordFields.jsx';
 import { ResultDialog } from './ResultSheet.jsx';
@@ -26,7 +27,7 @@ export function EditRecordDialog({ record, patient, onClose, onSaved }) {
 
   const review = () => {
     setTried(true);
-    if (Object.values(errs).some(Boolean)) return;
+    if (Object.values(errs).some(Boolean)) return focusFirstError('.t-sheet');
     setReviewing(true);
   };
 

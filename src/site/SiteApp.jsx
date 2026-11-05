@@ -67,7 +67,7 @@ export default function SiteApp() {
   useScrollTopOnSamePageLink();
   return (
     <Routes>
-      {/* Đăng nhập và tạo tài khoản có đầu trang, chân trang rút gọn riêng (AuthShell) */}
+      {/* Đăng nhập và tạo tài khoản có khung riêng, không có đầu trang, chân trang (AuthShell) */}
       <Route path="dang-nhap" element={<Login />} />
       <Route path="dang-ky" element={<Register />} />
 

@@ -12,12 +12,7 @@
 .db-panel { background: var(--surface-card); border: 1px solid var(--line-soft); border-radius: 28px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px; }
 .db-panel-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
 .db-link { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; color: var(--green-700); text-decoration: underline; }
-.a-shortcuts { flex: 1 1 300px; min-width: 0; background: var(--gold-100); border-radius: 28px; padding: 32px; display: flex; flex-direction: column; gap: 16px; align-self: flex-start; }
-.a-slot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 7px 12px; border-bottom: 1px solid var(--line-soft); }
-.a-slot.now { background: var(--green-100); border-radius: 12px; border-bottom-color: transparent; }
-.a-slot-time { flex: 0 0 56px; font-weight: 700; color: var(--ink-900); }
-.a-slot-boxes { flex: 1 1 200px; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.a-slot-count { flex: 0 0 76px; text-align: right; font-weight: 700; color: var(--green-700); }
+.a-shortcuts { flex: 1 1 280px; min-width: 0; background: var(--gold-100); border-radius: 28px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px; }
 .a-drafts { list-style: none; padding: 0; display: flex; flex-direction: column; }
 .a-drafts li { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line-soft); }
 
@@ -25,7 +20,7 @@
 /* Họ và tên · Số điện thoại · Email · Vai trò · Trạng thái · Thao tác: tên và email co giãn, các cột còn lại cố định */
 .a-accounts .t-tr { grid-template-columns: minmax(140px, 1fr) 136px minmax(160px, 1.3fr) 176px 112px 96px; }
 /* Bài viết · Danh mục · Tác giả · Trạng thái · Cập nhật · Thao tác */
-.a-posts .t-tr { grid-template-columns: minmax(250px, 1fr) 152px 160px 96px 116px 80px; }
+.a-posts .t-tr { grid-template-columns: minmax(250px, 1fr) 152px 160px 96px 116px 104px; }
 .a-accounts .t-td,
 .a-accounts .t-th,
 .a-posts .t-td,
@@ -41,6 +36,11 @@
 .t-table .a-td-action { padding-left: 4px; padding-right: 4px; text-align: center; }
 .a-td-status,
 .a-td-action { display: flex; justify-content: center; }
+.a-posts .a-td-action { justify-content: flex-end; }
+.a-pin { color: var(--ink-500); }
+.a-pin:hover { background: var(--green-100); color: var(--green-700); }
+.a-pin[aria-pressed='true'] { background: var(--green-100); color: var(--green-700); }
+.a-pin[aria-pressed='true'] svg { fill: currentColor; }
 .a-status-icon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 999px; flex-shrink: 0; }
 .a-status-icon.green { background: var(--green-100); color: var(--green-700); }
 .a-status-icon.red { background: var(--alert-100); color: var(--alert-700); }
@@ -63,17 +63,11 @@
 .a-cat { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; font-weight: 600; white-space: nowrap; background: var(--green-100); color: var(--green-700); }
 .a-cat.gold { background: var(--gold-100); color: var(--gold-700); }
 .a-cat.sand { background: var(--surface-200); color: var(--ink-700); }
-@media (max-width: 900px) {
-  .a-accounts.t-table,
-  .a-posts.t-table { min-width: 900px; }
+@media (max-width: 960px) {
+  .a-accounts.t-table { min-width: 860px; }
+  .a-posts.t-table { min-width: 880px; }
 }
 
-/* Hộp thoại không có thanh màu: biểu tượng tròn bên trái */
-.a-modal { margin: auto; width: 100%; background: var(--surface-card); border-radius: 28px; box-shadow: var(--shadow-lg); padding: 36px; display: flex; flex-direction: column; gap: 22px; }
-.a-modal-head { display: flex; gap: 18px; align-items: flex-start; }
-.a-modal-icon { display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; border-radius: 999px; flex-shrink: 0; background: var(--green-100); color: var(--green-700); }
-.a-modal-icon.red { background: var(--alert-100); color: var(--alert-700); }
-.a-modal-actions { display: flex; flex-wrap: wrap; gap: 14px; justify-content: flex-end; }
 
 /* ---------- Soạn bài viết ---------- */
 .a-editor-grid { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
@@ -223,3 +217,30 @@
   .pv-desc { font-size: 19px; line-height: 31px; }
   .pv-cover { height: 260px; }
 }
+
+/* Hôm nay tại phòng khám: số phiếu theo trạng thái */
+.db-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 12px; }
+.db-stat { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border-radius: 18px; text-decoration: none; background: var(--surface-100); border: 2px solid transparent; }
+.db-stat:hover, .db-stat:focus-visible { border-color: var(--line-strong); }
+.db-stat-label { font-weight: 600; color: var(--ink-700); }
+.db-stat-value { font-family: var(--font-serif); font-size: 30px; line-height: 38px; font-weight: 700; color: var(--ink-900); }
+.db-stat-value small { font-family: var(--font-sans); font-size: 16px; font-weight: 600; color: var(--ink-500); }
+.db-stat.green { background: var(--green-100); }
+.db-stat.green .db-stat-label { color: var(--green-700); }
+.db-stat.gold { background: var(--gold-100); }
+.db-stat.gold .db-stat-label { color: var(--gold-700); }
+.db-stat.muted .db-stat-value { color: var(--ink-500); }
+
+/* Hàng đợi lúc này */
+.db-queue { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px 28px; }
+.db-queue-title { margin-bottom: 8px !important; }
+.db-seats, .db-next { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.db-seats li, .db-next li { display: flex; align-items: baseline; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--surface-100); min-width: 0; }
+.db-seats li.empty { background: transparent; border: 1px dashed var(--line-strong); }
+.db-seat-no { flex: 0 0 52px; font-weight: 700; color: var(--green-700); }
+.db-seat-name { flex: 1 1 auto; min-width: 0; font-weight: 700; color: var(--ink-900); }
+.db-seats li.empty .db-seat-name { font-weight: 500; color: var(--ink-500); }
+.db-seat-sub { flex-shrink: 0; font-size: 15px; color: var(--ink-500); }
+.db-next li { align-items: center; }
+.db-next-no { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 999px; background: #e3b659; color: #2a2118; font-weight: 700; }
+.db-next-no.prio { background: #2f5f8f; color: #fff; }

@@ -68,6 +68,7 @@ export default function AccountInfo() {
         dob: joinDob(form.dob),
         gender: form.gender,
         address: joinAddress(form.address),
+        expectedUpdatedAt: data.user.infoUpdatedAt,
       });
       setData(res);
       setUser(res.user);
@@ -75,17 +76,15 @@ export default function AccountInfo() {
       setTried(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
+      // Vừa có người khác đổi thông tin: nạp lại để cô chú xem thông tin mới rồi mới lưu
+      if (err.code === 'STALE') {
+        setData(await api.get('/me'));
+        setTried(false);
+      }
       setError(err);
     } finally {
       setPending(false);
     }
-  };
-
-  const reset = () => {
-    setForm(fromUser(data.user));
-    setError(null);
-    setTried(false);
-    setSaved(false);
   };
 
   const u = data?.user;
@@ -195,9 +194,6 @@ export default function AccountInfo() {
                 <button type="submit" className="a-btn-primary k-btn" disabled={pending} aria-busy={pending || undefined}>
                   {pending ? <span className="spinner" aria-hidden="true" /> : <Icon name="check" strokeWidth={1.75} />}
                   Lưu thay đổi
-                </button>
-                <button type="button" className="a-btn-ghost k-btn-ghost" onClick={reset}>
-                  Bỏ thay đổi
                 </button>
               </div>
             </form>

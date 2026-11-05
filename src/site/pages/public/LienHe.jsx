@@ -193,7 +193,7 @@ export default function LienHe() {
       <section className="i-section" style={{ paddingTop: 0 }} aria-labelledby="hoi-dap">
         <div className="h-wrap i-stack" style={{ gap: 28 }}>
           <h2 id="hoi-dap" className="i-h2 i-h2-sm" style={{ marginBottom: 0 }}>
-            Mấy điều bà con hay hỏi
+            Những câu hỏi thường gặp
           </h2>
           <div className="h-grid-3" style={{ gap: 24 }}>
             {FAQ.map(([q, a]) => (

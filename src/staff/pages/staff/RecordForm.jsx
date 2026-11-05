@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { GENDERS, fmtDate, shortTime, todayVN } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { fmtLeft, fmtStamp } from '../../lib/format.js';
+import { focusFirstError } from '../../../site/components/PatientFields.jsx';
 import { EMPTY_FORM, editState, fromRecord, toPayload, validateRecord } from '../../components/records/recordForm.js';
 import { EditRecordDialog } from '../../components/records/EditRecordDialog.jsx';
 import { HistoryTable } from '../../components/records/HistoryTable.jsx';
@@ -13,6 +14,9 @@ import { RecordFields } from '../../components/records/RecordFields.jsx';
 import { ResultDialog } from '../../components/records/ResultSheet.jsx';
 
 /** Lập và sửa phiếu kết quả khám (UC.9.7, UC.9.9, UC.10.4), theo prototype "TiepTan-HoSoChiTiet". */
+/** Chỉ nhận đường dẫn trong khu nội bộ. */
+const backTo = (back, fallback) => (typeof back === 'string' && back.startsWith('/noi-bo/') ? back : fallback);
+
 export default function RecordForm() {
   const { appointmentId } = useParams();
   useDocumentTitle('Phiếu kết quả khám');
@@ -26,6 +30,7 @@ export default function RecordForm() {
   const [saved, setSaved] = useState(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
+  const location = useLocation();
 
   if (appt.loading || (patientId && detail.loading && !detail.data)) return <Loading />;
   if (appt.error) return <ErrorAlert error={appt.error} />;
@@ -44,7 +49,7 @@ export default function RecordForm() {
 
   const review = () => {
     setTried(true);
-    if (Object.values(errs).some(Boolean)) return;
+    if (Object.values(errs).some(Boolean)) return focusFirstError('form.t-panel');
     setDialog({
       type: 'confirm',
       draft: { ...(record || {}), ...toPayload(current), visitDate, appointment: { ticketCode: a.ticketCode } },
@@ -83,9 +88,10 @@ export default function RecordForm() {
 
   return (
     <>
-      <Link to={`/noi-bo/benh-nhan/${p.id}`} className="t-back">
+      {/* Về đúng trang đã mở phiếu (Hàng đợi, Lịch trong ngày…); mở thẳng bằng đường dẫn thì về hồ sơ bệnh nhân */}
+      <Link to={backTo(location.state?.back, `/noi-bo/benh-nhan/${p.id}`)} className="t-back">
         <Icon name="arrowLeft" size={22} />
-        Quay lại hồ sơ bệnh nhân
+        Quay lại
       </Link>
 
       {saved && (

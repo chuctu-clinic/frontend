@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /** Tải dữ liệu khi deps đổi; trả về { data, error, loading, reload, setData }. */
 export function useAsync(fn, deps = []) {
@@ -51,6 +51,65 @@ export function useDismiss(open, onClose) {
     };
   }, [open, onClose]);
   return ref;
+}
+
+/** Vùng nhìn thấy được của phần tử: cắt bởi khung cuộn gần nhất (overflow khác visible) và cửa sổ. */
+function visibleBounds(el) {
+  let top = 0;
+  let bottom = window.innerHeight;
+  for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+    const style = getComputedStyle(p);
+    if (style.overflowX !== 'visible' || style.overflowY !== 'visible') {
+      const r = p.getBoundingClientRect();
+      top = Math.max(top, r.top);
+      bottom = Math.min(bottom, r.bottom);
+      break;
+    }
+  }
+  return { top, bottom };
+}
+
+/**
+ * Chọn hướng mở cho menu thả của một dòng bảng: mở lên khi bên dưới không đủ chỗ mà bên trên đủ, tính theo khung thật
+ * sự cắt menu (khung cuộn ngang của bảng trên màn hình hẹp cũng cắt theo chiều dọc), không chỉ theo cửa sổ. Tính lại
+ * khi cuộn hay đổi kích thước lúc menu đang mở. Mở xuống mà vẫn bị che thì cuộn cho thấy đủ menu, chỉ sau khi đã chọn
+ * hướng (không cuộn theo hướng cũ). Trả về { menuRef, up }; wrapRef là khối chứa nút mở menu.
+ */
+export function useMenuPlacement(open, wrapRef) {
+  const menuRef = useRef(null);
+  const [place, setPlace] = useState({ up: false, ready: false });
+
+  const measure = useCallback(() => {
+    const wrap = wrapRef.current;
+    const menu = menuRef.current;
+    if (!wrap || !menu) return;
+    const button = wrap.getBoundingClientRect();
+    const height = menu.offsetHeight + 4;
+    const { top, bottom } = visibleBounds(wrap);
+    const up = button.bottom + height > bottom && button.top - height >= top;
+    setPlace((p) => (p.up === up && p.ready ? p : { up, ready: true }));
+  }, [wrapRef]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPlace({ up: false, ready: false });
+      return undefined;
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
+    };
+  }, [open, measure]);
+
+  // Chạy khi đã chọn hướng xong (ready), nên không cuộn theo vị trí của lần mở trước
+  useEffect(() => {
+    if (open && place.ready && !place.up) menuRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [open, place.ready, place.up]);
+
+  return { menuRef, up: place.up };
 }
 
 /**

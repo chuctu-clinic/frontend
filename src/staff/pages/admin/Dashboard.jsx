@@ -1,69 +1,128 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { fmtDate, fmtTime, shortTime, todayVN } from '../../../shared/lib/format.js';
+import { fmtDate, fmtTime, todayVN } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { longDay, nowMinutesVN } from '../../components/appointments/time.js';
+import { longDay } from '../../components/appointments/time.js';
 import './admin.css';
 
-const RANK = { COMPLETED: 0, IN_ROOM: 1, WAITING: 2 };
+const clock = (value) => fmtTime(value).replace(/^0/, '');
 
-/** Sơ đồ ghế thu gọn: mỗi khung giờ một dòng, mỗi người đã check-in một ô. */
-function MiniSlotMap({ slotMap, waiting }) {
-  const order = new Map(waiting.map((w, i) => [w.ticketCode, { no: i + 1, prio: w.priorityGroup === 'PRIORITY' }]));
-  const now = nowMinutesVN();
+/** Số phiếu hôm nay theo trạng thái; bấm một ô thì mở Lịch trong ngày đã lọc sẵn trạng thái đó. */
+function TodayStats({ appointments, queue }) {
+  const by = appointments.byStatus || {};
+  const stats = [
+    ['BOOKED', 'Chưa đến', by.BOOKED || 0, 'gold'],
+    ['CHECKED_IN', 'Đang chờ', by.CHECKED_IN || 0, 'gold'],
+    ['IN_PROGRESS', 'Đang khám', `${queue.inRoomCount}/${queue.capacity}`, 'green', 'ghế'],
+    ['COMPLETED', 'Đã khám xong', by.COMPLETED || 0, 'green'],
+    ['CANCELLED', 'Đã huỷ', by.CANCELLED || 0, 'muted'],
+  ];
   return (
-    <>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {slotMap.map((s) => {
-          const start = s.startMinutes;
-          const people = [...s.checkins].sort((a, b) => RANK[a.status] - RANK[b.status] || (order.get(a.ticketCode)?.no ?? 0) - (order.get(b.ticketCode)?.no ?? 0));
-          return (
-            <div key={s.start} className={`a-slot ${start <= now && now < start + 60 ? 'now' : ''}`}>
-              <span className="a-slot-time">{shortTime(s.start)}</span>
-              <div role="group" aria-label={`Khung ${shortTime(s.start)}, ${people.length} người đã check-in`} className="a-slot-boxes">
-                {people.length === 0 && <span style={{ fontSize: 15, color: 'var(--line-strong)' }}>Chưa có ai check-in</span>}
-                {people.map((c) => {
-                  const o = order.get(c.ticketCode);
-                  const kind = c.status === 'COMPLETED' ? 'done' : c.status === 'IN_ROOM' ? 'in' : o?.prio ? 'prio' : 'wait';
-                  const label = { done: 'Đã hoàn thành', in: 'Trong phòng khám', wait: 'Đang chờ', prio: 'Đang chờ, nền xanh dương' }[kind];
-                  const aria = `${label}${o ? `, thứ tự ${o.no}` : ''}`;
-                  return (
-                    <span key={c.id} role="img" aria-label={aria} title={aria} className={`t-box sm ${kind}`}>
-                      {kind === 'done' ? '✓' : kind === 'in' ? '▶' : o?.no}
-                    </span>
-                  );
-                })}
-              </div>
-              <span className="a-slot-count">{people.length} người</span>
-            </div>
-          );
-        })}
+    <section className="db-panel" aria-labelledby="db-homnay">
+      <div className="db-panel-head">
+        <h2 id="db-homnay" className="t-h2">
+          Hôm nay tại phòng khám
+        </h2>
+        <span className="t-text">
+          {appointments.total} phiếu khám, {appointments.active} còn hiệu lực
+        </span>
       </div>
-      <ul aria-label="Chú thích" className="t-key" style={{ paddingTop: 12, gap: '8px 22px' }}>
-        {[
-          ['done', '✓', 'Đã hoàn thành'],
-          ['in', '▶', 'Trong phòng khám'],
-          ['wait', '1', 'Đang chờ'],
-          ['prio', '1', 'Đang chờ, nền xanh dương'],
-        ].map(([k, ky, label]) => (
-          <li key={k} style={{ fontSize: 15, gap: 8 }}>
-            <span aria-hidden="true" className={`t-box sm ${k}`}>
-              {ky}
+      <div className="db-stats">
+        {stats.map(([key, label, value, tone, unit]) => (
+          <Link key={key} to={`/noi-bo/lich-trong-ngay?loc=${key}`} className={`db-stat ${tone}`}>
+            <span className="db-stat-label">{label}</span>
+            <span className="db-stat-value">
+              {value}
+              {unit && <small> {unit}</small>}
             </span>
-            {label}
-          </li>
+          </Link>
         ))}
-      </ul>
-    </>
+      </div>
+    </section>
+  );
+}
+
+/** Hàng đợi thu nhỏ: các ghế đang khám và vài người kế tiếp. */
+function QueueNow({ queue }) {
+  const next = queue.waiting.slice(0, 3);
+  return (
+    <section className="db-panel" style={{ flex: '999 1 460px', minWidth: 0 }} aria-labelledby="db-hangdoi">
+      <div className="db-panel-head">
+        <h2 id="db-hangdoi" className="t-h2">
+          Hàng đợi lúc này
+        </h2>
+        <span className="t-text">
+          {queue.inRoomCount}/{queue.capacity} ghế · {queue.waitingCount} người đang chờ
+        </span>
+      </div>
+      <div className="db-queue">
+        <div>
+          <p className="t-eyebrow db-queue-title">Đang khám</p>
+          <ul className="db-seats">
+            {queue.seats.map((s) => (
+              <li key={s.seatNo} className={s.empty ? 'empty' : ''}>
+                <span className="db-seat-no">Ghế {s.seatNo}</span>
+                {s.empty ? (
+                  <span className="db-seat-name">Trống</span>
+                ) : (
+                  <>
+                    <span className="db-seat-name">{s.patient?.fullName}</span>
+                    <span className="db-seat-sub">vào lúc {clock(s.enteredAt)}</span>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="t-eyebrow db-queue-title">Kế tiếp</p>
+          {next.length === 0 ? (
+            <p className="t-text">Chưa có ai đang chờ.</p>
+          ) : (
+            <ol className="db-next">
+              {next.map((w, i) => (
+                <li key={w.id}>
+                  <span className={`db-next-no ${w.priorityGroup === 'PRIORITY' ? 'prio' : ''}`}>{i + 1}</span>
+                  <span className="db-seat-name">{w.patient?.fullName}</span>
+                  <span className="db-seat-sub">chờ {w.waitedMinutes} phút</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          {queue.waitingCount > next.length && <p className="t-text" style={{ marginTop: 8 }}>và {queue.waitingCount - next.length} người nữa</p>}
+        </div>
+      </div>
+      <div className="t-actions" style={{ gap: 12 }}>
+        <Link to="/noi-bo/hang-doi" className="t-btn t-btn-primary" style={{ padding: '0 22px' }}>
+          Mở hàng đợi
+        </Link>
+        <Link to="/noi-bo/man-hinh-cho" target="_blank" rel="noopener" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }}>
+          <Icon name="external" strokeWidth={1.75} />
+          Mở màn hình chờ
+        </Link>
+      </div>
+    </section>
   );
 }
 
 /** Tổng quan trong ngày cho Admin (UC.2.3), theo prototype "Admin-Dashboard". */
 export default function Dashboard() {
   useDocumentTitle('Tổng quan');
-  const { data, loading, error } = useAsync(() => api.get('/admin/dashboard'), []);
+  const { data, loading, error, reload } = useAsync(() => api.get('/admin/dashboard'), []);
+  const queue = useAsync(() => api.get('/staff/queue'), []);
+  const reloadQueue = queue.reload;
+
+  // Tự làm mới như trang Hàng đợi, để số liệu hôm nay không bị cũ
+  useEffect(() => {
+    const t = setInterval(() => {
+      reload({ silent: true });
+      reloadQueue({ silent: true });
+    }, 30_000);
+    return () => clearInterval(t);
+  }, [reload, reloadQueue]);
 
   if (loading) return <Loading />;
   if (error) return <ErrorAlert error={error} />;
@@ -89,28 +148,10 @@ export default function Dashboard() {
         <p className="t-lead">Quản trị viên có toàn quyền hệ thống, bao gồm tất cả chức năng của tiếp tân.</p>
       </div>
 
-      <div className="a-tiles">
-        {tiles.map(([to, label, value, go, green]) => (
-          <Link key={to} to={to} className={`a-tile ${green ? 'green' : ''}`}>
-            <span className="a-tile-label">{label}</span>
-            <span className="a-tile-value">{value}</span>
-            <span className="a-tile-go">{go}</span>
-          </Link>
-        ))}
-      </div>
+      <TodayStats appointments={data.appointments} queue={data.queue} />
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
-        <section className="db-panel" style={{ flex: '999 1 460px', minWidth: 0 }} aria-labelledby="db-so-do">
-          <div className="db-panel-head">
-            <h2 id="db-so-do" className="t-h2">
-              Sơ đồ ghế theo khung giờ hôm nay
-            </h2>
-            <Link to="/noi-bo/hang-doi" className="db-link">
-              Mở hàng đợi
-            </Link>
-          </div>
-          <MiniSlotMap slotMap={data.queue.slotMap} waiting={data.queue.waiting || []} />
-        </section>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
+        {queue.data && <QueueNow queue={queue.data} />}
         <section className="a-shortcuts" aria-labelledby="db-loi-tat">
           <h2 id="db-loi-tat" className="t-h2">
             Lối tắt
@@ -126,20 +167,29 @@ export default function Dashboard() {
         </section>
       </div>
 
-      <section className="db-panel" aria-labelledby="db-nhap">
-        <div className="db-panel-head">
-          <h2 id="db-nhap" className="t-h2">
-            Bài viết bản nháp
-          </h2>
-          <Link to="/noi-bo/quan-tri/bai-viet" className="db-link">
-            Quản lý bài viết
+      <h2 className="t-h2" style={{ marginBottom: -8 }}>
+        Hệ thống
+      </h2>
+      <div className="a-tiles">
+        {tiles.map(([to, label, value, go, green]) => (
+          <Link key={to} to={to} className={`a-tile ${green ? 'green' : ''}`}>
+            <span className="a-tile-label">{label}</span>
+            <span className="a-tile-value">{value}</span>
+            <span className="a-tile-go">{go}</span>
           </Link>
-        </div>
-        {data.drafts.length === 0 ? (
-          <p className="t-text" style={{ paddingTop: 14, borderTop: '1px solid var(--line-soft)' }}>
-            Không có bài viết nào đang ở bản nháp.
-          </p>
-        ) : (
+        ))}
+      </div>
+
+      {data.drafts.length > 0 && (
+        <section className="db-panel" aria-labelledby="db-nhap">
+          <div className="db-panel-head">
+            <h2 id="db-nhap" className="t-h2">
+              Bài viết bản nháp
+            </h2>
+            <Link to="/noi-bo/quan-tri/bai-viet" className="db-link">
+              Quản lý bài viết
+            </Link>
+          </div>
           <ul className="a-drafts">
             {data.drafts.map((p) => (
               <li key={p.id}>
@@ -158,8 +208,8 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      )}
     </>
   );
 }

@@ -65,15 +65,23 @@ export const patientBody = (form) => ({
   email: form.email.trim() || null,
 });
 
-/** Đưa con trỏ tới ô lỗi đầu tiên trong vùng chứa. */
+/**
+ * Đưa con trỏ và màn hình tới ô lỗi đầu tiên trong vùng chứa (scope: bộ chọn của hộp thoại hay biểu mẫu đang mở, để
+ * không nhảy sang ô lỗi của trang nằm phía sau). Nút lưu thường ở cuối nên có thể không thấy dòng báo lỗi.
+ */
 export const focusFirstError = (scope) =>
-  setTimeout(() => document.querySelector(`${scope} [aria-invalid="true"], ${scope} .a-radios-invalid input`)?.focus());
+  setTimeout(() => {
+    const field = document.querySelector(`${scope} [aria-invalid="true"], ${scope} .a-radios-invalid input`);
+    field?.focus();
+    // Ô đã có sẵn con trỏ thì focus() không cuộn nên phải cuộn riêng
+    field?.scrollIntoView({ block: 'center' });
+  });
 
 /**
  * Hai nhóm "Thông tin người khám" và "Thông tin khác (Không bắt buộc)".
  * Quan hệ với người khám do nơi dùng tự đặt (trang đặt lịch để ở nhóm Thông tin người đặt).
  */
-export function PatientFields({ id, form, setForm, errors: fe, phoneNote }) {
+export function PatientFields({ id, form, setForm, errors: fe, phoneNote, phoneReadOnly }) {
   const [moreOpen, setMoreOpen] = useState(true);
   const setValue = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const inv = (k) => (fe[k] ? 'true' : 'false');
@@ -98,7 +106,7 @@ export function PatientFields({ id, form, setForm, errors: fe, phoneNote }) {
             <FieldError id={`${id}-ten-loi`}>{fe.fullName}</FieldError>
           </div>
           <div style={{ flex: '1 1 300px', minWidth: 0 }}>
-            <PhoneField id={`${id}-sdt`} label="Số điện thoại" required value={form.phone} onChange={(v) => setValue('phone', v)} error={fe.phone} note={phoneNote} />
+            <PhoneField id={`${id}-sdt`} label="Số điện thoại" required value={form.phone} onChange={(v) => setValue('phone', v)} error={fe.phone} note={phoneNote} readOnly={phoneReadOnly} />
           </div>
         </div>
         <DobField id={`${id}-ns`} required value={form.dob} onChange={(v) => setValue('dob', v)} error={fe.dob} />
