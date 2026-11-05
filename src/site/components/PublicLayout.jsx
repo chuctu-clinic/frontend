@@ -145,10 +145,13 @@ export function PublicLayout() {
   );
 }
 
-/** Hai nút gọi điện và chỉ đường, luôn nằm ở góc dưới bên phải màn hình điện thoại và máy bảng (layout.css). */
+/** Các nút nhắn Zalo, gọi điện và chỉ đường, luôn nằm ở góc dưới bên phải màn hình điện thoại và máy bảng (layout.css). */
 function QuickContact() {
   return (
     <nav className="quick-contact" aria-label="Liên hệ nhanh">
+      <a href={CLINIC.zaloUrl} className="quick-btn quick-btn-zalo" target="_blank" rel="noreferrer" aria-label={`Nhắn Zalo cho phòng khám ${CLINIC.phone}`}>
+        <span aria-hidden="true">Zalo</span>
+      </a>
       <a href={CLINIC.phoneHref} className="quick-btn" aria-label={`Gọi phòng khám ${CLINIC.phone}`}>
         <Icon name="phone" size={28} strokeWidth={1.75} />
       </a>

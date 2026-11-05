@@ -6,7 +6,8 @@ import { api } from '../../../shared/lib/api.js';
 import { fmtDate, todayVN } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
 import { useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { FieldError, Notice, TPicker } from '../../components/fields.jsx';
+import { FieldError, TPicker } from '../../components/fields.jsx';
+import { NoticeDialog } from '../../components/dialogs.jsx';
 import { hasContent, toEditorHtml, uploadImage } from './postHtml.js';
 import './admin.css';
 
@@ -245,7 +246,7 @@ export default function PostEditor() {
         <h1 className="t-h1">{isNew ? 'Soạn bài viết' : 'Sửa bài viết'}</h1>
         {statusChip}
       </div>
-      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
       <ErrorAlert error={error} />
 
       <div className="a-editor-grid">

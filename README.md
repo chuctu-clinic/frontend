@@ -1,89 +1,183 @@
 # Phòng khám Chúc Từ – Frontend
 
-Giao diện website quản lý tiếp nhận và đặt lịch khám của Phòng chẩn trị Y học cổ truyền từ thiện Chúc Từ, dựng theo prototype **Website Phòng khám Chúc Từ** cùng Design System của phòng khám. API nằm ở repo [chuctu-clinic/backend](https://github.com/chuctu-clinic/backend).
+Giao diện website đặt lịch và tiếp nhận bệnh nhân của **Phòng chẩn trị Y học cổ truyền từ thiện Chúc Từ**.
+API (server) nằm ở thư mục [`../backend`](../backend).
 
-| Phần | Nội dung |
+Website có hai khu dùng chung một ứng dụng:
+
+| Khu | Địa chỉ | Dành cho |
+| --- | --- | --- |
+| **Trang khách** | `/` | Người bệnh: xem thông tin, đăng ký, đặt lịch, xem phiếu khám và kết quả |
+| **Khu nội bộ** | `/noi-bo/` | Tiếp tân và Admin: lịch trong ngày, hàng đợi, hồ sơ, kết quả khám, bài viết, tài khoản |
+
+| | |
 | --- | --- |
-| `src/site` | Trang khách, chạy ở `/`: trang thông tin, đăng nhập bằng số điện thoại, đặt lịch, phiếu khám, tài khoản |
-| `src/staff` | Khu tiếp tân và Admin, chạy ở `/noi-bo/` |
-| `src/shared` | Gọi API, phiên đăng nhập, định dạng, component và CSS dùng chung |
-| Công nghệ | ReactJS 18 + Vite, React Router |
+| **Công nghệ** | React 18, Vite, React Router |
+| **Soạn bài viết** | Tiptap, nhập nội dung từ file Word bằng mammoth |
+| **Đăng nhập bằng SMS** | Firebase Phone Auth (khi backend bật) |
 
-## Chạy thử
+---
 
-Yêu cầu Node.js 20 trở lên. Chạy backend trước (repo backend: `npm run dev`, API ở cổng 4000), rồi:
+## Mục lục
+
+1. [Chạy thử trên máy](#1-chạy-thử-trên-máy)
+2. [Cấu hình `.env`](#2-cấu-hình-env)
+3. [Chạy bằng Docker](#3-chạy-bằng-docker)
+4. [Đưa lên mạng (triển khai)](#4-đưa-lên-mạng-triển-khai)
+5. [Cấu trúc mã nguồn](#5-cấu-trúc-mã-nguồn)
+6. [Quy ước khi viết code](#6-quy-ước-khi-viết-code)
+
+---
+
+## 1. Chạy thử trên máy
+
+### Cần cài sẵn
+
+- **Node.js 20** trở lên
+- **Backend đang chạy** ở cổng 4000 (xem README của [`../backend`](../backend))
+
+### Các bước
 
 ```bash
-npm install
+npm install      # chỉ cần lần đầu, hoặc khi package.json thay đổi
 npm run dev
 ```
 
-- Trang khách: http://localhost:5173
-- Khu nội bộ (tiếp tân, Admin): http://localhost:5173/noi-bo/
+Mở trình duyệt:
 
-`npm run dev` chạy Vite ở cổng 5173 và chuyển `/api` sang backend ở `localhost:4000`, giống khi triển khai thật: chung một địa chỉ và chung cookie phiên. Tài khoản mẫu xem ở README của backend.
+- Trang khách: http://localhost:5173
+- Khu nội bộ: http://localhost:5173/noi-bo/
+
+Khi chạy `npm run dev`, Vite tự chuyển mọi yêu cầu `/api` sang backend ở `localhost:4000`. Trình duyệt chỉ thấy một địa chỉ nên cookie đăng nhập hoạt động giống như khi chạy thật.
+
+Tài khoản để đăng nhập thử có trong README của backend (mục *Tài khoản mẫu*).
+
+### Build bản chạy thật
 
 ```bash
-npm run build      # build ra dist/
+npm run build      # tạo thư mục dist/
+npm run preview    # xem thử bản build
 ```
 
-## Chạy bằng Docker
+---
+
+## 2. Cấu hình `.env`
+
+Chép `.env.example` thành `.env` nếu cần đổi gì. Mọi biến đều có giá trị mặc định, không tạo `.env` cũng chạy được.
+
+| Biến | Dùng khi | Ý nghĩa | Mặc định |
+| --- | --- | --- | --- |
+| `DEV_PORT` | `npm run dev` | Cổng của Vite | `5173` |
+| `DEV_API_TARGET` | `npm run dev` | Backend mà Vite chuyển `/api` tới | `http://localhost:4000` |
+| `VITE_API_URL` | `npm run build` | Địa chỉ backend khi frontend và backend ở **hai tên miền khác nhau**. Để trống thì gọi `/api` trên cùng địa chỉ (khuyên dùng). | trống |
+| `API_UPSTREAM` | chạy Docker | Backend mà nginx chuyển `/api` tới | `http://host.docker.internal:4000` |
+
+> `VITE_API_URL` được ghi thẳng vào mã chạy trên trình duyệt, ai cũng xem được. Không đặt thông tin bí mật ở đây.
+
+---
+
+## 3. Chạy bằng Docker
 
 ```bash
 docker compose up --build
 ```
 
-Mở http://localhost:8080 (trang khách) và http://localhost:8080/noi-bo/ (tiếp tân, Admin). nginx phục vụ ứng dụng (cả `/` lẫn `/noi-bo/`) và chuyển `/api` sang backend theo biến `API_UPSTREAM`. Mặc định là backend chạy trên cùng máy ở cổng 4000 (repo backend: `docker compose up`).
+Mở http://localhost:8080 (trang khách) và http://localhost:8080/noi-bo/ (khu nội bộ).
 
-## Triển khai
+nginx phục vụ giao diện và chuyển `/api` sang backend theo biến `API_UPSTREAM`. Mặc định đó là backend chạy trên cùng máy ở cổng 4000.
 
-Có hai cách nối với backend:
+---
 
-1. **Cùng địa chỉ** (khuyên dùng): chạy image Docker của repo này với `API_UPSTREAM` là địa chỉ backend, ví dụ `API_UPSTREAM=https://api.chuctu.vn`. Trình duyệt chỉ thấy một địa chỉ, cookie phiên là cookie cùng trang.
-   - **Vercel**: `vercel.json` đã chuyển `/api` sang backend và đưa mọi đường dẫn khác về `index.html`. Sửa `destination` của `/api` thành địa chỉ backend (rewrite của Vercel không đọc được biến môi trường), để trống `VITE_API_URL`, và thêm địa chỉ Vercel vào `CLIENT_ORIGIN` bên backend.
-2. **Khác địa chỉ** (frontend gọi thẳng backend ở tên miền khác): build với `VITE_API_URL=https://dia-chi-backend` và đặt `CLIENT_ORIGIN` bên backend là địa chỉ frontend. Cả hai bên phải dùng HTTPS vì cookie phiên là `SameSite=None; Secure`. Trang tĩnh cần cấu hình chuyển mọi đường dẫn về `index.html` giống `nginx.conf`.
+## 4. Đưa lên mạng (triển khai)
 
-Mọi biến đặt trong file `.env` (chép từ `.env.example`, không commit). Biến nào để trống thì dùng giá trị mặc định.
+### Cách khuyên dùng: frontend và backend chung một địa chỉ
 
-| Biến | Lúc | Ý nghĩa |
-| --- | --- | --- |
-| `DEV_PORT` | `npm run dev` | Cổng của Vite, mặc định 5173. |
-| `DEV_API_TARGET` | `npm run dev` | Backend mà Vite chuyển `/api` tới, mặc định `http://localhost:4000`. |
-| `VITE_API_URL` | build | Địa chỉ API khi frontend và backend ở hai địa chỉ khác nhau. Để trống thì gọi `/api` cùng địa chỉ. |
-| `API_UPSTREAM` | chạy container | Địa chỉ backend mà nginx chuyển `/api` tới. |
+Trình duyệt chỉ thấy một tên miền, còn `/api` được chuyển ngầm sang backend. Cookie đăng nhập là cookie cùng trang nên đơn giản và an toàn.
 
-Khách và nhân viên dùng chung một phiên đăng nhập (cookie `ct_session`); trang nào dùng được do vai trò của tài khoản quyết định. Một trình duyệt chỉ đăng nhập được một tài khoản tại một thời điểm.
+**Trên Vercel** (đã có sẵn `vercel.json`):
 
-## Cấu trúc mã nguồn
+1. Trong `vercel.json`, sửa `destination` của dòng `/api/:path*` thành địa chỉ backend.
+
+   > Hiện dòng này vẫn trỏ về backend Node.js cũ trên Render (`backend-az4x.onrender.com`). Cần đổi sang địa chỉ backend Spring Boot mới khi đưa lên mạng.
+
+2. Để trống `VITE_API_URL`.
+3. Bên backend, thêm địa chỉ Vercel vào `CLIENT_ORIGIN`. **Bắt buộc**: thiếu thì server từ chối mọi thao tác (lỗi 403) để chống giả mạo yêu cầu.
+4. Trên Firebase Console, thêm tên miền Vercel vào **Authorized domains**.
+
+**Bằng Docker:** chạy image của thư mục này với `API_UPSTREAM` là địa chỉ backend, ví dụ `API_UPSTREAM=https://api.chuctu.vn`.
+
+### Cách khác: frontend và backend ở hai tên miền khác nhau
+
+- Build với `VITE_API_URL=https://dia-chi-backend`.
+- Đặt `CLIENT_ORIGIN` bên backend là địa chỉ frontend.
+- Cả hai bên phải dùng **HTTPS**, vì cookie đăng nhập khi đó là `SameSite=None; Secure`.
+- Trang tĩnh phải chuyển mọi đường dẫn về `index.html`, giống `nginx.conf`.
+
+---
+
+## 5. Cấu trúc mã nguồn
 
 ```
 src/
-  main.jsx, App.jsx       điểm vào; "/noi-bo/*" tải khu nội bộ, còn lại tải trang khách (hai phần tải riêng)
-  shared/                 dùng chung cho hai khu
-    ui/                   Icon, Brand, Markdown, nút, ô nhập, thông báo (ui.jsx)
-    lib/                  api (gọi REST), session (phiên đăng nhập), format (ngày giờ, CLINIC),
-                          hooks (useAsync, useDocumentTitle, useDismiss, useModal)
-    domain/               BẢN CHÉP của backend (src/shared/): constants, phone, medicalHistory. Sửa bên nào thì chép sang bên kia.
-    styles.css            CSS nền tảng theo Design System
-  site/                   trang khách, chạy ở /
-    components/           khung trang, Dialog, Picker, ô nhập dùng chung (fields, PatientFields)
-    pages/public          Trang chủ, Giới thiệu, Dịch vụ, Hướng dẫn, Liên hệ, Tin tức
-    pages/auth            Đăng nhập / đăng ký bằng số điện thoại + mã 6 số (console hoặc Firebase)
-    pages/account         Thông tin tài khoản, hồ sơ khám (tối đa 10), phiếu khám, kết quả, lịch sử
-    pages/booking         Đặt lịch 4 bước
-  staff/                  khu tiếp tân và Admin, chạy ở /noi-bo/
-    components/           khung khu nội bộ, hộp thoại, ô nhập, phân trang, lịch tháng
-      appointments/       check-in, huỷ, đổi lịch, thêm lịch khám
-      records/            biểu mẫu và bản xem phiếu kết quả khám
-    lib/                  định dạng riêng, homeFor (trang đầu theo vai trò)
-    pages/auth            Đăng nhập nội bộ, đổi mật khẩu
-    pages/staff           Lịch trong ngày, hàng đợi, hồ sơ bệnh nhân, phiếu kết quả
-    pages/admin           Tổng quan, quản lý tài khoản, quản lý bài viết (trình soạn Tiptap)
-Dockerfile, nginx.conf  build ứng dụng và phục vụ bằng nginx
+  main.jsx, App.jsx     điểm khởi động; /noi-bo/* tải khu nội bộ, còn lại tải trang khách
+
+  shared/               dùng chung cho cả hai khu
+    lib/                api (gọi server), session (phiên đăng nhập), format (ngày giờ),
+                        hooks (useAsync, useDismiss, useModal, useMenuPlacement...)
+    ui/                 Icon, logo, nút, ô nhập, thông báo
+    domain/             hằng số nghiệp vụ, kiểm tra số điện thoại, danh mục tiền sử bệnh
+    styles.css          CSS nền tảng theo Design System
+
+  site/                 trang khách, chạy ở /
+    pages/public/       Trang chủ, Giới thiệu, Dịch vụ, Hướng dẫn, Liên hệ, Tin tức
+    pages/auth/         Đăng ký, đăng nhập bằng số điện thoại và mã 6 số
+    pages/booking/      Đặt lịch 4 bước
+    pages/account/      Tài khoản, hồ sơ khám (tối đa 10), phiếu khám, kết quả, lịch sử
+    components/         khung trang, hộp thoại, ô nhập dùng chung
+
+  staff/                khu nội bộ, chạy ở /noi-bo/
+    pages/auth/         Đăng nhập nội bộ, quên và đổi mật khẩu
+    pages/staff/        Lịch trong ngày, hàng đợi, hồ sơ bệnh nhân, phiếu kết quả
+    pages/admin/        Tổng quan, quản lý tài khoản, quản lý bài viết
+    components/         khung khu nội bộ, hộp thoại, lịch tháng, phân trang
+      appointments/     check-in, huỷ, đổi giờ, thêm lịch khám
+      records/          biểu mẫu và bản xem phiếu kết quả khám
+
+public/                 logo, ảnh mặt tiền, robots.txt
+Dockerfile, nginx.conf  build và phục vụ bằng nginx
+vercel.json             cấu hình khi đưa lên Vercel
 ```
 
-Mỗi trang hay nhóm trang có tệp CSS riêng, tên class có tiền tố theo tệp để hai khu không đè nhau: `t-` khu nội bộ (staff.css), `ad-` và `pv-` quản trị, `s-` đăng nhập nội bộ; `a-` biểu mẫu trang khách (auth.css), `b-` và `bk-` đặt lịch, `r-` phiếu kết quả, `h-` trang chủ, `i-` trang thông tin, `p-` tin tức.
+---
 
-## Việc còn lại
+## 6. Quy ước khi viết code
 
-- **Nơi triển khai**: chưa chọn, chưa có CI/CD.
+- **Hằng số nghiệp vụ phải khớp với backend.** Các file trong `src/shared/domain/` là bản chép phía giao diện của các quy tắc ở backend:
+
+  | Frontend | Backend |
+  | --- | --- |
+  | `constants.js` | `common/Constants.java` |
+  | `phone.js` | `common/Phones.java` |
+  | `medicalHistory.js` | `record/` |
+
+  Sửa bên nào thì sửa luôn bên kia.
+
+- **Quy tắc luôn được kiểm tra ở backend.** Giao diện ẩn hay hiện nút chỉ để người dùng dễ thao tác, không thay cho việc kiểm tra ở server.
+
+- **Mỗi trang có file CSS riêng.** Tên class có tiền tố theo khu để không đè nhau:
+
+  | Tiền tố | Dùng cho |
+  | --- | --- |
+  | `t-` | khu nội bộ (`staff.css`) |
+  | `ad-`, `pv-` | quản trị |
+  | `s-` | đăng nhập nội bộ |
+  | `a-` | biểu mẫu trang khách |
+  | `b-`, `bk-` | đặt lịch |
+  | `r-` | phiếu kết quả |
+  | `h-` | trang chủ |
+  | `i-` | trang thông tin |
+  | `p-` | tin tức |
+
+- **Một phiên đăng nhập cho cả hai khu.** Khách và nhân viên dùng chung cookie `ct_session`. Trang nào dùng được do vai trò tài khoản quyết định. Một trình duyệt chỉ đăng nhập một tài khoản tại một thời điểm.
+
+- **Menu thao tác trên bảng** dùng hook `useMenuPlacement` để tự chọn mở lên hay mở xuống theo chỗ trống thật, kể cả khi bảng nằm trong khung cuộn trên màn hình hẹp.

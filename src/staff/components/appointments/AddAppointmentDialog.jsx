@@ -10,7 +10,7 @@ import { DayCards, SlotChoices } from './RescheduleDialog.jsx';
 import { NewPatientFields } from './NewPatientFields.jsx';
 import { TPicker } from '../fields.jsx';
 
-/** Tìm hồ sơ có sẵn theo họ tên, số điện thoại hoặc mã bệnh nhân. */
+/** Tìm hồ sơ có sẵn theo họ tên, số điện thoại hoặc mã bệnh nhân. Hồ sơ đã khoá vẫn hiện (không chọn được) để tiếp tân biết mà không tạo trùng. */
 function usePatientSearch(q) {
   const [state, setState] = useState({ items: null, loading: false });
   useEffect(() => {
@@ -23,7 +23,7 @@ function usePatientSearch(q) {
     setState((s) => ({ ...s, loading: true }));
     const t = setTimeout(() => {
       api
-        .get(`/staff/patients${qs({ q: text, locked: 'false', limit: 6 })}`)
+        .get(`/staff/patients${qs({ q: text, limit: 6 })}`)
         .then((d) => alive && setState({ items: d.items, loading: false }))
         .catch(() => alive && setState({ items: [], loading: false }));
     }, 250);
@@ -100,18 +100,34 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
           </div>
           {search.items?.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {search.items.map((p) => (
-                <button key={p.id} type="button" className="t-pick" onClick={() => choose(p)}>
-                  <span className="t-pick-main">
-                    <span>{p.fullName}</span>
-                    <span>{patientLine(p)}</span>
-                  </span>
-                  <span className="t-pick-go">
-                    Chọn
-                    <Icon name="chevronRight" size={22} />
-                  </span>
-                </button>
-              ))}
+              {search.items.map((p) =>
+                p.isLocked ? (
+                  <button key={p.id} type="button" className="t-pick locked" disabled aria-describedby={`tl-khoa-${p.id}`}>
+                    <span className="t-pick-main">
+                      <span>{p.fullName}</span>
+                      <span>{patientLine(p)}</span>
+                      <span id={`tl-khoa-${p.id}`} className="t-pick-lock">
+                        Hồ sơ đã khoá, không đặt lịch được. Liên hệ Admin để mở khoá, không tạo hồ sơ mới.
+                      </span>
+                    </span>
+                    <span className="t-pick-go locked">
+                      <Icon name="lock" size={20} />
+                      Đã khoá
+                    </span>
+                  </button>
+                ) : (
+                  <button key={p.id} type="button" className="t-pick" onClick={() => choose(p)}>
+                    <span className="t-pick-main">
+                      <span>{p.fullName}</span>
+                      <span>{patientLine(p)}</span>
+                    </span>
+                    <span className="t-pick-go">
+                      Chọn
+                      <Icon name="chevronRight" size={22} />
+                    </span>
+                  </button>
+                ),
+              )}
             </div>
           )}
           {search.items?.length === 0 && !search.loading && (
@@ -154,6 +170,11 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
               {isNew && (
                 <p className="t-text" style={{ marginTop: 2, fontWeight: 600, color: 'var(--green-700)' }}>
                   Hồ sơ vừa tạo xong
+                </p>
+              )}
+              {isNew && patient.userId && (
+                <p className="t-text" style={{ marginTop: 2 }}>
+                  Số điện thoại này đã có tài khoản website nên hồ sơ được nối vào tài khoản đó. Bệnh nhân sẽ thấy phiếu khám khi đăng nhập.
                 </p>
               )}
             </div>

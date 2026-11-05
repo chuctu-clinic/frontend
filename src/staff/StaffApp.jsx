@@ -10,6 +10,7 @@ import ChangePassword from './pages/auth/ChangePassword.jsx';
 
 import DailySchedule from './pages/staff/DailySchedule.jsx';
 import Queue from './pages/staff/Queue.jsx';
+import QueueDisplay from './pages/staff/QueueDisplay.jsx';
 import Patients from './pages/staff/Patients.jsx';
 import PatientDetail from './pages/staff/PatientDetail.jsx';
 import RecordForm from './pages/staff/RecordForm.jsx';
@@ -97,6 +98,9 @@ export default function StaffApp() {
         <Route path="quan-tri/bai-viet/moi" element={<PostEditor />} />
         <Route path="quan-tri/bai-viet/:id" element={<PostEditor />} />
       </Route>
+
+      {/* Màn hình hàng đợi chiếu lên TV phòng chờ: toàn trang, không có khung nội bộ */}
+      <Route path="man-hinh-cho" element={<RequireStaff><QueueDisplay /></RequireStaff>} />
 
       {/* Xem thử bài viết như người đọc: toàn trang, không có khung nội bộ */}
       <Route path="quan-tri/bai-viet/xem-thu" element={<RequireStaff admin><PostPreview /></RequireStaff>} />

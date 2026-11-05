@@ -6,7 +6,7 @@ import { api, qs } from '../../../shared/lib/api.js';
 import { addDays, fmtDate, fmtTime, shortTime, todayVN, weekday } from '../../../shared/lib/format.js';
 import { useAsync, useDismiss, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { MonthGrid } from '../../components/MonthGrid.jsx';
-import { Notice } from '../../components/fields.jsx';
+import { NoticeDialog } from '../../components/dialogs.jsx';
 import { Pager } from '../../components/Pager.jsx';
 import { AddAppointmentDialog } from '../../components/appointments/AddAppointmentDialog.jsx';
 import { CancelDialog, CheckinDialog, UndoCheckinDialog } from '../../components/appointments/StatusDialogs.jsx';
@@ -40,7 +40,7 @@ const norm = (t) =>
     .replace(/đ/g, 'd')
     .replace(/[^a-z0-9]/g, '');
 
-/** Lịch trong ngày: lọc trạng thái, tra cứu, check-in, vào khám, đổi giờ, huỷ, hoàn tác (UC.7.1 – UC.7.7). */
+/** Lịch trong ngày: lọc trạng thái, tra cứu, check-in, đổi giờ, huỷ, hoàn tác check-in (mời vào khám ở trang Hàng đợi) (UC.7.1 – UC.7.7). */
 export default function DailySchedule() {
   useDocumentTitle('Lịch trong ngày');
   const [params, setParams] = useSearchParams();
@@ -48,13 +48,15 @@ export default function DailySchedule() {
   const date = params.get('ngay') || today;
   const isToday = date === today;
   const isPast = date < today;
-  const [filter, setFilter] = useState('all');
+  // ?loc=<trạng thái>: mở sẵn bộ lọc (bấm từ ô số liệu ở Tổng quan)
+  const [filter, setFilter] = useState(() => (FILTERS.some(([k]) => k === params.get('loc')) ? params.get('loc') : 'all'));
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [menu, setMenu] = useState(null);
   const [dialog, setDialog] = useState(null);
   const [notice, setNotice] = useState(null);
   const [error, setError] = useState(null);
+  const [lookupMsg, setLookupMsg] = useState(null);
   const [calOpen, setCalOpen] = useState(false);
   const [marked, setMarked] = useState(() => new Set());
   const calRef = useDismiss(calOpen, () => setCalOpen(false));
@@ -82,6 +84,7 @@ export default function DailySchedule() {
     setCalOpen(false);
     setNotice(null);
     setQ('');
+    setLookupMsg(null);
     setPage(1);
     setMenu(null);
   };
@@ -98,7 +101,8 @@ export default function DailySchedule() {
   const count = (s) => all.filter((a) => a.status === s).length;
   const qn = norm(q);
   const rows = useMemo(() => {
-    let list = all.filter((a) => (filter === 'all' ? a.status !== 'CANCELLED' : a.status === filter));
+    // Tất cả: gồm cả phiếu đã huỷ, xếp xuống cuối để phiếu còn hiệu lực luôn ở trên
+    let list = filter === 'all' ? [...all.filter((a) => a.status !== 'CANCELLED'), ...all.filter((a) => a.status === 'CANCELLED')] : all.filter((a) => a.status === filter);
     if (qn) list = list.filter((a) => norm(`${a.ticketCode}${a.patient?.fullName}${a.patient?.patientCode}${a.patient?.phone}`).includes(qn));
     if (filter === 'CHECKED_IN') list = [...list].sort((x, y) => (x.checkin?.queueNo ?? 999) - (y.checkin?.queueNo ?? 999));
     return list;
@@ -108,18 +112,42 @@ export default function DailySchedule() {
   const shown = rows.slice((current - 1) * PER_PAGE, current * PER_PAGE);
   const withNo = filter === 'CHECKED_IN';
 
+  const showResults = () => document.getElementById('lt-ketqua')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
   const lookup = async () => {
     const text = q.trim();
-    if (!text || rows.length > 0) return;
+    setLookupMsg(null);
+    if (!text) {
+      setLookupMsg('Nhập mã phiếu khám, tên, mã bệnh nhân hoặc số điện thoại để tra cứu.');
+      document.getElementById('lt-ma')?.focus();
+      return;
+    }
+    // Danh sách đã lọc ngay khi gõ: có kết quả thì chỉ cần đưa người dùng tới bảng
+    if (rows.length > 0) return showResults();
+    // Có trong ngày nhưng bị bộ lọc trạng thái che: chuyển về Tất cả
+    const hidden = all.find((a) => norm(`${a.ticketCode}${a.patient?.fullName}${a.patient?.patientCode}${a.patient?.phone}`).includes(qn));
+    if (hidden) {
+      setFilter('all');
+      setPage(1);
+      return showResults();
+    }
     // Không có trong ngày đang xem: tra mã phiếu ở mọi ngày rồi chuyển sang ngày đó
-    if (!/^CT-PK-/i.test(text)) return;
+    if (!/^CT-PK-/i.test(text)) {
+      setLookupMsg(`Ngày đang xem không có lịch khám nào khớp với “${text}”. Tìm theo tên hay số điện thoại chỉ áp dụng cho ngày đang xem; nhập đủ mã phiếu khám (dạng CT-PK-…) để tìm ở mọi ngày.`);
+      return;
+    }
     try {
-      const res = await api.get(`/staff/appointments/lookup${qs({ code: text })}`);
-      if (res.appointment) {
-        setParams(res.appointment.slotDate === today ? {} : { ngay: res.appointment.slotDate });
-        setFilter('all');
-        setPage(1);
+      const res = await api.get(`/staff/appointments/lookup${qs({ code: text.toUpperCase() })}`);
+      const found = res.appointment;
+      if (!found) {
+        setLookupMsg(`Không tìm thấy phiếu khám mã “${text}”. Kiểm tra lại mã trên phiếu của bệnh nhân.`);
+        return;
       }
+      setParams(found.slotDate === today ? {} : { ngay: found.slotDate });
+      setFilter('all');
+      setPage(1);
+      setLookupMsg(found.slotDate === date ? null : `Phiếu ${found.ticketCode} thuộc ngày ${fmtDate(found.slotDate)}, đã chuyển sang ngày đó.`);
+      showResults();
     } catch (err) {
       setError(err);
     }
@@ -131,35 +159,13 @@ export default function DailySchedule() {
     reload({ silent: true });
   };
 
-  const act = async (key, a) => {
+  const act = (key, a) => {
     setMenu(null);
     setError(null);
     if (key === 'checkin') return setDialog({ type: 'checkin', appt: a });
     if (key === 'undo-checkin') return setDialog({ type: 'undo', appt: a });
     if (key === 'reschedule') return setDialog({ type: 'reschedule', appt: a });
     if (key === 'cancel') return setDialog({ type: 'cancel', appt: a });
-    try {
-      if (key === 'enter') {
-        await api.post(`/staff/appointments/${a.id}/enter`);
-        setNotice(
-          <>
-            Đã mời <span className="t-notice-name">{a.patient?.fullName}</span> vào khám lúc {clock(new Date())}. Phiếu {a.ticketCode} chuyển sang Đã vào khám và rời khỏi danh sách
-            chờ.
-          </>,
-        );
-      } else if (key === 'undo-enter') {
-        await api.post(`/staff/appointments/${a.id}/undo-enter`);
-        setNotice(
-          <>
-            Đã hoàn tác vào khám của <span className="t-notice-name">{a.patient?.fullName}</span>. Phiếu trở về Đã check-in, giữ nguyên giờ check-in{' '}
-            {a.checkin ? clock(a.checkin.checkInTime) : ''}.
-          </>,
-        );
-      }
-      reload({ silent: true });
-    } catch (err) {
-      setError(err);
-    }
   };
 
   const dayLabel = isToday ? 'hôm nay' : `ngày ${fmtDate(date)}`;
@@ -244,6 +250,7 @@ export default function DailySchedule() {
             onChange={(e) => {
               setQ(e.target.value);
               setPage(1);
+              setLookupMsg(null);
             }}
           />
         </div>
@@ -251,6 +258,11 @@ export default function DailySchedule() {
           <Icon name="search" strokeWidth={1.75} />
           Tra cứu
         </button>
+        {lookupMsg && (
+          <p role="status" className="t-text" style={{ flexBasis: '100%', fontWeight: 600 }}>
+            {lookupMsg}
+          </p>
+        )}
       </form>
 
       <div className="t-stats">
@@ -272,10 +284,10 @@ export default function DailySchedule() {
         </div>
       </div>
 
-      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
       <ErrorAlert error={error || loadError} />
 
-      <div className="t-card">
+      <div className="t-card" id="lt-ketqua" style={{ scrollMarginTop: 24 }}>
         <p className="t-label" style={{ padding: '20px 24px 12px' }}>
           Lịch khám {dayLabel} — {rows.length} lượt
         </p>
@@ -292,7 +304,7 @@ export default function DailySchedule() {
               }}
             >
               {label}
-              <span className="t-filter-n">{key === 'all' ? active.length : count(key)}</span>
+              <span className="t-filter-n">{key === 'all' ? all.length : count(key)}</span>
             </button>
           ))}
         </div>
@@ -323,7 +335,7 @@ export default function DailySchedule() {
                 </div>
               </div>
               <div role="rowgroup" className="t-tbody">
-                {shown.map((a, i) => {
+                {shown.map((a) => {
                   const note = stateNote(a, isToday);
                   const prio = a.status === 'CHECKED_IN' && a.checkin?.priorityGroup === 'PRIORITY';
                   return (
@@ -359,7 +371,6 @@ export default function DailySchedule() {
                           isToday={isToday}
                           isPast={isPast}
                           open={menu === a.id}
-                          up={shown.length >= 4 && i >= shown.length - 2}
                           onToggle={() => setMenu((m) => (m === a.id ? null : a.id))}
                           act={act}
                         />

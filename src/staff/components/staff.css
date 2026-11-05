@@ -656,3 +656,17 @@ button.t-check { cursor: pointer; }
 .t-tint-gold > svg { color: var(--gold-700); }
 .t-tint-red > svg { color: var(--alert-700); }
 .t-role-admin { background: #c9963f; color: #2a2118; }
+
+/* Hộp thoại không có thanh màu: biểu tượng tròn bên trái */
+.a-modal { margin: auto; width: 100%; background: var(--surface-card); border-radius: 28px; box-shadow: var(--shadow-lg); padding: 36px; display: flex; flex-direction: column; gap: 22px; }
+.a-modal-head { display: flex; gap: 18px; align-items: flex-start; }
+.a-modal-icon { display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; border-radius: 999px; flex-shrink: 0; background: var(--green-100); color: var(--green-700); }
+.a-modal-icon.red { background: var(--alert-100); color: var(--alert-700); }
+.a-modal-actions { display: flex; flex-wrap: wrap; gap: 14px; justify-content: flex-end; }
+.a-modal .t-notice-name { color: var(--ink-900); font-weight: 700; }
+/* Hồ sơ đã khoá trong kết quả tìm: hiện để biết, không chọn được */
+.t-pick.locked { border-style: dashed; border-color: var(--line-strong); }
+.t-pick.locked:hover { background: var(--surface-200); border-color: var(--line-strong); }
+.t-pick-main .t-pick-lock { font-size: 15px; line-height: 22px; font-weight: 600; color: var(--alert-700) !important; }
+.t-pick-go.locked { color: var(--alert-700); }
+.t-pick.locked .t-pick-main span:nth-child(2) { color: var(--ink-700); }

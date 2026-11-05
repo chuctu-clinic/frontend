@@ -5,10 +5,10 @@ import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { fmtDate, fmtTime } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
-import { useAsync, useDismiss, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { Notice, TPicker } from '../../components/fields.jsx';
+import { useAsync, useDismiss, useDocumentTitle, useMenuPlacement } from '../../../shared/lib/hooks.js';
+import { TPicker } from '../../components/fields.jsx';
 import { Pager } from '../../components/Pager.jsx';
-import { PlainDialog } from '../../components/dialogs.jsx';
+import { NoticeDialog, PlainDialog } from '../../components/dialogs.jsx';
 import './admin.css';
 import { StatusIcon, StatusLegend } from './StatusIcon.jsx';
 
@@ -28,8 +28,9 @@ const POST_STATUS = {
   DRAFT: { icon: 'edit', tone: 'gray', label: 'Bản nháp', note: 'Bản nháp, chưa đăng' },
 };
 
-function RowMenu({ p, open, up, onToggle, onHide, onPublish, onDelete }) {
+function RowMenu({ p, open, onToggle, onHide, onPublish, onDelete }) {
   const ref = useDismiss(open, onToggle);
+  const { menuRef, up } = useMenuPlacement(open, ref);
   const fixedPage = Boolean(p.slug);
   return (
     <div className="t-menu-wrap" ref={ref}>
@@ -41,7 +42,7 @@ function RowMenu({ p, open, up, onToggle, onHide, onPublish, onDelete }) {
         </svg>
       </button>
       {open && (
-        <div role="menu" aria-label={`Thao tác cho bài ${p.title}`} className={`t-menu ${up ? 'up' : 'down'}`} style={{ width: 240 }}>
+        <div ref={menuRef} role="menu" aria-label={`Thao tác cho bài ${p.title}`} className={`t-menu ${up ? 'up' : 'down'}`} style={{ width: 240 }}>
           <Link role="menuitem" className="t-menu-item" to={`/noi-bo/quan-tri/bai-viet/${p.id}/xem-thu`} state={{ from: 'list' }}>
             <Icon name="eye" size={22} />
             Xem bài viết
@@ -163,7 +164,7 @@ export default function Posts() {
         </Link>
       </div>
 
-      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
       <ErrorAlert error={error} />
 
       <div className="t-card" style={{ padding: 20, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end' }}>
@@ -224,7 +225,7 @@ export default function Posts() {
                 ))}
               </div>
               <div role="rowgroup" className="t-tbody">
-                {data.items.map((p, i) => (
+                {data.items.map((p) => (
                   <div key={p.id} role="row" className="t-tr" style={menu === p.id ? { position: 'relative', zIndex: 30 } : undefined}>
                     <div role="cell" className="t-td" style={{ paddingLeft: 16 }}>
                       <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
@@ -269,7 +270,6 @@ export default function Posts() {
                       <RowMenu
                         p={p}
                         open={menu === p.id}
-                        up={data.items.length >= 4 && i >= data.items.length - 2}
                         onToggle={() => setMenu((m) => (m === p.id ? null : p.id))}
                         onHide={() =>
                           setPostStatus(p, 'HIDDEN', `Đã ẩn bài “${p.title}”. Bài không còn hiển thị trên website, vẫn được giữ lại để công khai lại sau.`)

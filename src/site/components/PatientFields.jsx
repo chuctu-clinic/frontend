@@ -65,9 +65,17 @@ export const patientBody = (form) => ({
   email: form.email.trim() || null,
 });
 
-/** Đưa con trỏ tới ô lỗi đầu tiên trong vùng chứa. */
+/**
+ * Đưa con trỏ và màn hình tới ô lỗi đầu tiên trong vùng chứa (scope: bộ chọn của hộp thoại hay biểu mẫu đang mở, để
+ * không nhảy sang ô lỗi của trang nằm phía sau). Nút lưu thường ở cuối nên có thể không thấy dòng báo lỗi.
+ */
 export const focusFirstError = (scope) =>
-  setTimeout(() => document.querySelector(`${scope} [aria-invalid="true"], ${scope} .a-radios-invalid input`)?.focus());
+  setTimeout(() => {
+    const field = document.querySelector(`${scope} [aria-invalid="true"], ${scope} .a-radios-invalid input`);
+    field?.focus();
+    // Ô đã có sẵn con trỏ thì focus() không cuộn nên phải cuộn riêng
+    field?.scrollIntoView({ block: 'center' });
+  });
 
 /**
  * Hai nhóm "Thông tin người khám" và "Thông tin khác (Không bắt buộc)".
