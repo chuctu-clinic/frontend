@@ -98,7 +98,7 @@ Trình duyệt chỉ thấy một tên miền, còn `/api` được chuyển ng�
 
 1. Trong `vercel.json`, sửa `destination` của dòng `/api/:path*` thành địa chỉ backend.
 
-   > Hiện dòng này vẫn trỏ về backend Node.js cũ trên Render (`backend-az4x.onrender.com`). Cần đổi sang địa chỉ backend Spring Boot mới khi đưa lên mạng.
+   > Hiện dòng này trỏ về backend Spring Boot trên Railway (`backend-production-b765f.up.railway.app`).
 
 2. Để trống `VITE_API_URL`.
 3. Bên backend, thêm địa chỉ Vercel vào `CLIENT_ORIGIN`. **Bắt buộc**: thiếu thì server từ chối mọi thao tác (lỗi 403) để chống giả mạo yêu cầu.
