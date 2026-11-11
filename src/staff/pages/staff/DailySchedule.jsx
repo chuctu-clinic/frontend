@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
@@ -19,7 +19,7 @@ const FILTERS = [
   ['all', 'Tất cả'],
   ['BOOKED', 'Chưa đến'],
   ['CHECKED_IN', 'Đã check-in'],
-  ['IN_PROGRESS', 'Đã vào khám'],
+  ['IN_PROGRESS', 'Đang khám, điều trị'],
   ['COMPLETED', 'Đã hoàn thành'],
   ['CANCELLED', 'Đã huỷ'],
 ];
@@ -78,6 +78,15 @@ export default function DailySchedule() {
     next.delete('dat');
     setParams(next, { replace: true });
   }, [params, setParams]);
+
+  // Mở từ ô số liệu ở Tổng quan (?loc=): cuộn tới bảng đã lọc sẵn, một lần khi dữ liệu đã hiện
+  const scrolledToFilter = useRef(false);
+  useEffect(() => {
+    if (scrolledToFilter.current || !data || !params.get('loc')) return;
+    scrolledToFilter.current = true;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(() => document.getElementById('lt-ketqua')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }));
+  }, [data, params]);
 
   const goDate = (d) => {
     setParams(d === today ? {} : { ngay: d });
@@ -271,7 +280,7 @@ export default function DailySchedule() {
           <p>{active.length}</p>
         </div>
         <div className="t-stat green">
-          <p>Đã check-in</p>
+          <p>Đã đến</p>
           <p>{count('CHECKED_IN') + count('IN_PROGRESS') + count('COMPLETED')}</p>
         </div>
         <div className="t-stat gold">
@@ -291,7 +300,7 @@ export default function DailySchedule() {
         <p className="t-label" style={{ padding: '20px 24px 12px' }}>
           Lịch khám {dayLabel} — {rows.length} lượt
         </p>
-        <div role="group" aria-label="Lọc theo trạng thái" className="t-filters" style={{ padding: '0 24px 18px' }}>
+        <div role="group" aria-label="Lọc theo trạng thái" className="t-filters t-filters-row" style={{ padding: '0 24px 18px' }}>
           {FILTERS.map(([key, label]) => (
             <button
               key={key}
@@ -324,13 +333,13 @@ export default function DailySchedule() {
                 <div role="columnheader" className="t-th">
                   Bệnh nhân
                 </div>
-                <div role="columnheader" className="t-th">
-                  Giờ khám dự kiến
+                <div role="columnheader" className="t-th t-c">
+                  Giờ khám
                 </div>
-                <div role="columnheader" className="t-th">
+                <div role="columnheader" className="t-th t-c">
                   Trạng thái
                 </div>
-                <div role="columnheader" className="t-th">
+                <div role="columnheader" className="t-th t-c">
                   Thao tác
                 </div>
               </div>
@@ -346,26 +355,26 @@ export default function DailySchedule() {
                       style={menu === a.id ? { position: 'relative', zIndex: 30 } : undefined}
                     >
                       {withNo && (
-                        <div role="cell" className="t-td t-queue-no">
+                        <div role="cell" className="t-td t-queue-no sc-no">
                           {a.checkin?.queueNo ?? ''}
                         </div>
                       )}
-                      <div role="cell" className="t-td">
+                      <div role="cell" className="t-td sc-code">
                         <span className="t-td-code">{a.ticketCode}</span>
                         {a.source === 'COUNTER' && <span className="t-td-sub">Đặt hộ tại quầy</span>}
                       </div>
-                      <div role="cell" className="t-td">
+                      <div role="cell" className="t-td sc-pt">
                         <span className="t-td-name">{a.patient?.fullName}</span>
                         <span className="t-td-sub">{a.patient?.phone}</span>
                       </div>
-                      <div role="cell" className="t-td t-text">
+                      <div role="cell" className="t-td t-text t-c sc-time">
                         {shortTime(a.slotStart)}
                       </div>
-                      <div role="cell" className="t-td">
+                      <div role="cell" className="t-td t-c sc-st">
                         <StatusChip a={a} />
                         {note && <span className="t-state-note">{note}</span>}
                       </div>
-                      <div role="cell" className="t-td t-td-act">
+                      <div role="cell" className="t-td t-td-act t-c sc-act">
                         <RowMenu
                           a={a}
                           isToday={isToday}

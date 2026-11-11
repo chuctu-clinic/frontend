@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { fmtDate, fmtTime, todayVN } from '../../../shared/lib/format.js';
+import { fmtDate, fmtTime } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
-import { longDay } from '../../components/appointments/time.js';
 import './admin.css';
 
 const clock = (value) => fmtTime(value).replace(/^0/, '');
@@ -15,9 +14,9 @@ function TodayStats({ appointments, queue }) {
   const by = appointments.byStatus || {};
   const stats = [
     ['BOOKED', 'Chưa đến', by.BOOKED || 0, 'gold'],
-    ['CHECKED_IN', 'Đang chờ', by.CHECKED_IN || 0, 'gold'],
-    ['IN_PROGRESS', 'Đang khám', `${queue.inRoomCount}/${queue.capacity}`, 'green', 'ghế'],
-    ['COMPLETED', 'Đã khám xong', by.COMPLETED || 0, 'green'],
+    ['CHECKED_IN', 'Đã check-in', by.CHECKED_IN || 0, 'gold'],
+    ['IN_PROGRESS', 'Đang khám, điều trị', by.IN_PROGRESS || 0, 'green'],
+    ['COMPLETED', 'Đã hoàn thành', by.COMPLETED || 0, 'green'],
     ['CANCELLED', 'Đã huỷ', by.CANCELLED || 0, 'muted'],
   ];
   return (
@@ -45,7 +44,7 @@ function TodayStats({ appointments, queue }) {
   );
 }
 
-/** Hàng đợi thu nhỏ: các ghế đang khám và vài người kế tiếp. */
+/** Hàng đợi thu nhỏ: các chỗ đang khám và vài người kế tiếp. */
 function QueueNow({ queue }) {
   const next = queue.waiting.slice(0, 3);
   return (
@@ -55,16 +54,16 @@ function QueueNow({ queue }) {
           Hàng đợi lúc này
         </h2>
         <span className="t-text">
-          {queue.inRoomCount}/{queue.capacity} ghế · {queue.waitingCount} người đang chờ
+          {queue.inRoomCount}/{queue.capacity} chỗ điều trị · {queue.waitingCount} người chờ khám
         </span>
       </div>
       <div className="db-queue">
         <div>
-          <p className="t-eyebrow db-queue-title">Đang khám</p>
+          <p className="t-eyebrow db-queue-title">Đang điều trị</p>
           <ul className="db-seats">
             {queue.seats.map((s) => (
               <li key={s.seatNo} className={s.empty ? 'empty' : ''}>
-                <span className="db-seat-no">Ghế {s.seatNo}</span>
+                <span className="db-seat-no">Chỗ {s.seatNo}</span>
                 {s.empty ? (
                   <span className="db-seat-name">Trống</span>
                 ) : (
@@ -78,7 +77,7 @@ function QueueNow({ queue }) {
           </ul>
         </div>
         <div>
-          <p className="t-eyebrow db-queue-title">Kế tiếp</p>
+          <p className="t-eyebrow db-queue-title">Chờ khám</p>
           {next.length === 0 ? (
             <p className="t-text">Chưa có ai đang chờ.</p>
           ) : (
@@ -139,9 +138,6 @@ export default function Dashboard() {
   return (
     <>
       <div>
-        <p className="t-muted" style={{ marginBottom: 6, fontWeight: 600 }}>
-          {longDay(todayVN())}
-        </p>
         <h1 className="t-h1" style={{ marginBottom: 10 }}>
           Tổng quan
         </h1>

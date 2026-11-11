@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { useDismiss, useMenuPlacement } from '../../../shared/lib/hooks.js';
-import { RECEIVING_HOURS } from '../../../shared/domain/constants.js';
+import { RECEIVING_HOURS, VISIT_STAGE_LABELS } from '../../../shared/domain/constants.js';
 import { RECEIVING_CLOSED, isReceivingNow, nowMinutesVN } from '../../components/appointments/time.js';
 import { clock, minutesOf } from './DailySchedule.jsx';
 
@@ -27,7 +27,7 @@ export function StatusChip({ a }) {
       return (
         <span className="t-chip t-chip-solid">
           <Icon name="arrowRight" size={18} strokeWidth={2.25} />
-          Đã vào khám {a.checkin?.enteredAt ? clock(a.checkin.enteredAt) : ''}
+          {VISIT_STAGE_LABELS[a.checkin?.status] || 'Đang khám'}
         </span>
       );
     case 'COMPLETED':
@@ -71,9 +71,9 @@ export function RowMenu({ a, isToday, isPast, open, onToggle, act }) {
     // Ngoài giờ nhận bệnh: vẫn hiện mục Check-in nhưng làm mờ, kèm lý do
     items.push(isReceivingNow() ? ['checkin', 'check', 'Check-in', 'green'] : ['checkin', 'check', RECEIVING_CLOSED, 'disabled']);
   }
-  // Mời vào khám và hoàn tác vào khám chỉ làm ở trang Hàng đợi, để mọi thay đổi ghế nằm một chỗ
+  // Mời vào khám và hoàn tác vào khám chỉ làm ở trang Hàng đợi, để mọi thay đổi chỗ nằm một chỗ
   if (a.status === 'BOOKED' && !isPast) items.push(['reschedule', 'clock', 'Đổi giờ khám']);
-  if (a.status === 'IN_PROGRESS') items.push(['record', 'file', 'Ghi nhận lượt khám']);
+  if (a.status === 'IN_PROGRESS') items.push(['record', 'file', 'Xem lượt khám']);
   if (a.status === 'COMPLETED') items.push(['record', 'file', 'Xem lượt khám']);
   items.push(['patient', 'user', 'Mở hồ sơ bệnh nhân']);
   if (a.status === 'CHECKED_IN' && isToday) items.push(['undo-checkin', 'undo', 'Hoàn tác check-in']);

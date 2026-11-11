@@ -2,23 +2,36 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useDismiss } from '../../shared/lib/hooks.js';
 import { isAdmin, useSession } from '../../shared/lib/session.jsx';
+import { ROLE_LABELS } from '../../shared/lib/format.js';
+import { homeFor } from '../lib/home.js';
 import { Icon } from '../../shared/ui/Icon.jsx';
 import './staff.css';
+import { TodayBar } from './TodayBar.jsx';
 
-const STAFF_NAV = [
-  { to: '/noi-bo/lich-trong-ngay', label: 'Lịch trong ngày', icon: 'calendar' },
-  { to: '/noi-bo/hang-doi', label: 'Hàng đợi', icon: 'queue' },
-  { to: '/noi-bo/benh-nhan', label: 'Hồ sơ bệnh nhân', icon: 'users' },
-];
-const ADMIN_NAV = [
-  { to: '/noi-bo/quan-tri', label: 'Tổng quan', icon: 'dashboard', end: true },
-  ...STAFF_NAV,
-  { to: '/noi-bo/quan-tri/bai-viet', label: 'Quản lý bài viết', icon: 'news' },
-  { to: '/noi-bo/quan-tri/tai-khoan', label: 'Quản lý tài khoản', icon: 'userPlus' },
-];
+const SCHEDULE = { to: '/noi-bo/lich-trong-ngay', label: 'Lịch trong ngày', icon: 'calendar' };
+const QUEUE = { to: '/noi-bo/hang-doi', label: 'Hàng đợi', icon: 'queue' };
+const PATIENTS = { to: '/noi-bo/benh-nhan', label: 'Hồ sơ bệnh nhân', icon: 'users', end: true };
+const EXAM = { to: '/noi-bo/kham-benh', label: 'Khám bệnh', icon: 'file' };
+const TREATMENT = { to: '/noi-bo/dieu-tri', label: 'Điều trị', icon: 'check' };
 
-// Trang lập phiếu kết quả và trang soạn bài rộng hết khung, không có cột menu (theo prototype)
-const WIDE = ['/noi-bo/phieu-kham/:appointmentId/ket-qua', '/noi-bo/quan-tri/bai-viet/moi', '/noi-bo/quan-tri/bai-viet/:id'];
+const NAV = {
+  RECEPTIONIST: [SCHEDULE, QUEUE, PATIENTS],
+  DOCTOR: [EXAM, QUEUE],
+  TECHNICIAN: [TREATMENT, QUEUE],
+  ADMIN: [
+    { to: '/noi-bo/quan-tri', label: 'Tổng quan', icon: 'dashboard', end: true },
+    SCHEDULE,
+    QUEUE,
+    EXAM,
+    TREATMENT,
+    PATIENTS,
+    { to: '/noi-bo/quan-tri/bai-viet', label: 'Quản lý bài viết', icon: 'news' },
+    { to: '/noi-bo/quan-tri/tai-khoan', label: 'Quản lý tài khoản', icon: 'userPlus' },
+  ],
+};
+
+// Trang lập phiếu kết quả, khám sơ bộ và trang soạn bài rộng hết khung, không có cột menu (theo prototype)
+const WIDE = ['/noi-bo/phieu-kham/:appointmentId/ket-qua', '/noi-bo/kham-benh/:checkinId', '/noi-bo/quan-tri/bai-viet/moi', '/noi-bo/quan-tri/bai-viet/:id'];
 const EXTRA_WIDE = ['/noi-bo/quan-tri/bai-viet/moi', '/noi-bo/quan-tri/bai-viet/:id'];
 
 export function StaffLayout() {
@@ -27,7 +40,7 @@ export function StaffLayout() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const admin = isAdmin(user);
-  const nav = admin ? ADMIN_NAV : STAFF_NAV;
+  const nav = NAV[user.role] || NAV.RECEPTIONIST;
   const wide = WIDE.some((p) => matchPath(p, pathname));
   const extraWide = EXTRA_WIDE.some((p) => matchPath(p, pathname));
 
@@ -45,13 +58,13 @@ export function StaffLayout() {
       </a>
       <header className="t-header">
         <div className="t-header-row">
-          <Link to={admin ? '/noi-bo/quan-tri' : '/noi-bo/lich-trong-ngay'} className="t-logo" aria-label="Khu nội bộ Phòng khám Chúc Từ">
+          <Link to={homeFor(user)} className="t-logo" aria-label="Khu nội bộ Phòng khám Chúc Từ">
             <img src={`${import.meta.env.BASE_URL}logo-192.png`} alt="" />
             <span>Chúc Từ</span>
           </Link>
           <span className={`t-role ${admin ? 't-role-admin' : ''}`}>
             <Icon name={admin ? 'shield' : 'user'} size={20} strokeWidth={1.75} />
-            {admin ? 'Quản trị viên' : 'Tiếp tân'}
+            {ROLE_LABELS[user.role]}
           </span>
           {!wide && (
             <button type="button" className="t-burger" aria-expanded={menuOpen} aria-controls="t-side" onClick={() => setMenuOpen((v) => !v)}>
@@ -67,12 +80,13 @@ export function StaffLayout() {
       <section className="t-page">
         {wide ? (
           <main id="noi-dung" className="t-shell-narrow" style={extraWide ? { maxWidth: 1160 } : undefined}>
+            <TodayBar />
             <Outlet />
           </main>
         ) : (
           <div className="t-shell">
             <div className="t-aside">
-              <nav id="t-side" className={`t-side ${menuOpen ? 'open' : ''}`} aria-label={admin ? 'Chức năng quản trị' : 'Chức năng tiếp tân'}>
+              <nav id="t-side" className={`t-side ${menuOpen ? 'open' : ''}`} aria-label={`Chức năng ${ROLE_LABELS[user.role].toLowerCase()}`}>
                 {nav.map((n) => (
                   <NavLink key={n.to} to={n.to} end={n.end}>
                     <Icon name={n.icon} strokeWidth={1.75} />
@@ -82,6 +96,7 @@ export function StaffLayout() {
               </nav>
             </div>
             <main id="noi-dung" className="t-main">
+              <TodayBar />
               <Outlet />
             </main>
           </div>

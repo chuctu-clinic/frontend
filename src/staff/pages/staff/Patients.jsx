@@ -156,7 +156,7 @@ export default function Patients() {
         {loading && !data && <Loading />}
         {data && data.items.length > 0 && (
           <div className="t-scroll">
-            <div role="table" aria-label="Danh sách hồ sơ bệnh nhân" className="t-table">
+            <div role="table" aria-label="Danh sách hồ sơ bệnh nhân" className="t-table pt-table">
               <div role="row" className="t-tr t-thead" style={GRID}>
                 {['Mã bệnh nhân', 'Bệnh nhân', 'Trạng thái', 'Lần khám gần nhất', 'Thao tác'].map((h, i) => (
                   <div key={h} role="columnheader" className="t-th" style={{ padding: '14px 12px', textAlign: i >= 2 ? 'center' : undefined }}>
@@ -167,16 +167,16 @@ export default function Patients() {
               <div role="rowgroup" className="t-tbody">
                 {data.items.map((p) => (
                   <div key={p.id} role="row" className="t-tr" style={GRID}>
-                    <div role="cell" className="t-td t-td-code" style={{ padding: '16px 12px' }}>
+                    <div role="cell" className="t-td t-td-code pt-code" style={{ padding: '16px 12px' }}>
                       {p.patientCode}
                     </div>
-                    <div role="cell" className="t-td" style={{ padding: '16px 12px' }}>
+                    <div role="cell" className="t-td pt-name" style={{ padding: '16px 12px' }}>
                       <span className="t-td-name">{p.fullName}</span>
                       <span className="t-td-sub" style={{ marginTop: 4 }}>
                         Năm sinh {p.birthYear || '—'} · {p.phone || '—'}
                       </span>
                     </div>
-                    <div role="cell" className="t-td" style={{ padding: '16px 12px', textAlign: 'center' }}>
+                    <div role="cell" className="t-td pt-st" style={{ padding: '16px 12px', textAlign: 'center' }}>
                       {p.isLocked ? (
                         <span className="t-chip t-chip-locked t-chip-sm">
                           <Icon name="lock" size={18} strokeWidth={2.25} />
@@ -189,10 +189,10 @@ export default function Patients() {
                         </span>
                       )}
                     </div>
-                    <div role="cell" className="t-td t-text" style={{ padding: '16px 12px', textAlign: 'center' }}>
+                    <div role="cell" className="t-td t-text pt-last" style={{ padding: '16px 12px', textAlign: 'center' }}>
                       {p.lastVisitDate ? fmtDate(p.lastVisitDate) : 'Chưa khám'}
                     </div>
-                    <div role="cell" className="t-td" style={{ padding: '10px 12px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: menu === p.id ? 'relative' : undefined, zIndex: menu === p.id ? 30 : undefined }}>
+                    <div role="cell" className="t-td pt-act" style={{ padding: '10px 12px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: menu === p.id ? 'relative' : undefined, zIndex: menu === p.id ? 30 : undefined }}>
                       <RowMenu
                         p={p}
                         admin={admin}
