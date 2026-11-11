@@ -205,3 +205,4 @@
   .i-step-btn,
   .i-btn { width: 100%; }
 }
+.i-note-col > .i-note-card { flex: none; }

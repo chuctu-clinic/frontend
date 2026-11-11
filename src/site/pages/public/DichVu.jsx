@@ -23,7 +23,7 @@ const SERVICES = [
     chip: 'Vật lý trị liệu',
     title: 'Vật lý trị liệu — phục hồi chức năng',
     text: 'Các bài tập và kỹ thuật phục hồi vận động, có kỹ thuật viên đi cùng suốt buổi tập để chỉnh tư thế và theo dõi sức chịu đựng.',
-    uses: ['Thoái hóa khớp gối, cứng khớp vai', 'Phục hồi sau chấn thương, sau bó bột', 'Tập đi lại cho người cao tuổi yếu chân'],
+    uses: ['Thoái hoá khớp gối, cứng khớp vai', 'Phục hồi sau chấn thương, sau bó bột', 'Tập đi lại cho người cao tuổi yếu chân'],
     duration: '30 phút/buổi',
     course: '2-3 buổi',
     alt: 'Khu tập vật lý trị liệu',

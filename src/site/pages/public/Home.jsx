@@ -18,7 +18,7 @@ const STEPS = [
 
 const SERVICES = [
   ['needleSoft', 'Châm cứu', 'Giảm đau vai gáy, đau lưng, tê bì chân tay và di chứng sau tai biến.', 'cham-cuu'],
-  ['physio', 'Vật lý trị liệu', 'Tập phục hồi vận động sau chấn thương, thoái hóa khớp và cứng khớp.', 'vat-ly-tri-lieu'],
+  ['physio', 'Vật lý trị liệu', 'Tập phục hồi vận động sau chấn thương, thoái hoá khớp và cứng khớp.', 'vat-ly-tri-lieu'],
   ['handSoft', 'Xoa bóp — bấm huyệt', 'Thư giãn cơ, giảm mỏi và hỗ trợ giấc ngủ, thường kết hợp cùng châm cứu.', 'xoa-bop'],
   ['leafSoft', 'Bốc thuốc', 'Bắt mạch, kê thang thuốc Nam – thuốc Bắc, cân và gói ngay tại phòng khám.', 'boc-thuoc'],
 ];
@@ -79,7 +79,7 @@ export default function Home() {
               <Icon name="leafSoft" size={20} strokeWidth={SI} />
               Phòng chẩn trị Y học cổ truyền từ thiện
             </span>
-            <h1 className="h-h1">Chúc Từ — chăm sóc sức khỏe bằng tấm lòng</h1>
+            <h1 className="h-h1">Chúc Từ — chăm sóc sức khoẻ bằng tấm lòng</h1>
             <p className="h-lead">
               Châm cứu, bấm huyệt, xoa bóp và thuốc y học cổ truyền cho bệnh cơ xương khớp, đau nhức, tai biến, mất ngủ, đau đầu. Hoàn toàn miễn phí. Đặt lịch
               ngay trên trang này, cô chú nhận được phiếu khám liền.
