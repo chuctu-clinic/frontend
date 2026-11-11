@@ -2,9 +2,27 @@
 // Hằng số dùng chung giữa server và hai ứng dụng client.
 // File này chỉ là JavaScript thuần (không React, không import.meta.env) để Node.js nạp được.
 
-export const ROLES = ['USER', 'RECEPTIONIST', 'ADMIN'];
-export const STAFF_ROLES = ['RECEPTIONIST', 'ADMIN'];
-export const ROLE_LABELS = { USER: 'Người dùng', RECEPTIONIST: 'Tiếp tân', ADMIN: 'Quản trị viên' };
+export const ROLES = ['USER', 'RECEPTIONIST', 'DOCTOR', 'TECHNICIAN', 'ADMIN'];
+export const STAFF_ROLES = ['RECEPTIONIST', 'DOCTOR', 'TECHNICIAN', 'ADMIN'];
+export const ROLE_LABELS = { USER: 'Người dùng', RECEPTIONIST: 'Tiếp tân', DOCTOR: 'Bác sĩ', TECHNICIAN: 'Kỹ thuật viên', ADMIN: 'Quản trị viên' };
+
+// Kỹ thuật bác sĩ chỉ định cho kỹ thuật viên
+export const TREATMENT_KINDS = {
+  CHAM_CUU: 'Châm cứu',
+  XOA_BOP_BAM_HUYET: 'Xoa bóp — bấm huyệt',
+  VAT_LY_TRI_LIEU: 'Vật lý trị liệu',
+  KHAC: 'Khác',
+};
+
+// Các bước của một lượt khám sau khi check-in
+export const VISIT_STAGE_LABELS = {
+  WAITING: 'Chờ khám',
+  EXAMINING: 'Đang khám',
+  WAITING_TREATMENT: 'Chờ điều trị',
+  IN_ROOM: 'Đang điều trị',
+  WAITING_CONCLUSION: 'Chờ kết luận',
+  COMPLETED: 'Đã hoàn thành',
+};
 
 export const GENDERS = { NAM: 'Nam', NU: 'Nữ', KHAC: 'Khác' };
 
@@ -36,7 +54,7 @@ export const RECEIVING_HOURS = { open: '08:00', close: '16:30', label: '8:00 –
 export const STATUS_LABELS = {
   BOOKED: 'Chưa đến',
   CHECKED_IN: 'Đã check-in',
-  IN_PROGRESS: 'Đã vào khám',
+  IN_PROGRESS: 'Đang khám',
   COMPLETED: 'Đã hoàn thành',
   CANCELLED: 'Đã huỷ',
 };

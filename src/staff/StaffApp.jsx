@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { StaffLayout } from './components/StaffLayout.jsx';
 import { Empty, Loading } from '../shared/ui/ui.jsx';
-import { isAdmin, isStaff, useSession } from '../shared/lib/session.jsx';
+import { can, isAdmin, isStaff, useSession } from '../shared/lib/session.jsx';
 
 import StaffLogin from './pages/auth/StaffLogin.jsx';
 import { homeFor } from './lib/home.js';
@@ -14,6 +14,9 @@ import QueueDisplay from './pages/staff/QueueDisplay.jsx';
 import Patients from './pages/staff/Patients.jsx';
 import PatientDetail from './pages/staff/PatientDetail.jsx';
 import RecordForm from './pages/staff/RecordForm.jsx';
+import DoctorQueue from './pages/staff/DoctorQueue.jsx';
+import ExamForm from './pages/staff/ExamForm.jsx';
+import TreatmentRoom from './pages/staff/TreatmentRoom.jsx';
 import AccountInfo from './pages/staff/AccountInfo.jsx';
 
 import Dashboard from './pages/admin/Dashboard.jsx';
@@ -25,15 +28,18 @@ import PostPreview from './pages/admin/PostPreview.jsx';
 // Khu tiếp tân và Admin, nằm dưới route "/noi-bo/*". Đường dẫn trong Routes bên dưới tính từ /noi-bo,
 // còn liên kết (Link, Navigate, navigate) luôn ghi đủ "/noi-bo/…".
 
-/** Chỉ hỗ trợ trải nghiệm: quyền thật luôn được Backend kiểm tra. */
-function RequireStaff({ admin, children }) {
+/** Chỉ hỗ trợ trải nghiệm: quyền thật luôn được Backend kiểm tra. {@code roles}: các vai trò được vào (Admin luôn được). */
+function RequireStaff({ admin, roles, children }) {
   const { user, loading } = useSession();
   if (loading) return <Loading />;
   if (!isStaff(user)) return <Navigate to="/noi-bo/dang-nhap" replace />;
   if (user.mustChangePassword) return <Navigate to="/noi-bo/doi-mat-khau" replace />;
-  if (admin && !isAdmin(user)) return <Navigate to="/noi-bo/lich-trong-ngay" replace />;
+  if (admin && !isAdmin(user)) return <Navigate to={homeFor(user)} replace />;
+  if (roles && !can(user, ...roles)) return <Navigate to={homeFor(user)} replace />;
   return children;
 }
+
+const only = (roles, element) => <RequireStaff roles={roles}>{element}</RequireStaff>;
 
 /** Đường dẫn cũ /dat-ho: mở hộp thoại Thêm lịch khám ở Lịch trong ngày. */
 function CounterBookingRedirect() {
@@ -81,10 +87,13 @@ export default function StaffApp() {
       <Route path="doi-mat-khau" element={<ChangePassword />} />
 
       <Route element={<RequireStaff><StaffLayout /></RequireStaff>}>
-        <Route path="lich-trong-ngay" element={<DailySchedule />} />
-        <Route path="dat-ho" element={<CounterBookingRedirect />} />
+        <Route path="lich-trong-ngay" element={only(['RECEPTIONIST'], <DailySchedule />)} />
+        <Route path="dat-ho" element={only(['RECEPTIONIST'], <CounterBookingRedirect />)} />
         <Route path="hang-doi" element={<Queue />} />
-        <Route path="benh-nhan" element={<Patients />} />
+        <Route path="kham-benh" element={only(['DOCTOR'], <DoctorQueue />)} />
+        <Route path="kham-benh/:checkinId" element={only(['DOCTOR'], <ExamForm />)} />
+        <Route path="dieu-tri" element={only(['TECHNICIAN'], <TreatmentRoom />)} />
+        <Route path="benh-nhan" element={only(['RECEPTIONIST'], <Patients />)} />
         <Route path="benh-nhan/:id" element={<PatientDetail />} />
         <Route path="phieu-kham/:appointmentId/ket-qua" element={<RecordForm />} />
         <Route path="tai-khoan" element={<AccountInfo />} />

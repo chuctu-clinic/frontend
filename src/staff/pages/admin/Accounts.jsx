@@ -15,9 +15,9 @@ import { StatusIcon, StatusLegend } from './StatusIcon.jsx';
 
 const PER_PAGE = 10;
 
-export const ROLE_ORDER = ['USER', 'RECEPTIONIST', 'ADMIN'];
+export const ROLE_ORDER = ['USER', 'RECEPTIONIST', 'DOCTOR', 'TECHNICIAN', 'ADMIN'];
 
-export const STAFF = ['RECEPTIONIST', 'ADMIN'];
+export const STAFF = ['RECEPTIONIST', 'DOCTOR', 'TECHNICIAN', 'ADMIN'];
 
 const ROLE_ITEMS = ROLE_ORDER.map((r) => ({ value: r, label: ROLE_LABELS[r] }));
 
@@ -187,7 +187,8 @@ export default function Accounts() {
           </p>
           {data && (
             <p className="t-muted">
-              {data.roleCounts.ADMIN} Quản trị viên · {data.roleCounts.RECEPTIONIST} Tiếp tân · {data.roleCounts.USER} Người dùng
+              {data.roleCounts.ADMIN} Quản trị viên · {data.roleCounts.DOCTOR ?? 0} Bác sĩ · {data.roleCounts.TECHNICIAN ?? 0} Kỹ thuật viên ·{' '}
+              {data.roleCounts.RECEPTIONIST} Tiếp tân · {data.roleCounts.USER} Người dùng
             </p>
           )}
           {/* Cột Trạng thái chỉ hiện biểu tượng: chú thích ý nghĩa ngay trên bảng */}

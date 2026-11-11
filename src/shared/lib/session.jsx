@@ -138,5 +138,7 @@ export function useSession() {
   return useContext(SessionContext);
 }
 
-export const isStaff = (user) => user && (user.role === 'RECEPTIONIST' || user.role === 'ADMIN');
+export const isStaff = (user) => Boolean(user) && ['RECEPTIONIST', 'DOCTOR', 'TECHNICIAN', 'ADMIN'].includes(user.role);
 export const isAdmin = (user) => user?.role === 'ADMIN';
+/** Có quyền như vai trò này không: Quản trị viên làm được việc của mọi vai trò nội bộ. */
+export const can = (user, ...roles) => Boolean(user) && (user.role === 'ADMIN' || roles.includes(user.role));

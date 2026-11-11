@@ -4,7 +4,7 @@ import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { GENDERS, ageFrom, fmtDate, shortTime, todayVN } from '../../../shared/lib/format.js';
-import { isAdmin, useSession } from '../../../shared/lib/session.jsx';
+import { can, isAdmin, useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { PatientFields, focusFirstError, patientBody, patientForm, validatePatient } from '../../../site/components/PatientFields.jsx';
 import { NoticeDialog, TDialog } from '../../components/dialogs.jsx';
@@ -243,17 +243,17 @@ export default function PatientDetail() {
                           </span>
                         ) : (
                           <span className="t-chip t-chip-solid" style={{ padding: '4px 12px' }}>
-                            Đã vào khám
+                            Đang khám
                           </span>
                         )}
                       </div>
                       <div role="cell" className="t-td" style={{ padding: '10px 16px' }}>
                         {a.status === 'IN_PROGRESS' ? (
                           <Link to={`/noi-bo/phieu-kham/${a.id}/ket-qua`} state={{ back: `/noi-bo/benh-nhan/${p.id}` }} className="t-btn t-btn-primary" style={{ padding: '0 14px' }}>
-                            Ghi nhận lượt khám
+                            Xem lượt khám
                           </Link>
                         ) : (
-                          <span className="t-muted">{a.status === 'CHECKED_IN' ? 'Đang chờ vào khám' : 'Chờ bệnh nhân đến'}</span>
+                          <span className="t-muted">{a.status === 'CHECKED_IN' ? 'Đang chờ bác sĩ gọi khám' : 'Chờ bệnh nhân đến'}</span>
                         )}
                       </div>
                     </div>
@@ -280,7 +280,7 @@ export default function PatientDetail() {
             records={data.records}
             locked={p.isLocked}
             onView={(r) => setDialog({ type: 'view', record: r })}
-            onEdit={p.isLocked ? null : (r) => setDialog({ type: 'editRecord', record: r })}
+            onEdit={p.isLocked || !can(user, 'DOCTOR') ? null : (r) => setDialog({ type: 'editRecord', record: r })}
           />
         ) : (
           <p className="t-text">Hồ sơ này chưa có lượt khám nào.</p>
@@ -308,7 +308,7 @@ export default function PatientDetail() {
           patient={p}
           locked={p.isLocked}
           onClose={() => setDialog(null)}
-          onEdit={() => setDialog({ type: 'editRecord', record: dialog.record })}
+          onEdit={can(user, 'DOCTOR') ? () => setDialog({ type: 'editRecord', record: dialog.record }) : null}
         />
       )}
       {dialog?.type === 'editRecord' && (
