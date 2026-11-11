@@ -22,13 +22,15 @@ function displayName(full) {
 /** Tên dài thì thu nhỏ chữ ô lớn một bậc để vẫn hiện trọn, không cắt. */
 const callSize = (name) => (name.length > 26 ? 'xl' : name.length > 18 ? 'lg' : '');
 
-/** Người được mời gần nhất: ghế có giờ vào khám muộn nhất. */
-function latestCalled(seats) {
+/** Người được mời gần nhất: bác sĩ vừa gọi vào khám, hoặc vừa được mời vào chỗ điều trị. */
+function latestCalled(data) {
   let best = null;
-  for (const s of seats) {
-    if (s.empty || !s.enteredAt) continue;
-    if (!best || new Date(s.enteredAt) > new Date(best.enteredAt)) best = s;
-  }
+  const consider = (person, at, kind) => {
+    if (!at) return;
+    if (!best || new Date(at) > new Date(best.at)) best = { ...person, at, kind };
+  };
+  for (const v of data.examining || []) consider(v, v.examStartedAt, 'exam');
+  for (const s of data.seats) if (!s.empty) consider(s, s.enteredAt, 'seat');
   return best;
 }
 
@@ -93,8 +95,8 @@ export default function QueueDisplay() {
   }, []);
 
   // Có người mới được mời: nhấp nháy và kêu chuông (lần nạp đầu thì không)
-  const called = data ? latestCalled(data.seats) : null;
-  const callKey = called ? `${called.id}@${called.enteredAt}` : null;
+  const called = data ? latestCalled(data) : null;
+  const callKey = called ? `${called.id}@${called.kind}@${called.at}` : null;
   useEffect(() => {
     if (!data) return undefined;
     const prev = lastCallRef.current;
@@ -214,7 +216,15 @@ export default function QueueDisplay() {
               <>
                 <p className={`qd-call-name ${callSize(displayName(called.patient?.fullName))}`}>{displayName(called.patient?.fullName)}</p>
                 <p className="qd-call-seat">
-                  Xin mời vào <strong>Ghế số {called.seatNo}</strong>
+                  {called.kind === 'exam' ? (
+                    <>
+                      Xin mời vào <strong>phòng khám{called.doctorName ? ` — Bác sĩ ${called.doctorName}` : ''}</strong>
+                    </>
+                  ) : (
+                    <>
+                      Xin mời vào <strong>Chỗ điều trị số {called.seatNo}</strong>
+                    </>
+                  )}
                 </p>
               </>
             ) : (
@@ -223,11 +233,11 @@ export default function QueueDisplay() {
           </div>
 
           <div className="qd-seats-wrap">
-            <p className="qd-label dark">Đang khám</p>
+            <p className="qd-label dark">Đang điều trị</p>
             <div className="qd-seats">
               {(data?.seats || []).map((s) => (
-                <div key={s.seatNo} className={`qd-seat ${s.empty ? 'empty' : ''} ${called && s.id === called.id ? 'current' : ''}`}>
-                  <p className="qd-seat-no">Ghế {s.seatNo}</p>
+                <div key={s.seatNo} className={`qd-seat ${s.empty ? 'empty' : ''} ${called && called.kind === 'seat' && s.id === called.id ? 'current' : ''}`}>
+                  <p className="qd-seat-no">Chỗ {s.seatNo}</p>
                   <p className="qd-seat-name">{s.empty ? 'Trống' : displayName(s.patient?.fullName)}</p>
                 </div>
               ))}
@@ -262,7 +272,7 @@ export default function QueueDisplay() {
       <footer className="qd-foot">
         <div className="qd-marquee">
           <span>
-            Cô chú vui lòng ngồi chờ, khi màn hình hiện tên mình xin mời vào đúng số ghế · Người có phiếu đặt trước và đến đúng khung giờ được xếp lên trước · Cần hỗ trợ xin
+            Cô chú vui lòng ngồi chờ, khi màn hình hiện tên mình xin mời vào phòng khám hoặc đúng số chỗ điều trị · Người có phiếu đặt trước và đến đúng khung giờ được xếp lên trước · Cần hỗ trợ xin
             hỏi quầy tiếp tân
           </span>
         </div>

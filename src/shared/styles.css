@@ -446,7 +446,7 @@ legend { padding: 0; }
 .tab[aria-current='page'] { background: var(--green-700); border-color: var(--green-700); color: var(--on-brand); }
 .tab .count { font-variant-numeric: tabular-nums; opacity: 0.9; }
 
-/* Ghế trong phòng khám */
+/* Chỗ trong phòng khám */
 .seats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 1100px) {
   .seats { grid-template-columns: repeat(3, minmax(0, 1fr)); }

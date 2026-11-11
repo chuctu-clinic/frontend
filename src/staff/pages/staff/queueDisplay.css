@@ -63,7 +63,7 @@
 }
 .qd-call.flash .qd-call-seat strong { color: inherit; }
 
-/* Các ghế */
+/* Các chỗ */
 .qd-seats-wrap { display: flex; flex-direction: column; gap: 1.2vh; }
 .qd-seats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1vw; }
 .qd-seat { background: var(--qd-card); border: 2px solid var(--qd-green); border-radius: 1.2vw; padding: 1.4vh 0.8vw; text-align: center; min-width: 0; }
