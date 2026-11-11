@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { fmtDate, shortTime, weekday } from '../../../shared/lib/format.js';
+import { fmtDate, fmtTime, shortTime, weekday } from '../../../shared/lib/format.js';
 import { useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { Dialog } from '../../components/Dialog.jsx';
@@ -105,7 +105,9 @@ export default function TicketDetail() {
   const [cancelOpen, setCancelOpen] = useState(false);
 
   const appt = data?.appointment;
-  const booked = appt?.status === 'BOOKED';
+  // Đã đặt lịch nhưng tiếp tân đã check-in: đang ở phòng khám, không tự huỷ được nữa
+  const checkedIn = appt?.status === 'BOOKED' && Boolean(appt?.checkedInAt);
+  const booked = appt?.status === 'BOOKED' && !checkedIn;
   const cancelled = appt?.status === 'CANCELLED';
 
   const completed = appt?.status === 'COMPLETED';
@@ -147,6 +149,17 @@ export default function TicketDetail() {
                       <div>
                         <h2>Đặt lịch thành công — cô chú đã có phiếu khám</h2>
                         <p>Ngày khám, cô chú đưa phiếu khám này cho tiếp tân để check-in là xong. Không cần in, mở trên điện thoại cũng được.</p>
+                      </div>
+                    </div>
+                  )}
+                  {checkedIn && (
+                    <div className="bk-banner">
+                      <span className="bk-banner-dot">
+                        <Icon name="checkCircle" size={26} />
+                      </span>
+                      <div>
+                        <h2>Cô chú đã được tiếp nhận lúc {fmtTime(appt.checkedInAt).replace(/^0/, '')}</h2>
+                        <p>Cô chú chờ được gọi vào khám. Khi bác sĩ hoàn tất, kết quả khám sẽ hiện ở đây.</p>
                       </div>
                     </div>
                   )}

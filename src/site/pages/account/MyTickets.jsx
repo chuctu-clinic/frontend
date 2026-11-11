@@ -2,7 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
-import { CLINIC, fmtDate, shortTime, weekday } from '../../../shared/lib/format.js';
+import { CLINIC, fmtDate, fmtTime, shortTime, weekday } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import '../auth/auth.css';
 import './account.css';
@@ -55,6 +55,12 @@ function TicketCard({ a }) {
         </span>
       </div>
       <div className="r-ticket-foot">
+        {a.status === 'BOOKED' && a.checkedInAt && (
+          <span className="r-result-tag">
+            <Icon name="checkCircle" size={20} strokeWidth={1.75} />
+            Đã được tiếp nhận lúc {fmtTime(a.checkedInAt).replace(/^0/, '')}
+          </span>
+        )}
         {a.hasResult && (
           <span className="r-result-tag">
             <Icon name="clipboard" size={20} strokeWidth={1.75} />

@@ -23,6 +23,8 @@ const USER_STATUS = {
 /** Phiếu khám: mã phiếu, nội dung khám, giờ khám dự kiến thật to, thông tin người đi khám (UC.6.5). */
 export function Ticket({ appt, meta }) {
   const cancelled = appt.status === 'CANCELLED';
+  // Đã check-in: không nhắc giờ check-in và quầy tiếp nhận nữa
+  const waiting = appt.status === 'BOOKED' && !appt.checkedInAt;
   const [chip, chipClass] = USER_STATUS[appt.status] || USER_STATUS.BOOKED;
   const p = appt.patient || {};
   const [from, to] = checkInWindow(appt.slotStart, { early: meta?.priorityEarlyMinutes, length: meta?.slotMinutes });
@@ -72,7 +74,7 @@ export function Ticket({ appt, meta }) {
           {weekday(appt.slotDate)}, {fmtDate(appt.slotDate)}
         </p>
         <p className="bk-fine">Đây là giờ dự kiến. Thứ tự khám có thể thay đổi tuỳ số người đang chờ ở phòng khám.</p>
-        {appt.status === 'BOOKED' && (
+        {waiting && (
           <p className="bk-remind">
             Cô chú đến check-in từ {from} đến trước {to} để được xếp ưu tiên trong khung đã đặt.
           </p>
@@ -93,7 +95,7 @@ export function Ticket({ appt, meta }) {
             </div>
           ))}
         </dl>
-        {appt.status === 'BOOKED' && (
+        {waiting && (
           <p className="bk-counter">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
