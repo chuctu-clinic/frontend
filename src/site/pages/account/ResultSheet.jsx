@@ -91,8 +91,17 @@ export function ResultSheet({ record }) {
               <dt>2. Ghi chú điều trị</dt>
             </div>
             <NoteRow label="Châm cứu" value={notes.acupuncture} />
-            <NoteRow label="Bấm huyệt" value={notes.acupressure} />
+            <NoteRow label="Xoa bóp — bấm huyệt" value={notes.acupressure} />
+            <NoteRow label="Vật lý trị liệu" value={notes.physio} />
             <NoteRow label="Khác" value={notes.other} />
+            {record.advice && (
+              <div className="r-full">
+                <dt>3. Lời khuyên của bác sĩ</dt>
+                <dd className="r-text" style={{ whiteSpace: 'pre-line' }}>
+                  {record.advice}
+                </dd>
+              </div>
+            )}
           </dl>
         </section>
 

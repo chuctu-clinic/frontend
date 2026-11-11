@@ -9,8 +9,10 @@ export const EMPTY_FORM = {
   bpBottom: '',
   acupuncture: '',
   acupressure: '',
+  physio: '',
   other: '',
   history: { lines: HISTORY_ITEMS.map(() => null), extra: [] },
+  advice: '',
   followUpDate: '',
   doctorName: '',
 };
@@ -26,8 +28,10 @@ export function fromRecord(r) {
     bpBottom: bottom,
     acupuncture: r.treatmentNotes?.acupuncture || '',
     acupressure: r.treatmentNotes?.acupressure || '',
+    physio: r.treatmentNotes?.physio || '',
     other: r.treatmentNotes?.other || '',
     history: parseHistory(r.medicalHistory),
+    advice: r.advice || '',
     followUpDate: r.followUpDate || '',
     doctorName: r.doctorName || '',
   };
@@ -39,8 +43,9 @@ export function toPayload(f) {
     diagnosis: v(f.diagnosis),
     pulse: v(f.pulse),
     bloodPressure: f.bpTop && f.bpBottom ? `${f.bpTop}/${f.bpBottom}` : null,
-    treatmentNotes: { acupuncture: v(f.acupuncture), acupressure: v(f.acupressure), other: v(f.other) },
+    treatmentNotes: { acupuncture: v(f.acupuncture), acupressure: v(f.acupressure), physio: v(f.physio), other: v(f.other) },
     medicalHistory: buildHistory(f.history),
+    advice: v(f.advice),
     followUpDate: f.followUpDate || null,
     doctorName: v(f.doctorName),
   };

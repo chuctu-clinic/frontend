@@ -78,9 +78,11 @@ export function ResultSheet({ r, patient, preview }) {
             </div>
             {rows([
               ['Châm cứu', r.treatmentNotes?.acupuncture || NOT_DONE],
-              ['Bấm huyệt', r.treatmentNotes?.acupressure || NOT_DONE],
+              ['Xoa bóp — bấm huyệt', r.treatmentNotes?.acupressure || NOT_DONE],
+              ['Vật lý trị liệu', r.treatmentNotes?.physio || NOT_DONE],
               ['Khác', r.treatmentNotes?.other || '—'],
             ])}
+            {r.advice && rows([['3. Lời khuyên của bác sĩ', <span style={{ whiteSpace: 'pre-line' }}>{r.advice}</span>]])}
           </dl>
         </section>
         <section>

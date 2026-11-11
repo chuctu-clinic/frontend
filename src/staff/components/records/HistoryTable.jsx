@@ -5,7 +5,7 @@ import { editState } from './recordForm.js';
 
 /** Lịch sử khám: ngày, chẩn đoán, người ghi nhận, xem / sửa phiếu. */
 export function HistoryTable({ records, locked, onView, onEdit, withVitals }) {
-  const grid = { gridTemplateColumns: withVitals ? '200px minmax(0, 1fr) 150px 170px 190px' : '200px minmax(0, 1fr) 160px 190px', alignItems: 'start' };
+  const grid = { gridTemplateColumns: withVitals ? '210px minmax(0, 1fr) 150px 170px 190px' : '210px minmax(0, 1fr) 160px 190px', alignItems: 'start' };
   return (
     <div className="t-boxed t-scroll">
       <div role="table" aria-label="Lịch sử khám của hồ sơ" className="t-table">
@@ -35,7 +35,7 @@ export function HistoryTable({ records, locked, onView, onEdit, withVitals }) {
               <div key={r.id} role="row" className="t-tr" style={grid}>
                 <div role="cell" className="t-td">
                   <span className="t-td-name">{fmtDate(r.visitDate)}</span>
-                  <span className="t-td-sub">{r.appointment?.ticketCode}</span>
+                  <span className="t-td-sub" style={{ whiteSpace: 'nowrap' }}>{r.appointment?.ticketCode}</span>
                 </div>
                 <div role="cell" className="t-td t-text">
                   {r.diagnosis || '—'}

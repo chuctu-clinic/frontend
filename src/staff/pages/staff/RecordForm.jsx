@@ -12,6 +12,28 @@ import { EditRecordDialog } from '../../components/records/EditRecordDialog.jsx'
 import { HistoryTable } from '../../components/records/HistoryTable.jsx';
 import { RecordFields } from '../../components/records/RecordFields.jsx';
 import { ResultDialog } from '../../components/records/ResultSheet.jsx';
+import { VisitSummary } from '../../components/visit/VisitSummary.jsx';
+import { can, useSession } from '../../../shared/lib/session.jsx';
+import { homeFor } from '../../lib/home.js';
+
+/** Phiếu mới điền sẵn từ khám sơ bộ, báo cáo điều trị (hoặc trang khám sơ bộ khi kết luận luôn) và tên bác sĩ đang lập. */
+function prefilled(visit, prefill, user) {
+  const src = prefill || visit || {};
+  const r = visit?.report || {};
+  return fromRecord({
+    diagnosis: src.diagnosis ?? src.prelimDiagnosis,
+    pulse: src.pulse,
+    bloodPressure: src.bloodPressure,
+    medicalHistory: src.medicalHistory ?? visit?.medicalHistory,
+    treatmentNotes: {
+      acupuncture: r.acupuncture,
+      acupressure: r.acupressure,
+      physio: r.physio,
+      other: r.other,
+    },
+    doctorName: user.role === 'DOCTOR' ? user.fullName : '',
+  });
+}
 
 /** Lập và sửa phiếu kết quả khám (UC.9.7, UC.9.9, UC.10.4), theo prototype "TiepTan-HoSoChiTiet". */
 /** Chỉ nhận đường dẫn trong khu nội bộ. */
@@ -31,17 +53,22 @@ export default function RecordForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
   const location = useLocation();
+  const { user } = useSession();
+  const doctor = can(user, 'DOCTOR');
 
   if (appt.loading || (patientId && detail.loading && !detail.data)) return <Loading />;
   if (appt.error) return <ErrorAlert error={appt.error} />;
 
   const a = appt.data.appointment;
   const record = appt.data.record;
+  const visit = appt.data.visit;
   const p = detail.data?.patient || a.patient;
   const records = detail.data?.records || [];
-  const creating = !record && a.status === 'IN_PROGRESS' && !p.isLocked;
+  // Bác sĩ kết luận khi bệnh nhân đang khám sơ bộ (không cần điều trị) hoặc đã điều trị xong
+  const ready = visit && ['EXAMINING', 'WAITING_CONCLUSION'].includes(visit.status);
+  const creating = !record && a.status === 'IN_PROGRESS' && !p.isLocked && ready && doctor;
   const showForm = creating || editing;
-  const current = form || (record && editing ? fromRecord(record) : EMPTY_FORM);
+  const current = form || (record && editing ? fromRecord(record) : creating ? prefilled(visit, location.state?.prefill, user) : EMPTY_FORM);
   const errs = validateRecord(current);
   const visitDate = record?.visitDate || todayVN();
   const st = record ? editState(record, p.isLocked) : null;
@@ -61,7 +88,7 @@ export default function RecordForm() {
     setError(null);
     try {
       const res = record ? await api.put(`/staff/records/${record.id}`, toPayload(current)) : await api.post(`/staff/appointments/${appointmentId}/record`, toPayload(current));
-      appt.setData((d) => ({ ...d, record: res.record, appointment: { ...d.appointment, status: 'COMPLETED' } }));
+      appt.setData((d) => ({ ...d, record: res.record, appointment: { ...d.appointment, status: 'COMPLETED' }, visit: d.visit && { ...d.visit, status: 'COMPLETED' } }));
       detail.reload({ silent: true });
       setSaved({ fresh: !record, record: res.record });
       setEditing(false);
@@ -110,19 +137,19 @@ export default function RecordForm() {
               )}
             </p>
             <p className="t-text" style={{ marginTop: 4 }}>
-              Tiếp tân còn sửa được phiếu này đến <strong className="t-strong">{fmtStamp(savedState.until)}</strong> (24 giờ kể từ lúc xác nhận).
+              Bác sĩ còn sửa được phiếu này đến <strong className="t-strong">{fmtStamp(savedState.until)}</strong> (24 giờ kể từ lúc xác nhận). Mỗi lần sửa đều được ghi lại.
             </p>
           </div>
           <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }} onClick={() => setDialog({ type: 'view', record: saved.record })}>
             Xem phiếu kết quả
           </button>
-          {savedState.editable && (
+          {savedState.editable && doctor && (
             <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }} onClick={startEdit}>
               Sửa phiếu
             </button>
           )}
-          <Link to="/noi-bo/lich-trong-ngay" className="t-btn t-btn-primary" style={{ padding: '0 20px' }}>
-            Về Lịch trong ngày
+          <Link to={homeFor(user)} className="t-btn t-btn-primary" style={{ padding: '0 20px' }}>
+            {user.role === 'DOCTOR' ? 'Về Khám bệnh' : 'Về trang chính'}
           </Link>
         </div>
       )}
@@ -174,6 +201,8 @@ export default function RecordForm() {
         </dl>
       </section>
 
+      {!saved && <VisitSummary visit={visit} />}
+
       {record && !editing && !saved && (
         <section aria-labelledby="dc-tieude" className="t-panel" style={{ gap: 18 }}>
           <h2 id="dc-tieude" className="t-h2">
@@ -197,7 +226,7 @@ export default function RecordForm() {
               <Icon name="eye" size={20} />
               Xem phiếu kết quả
             </button>
-            {st.editable && (
+            {st.editable && doctor && (
               <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }} onClick={startEdit}>
                 <Icon name="edit" size={20} />
                 Sửa phiếu
@@ -214,8 +243,12 @@ export default function RecordForm() {
             {p.isLocked
               ? 'Hồ sơ đang bị khoá nên không ghi nhận lượt khám mới.'
               : a.status === 'CHECKED_IN'
-                ? 'Bệnh nhân đã check-in nhưng chưa vào khám. Bấm Vào khám ở Lịch trong ngày, hoặc chờ đến lượt ở Hàng đợi, rồi mới ghi nhận lượt khám.'
-                : 'Chỉ ghi nhận lượt khám cho người đang trong phòng khám. Phiếu khám này hiện ở trạng thái khác, chưa có phiếu kết quả.'}
+                ? 'Bệnh nhân đã check-in, đang chờ bác sĩ gọi vào khám.'
+                : visit && ['WAITING_TREATMENT', 'IN_ROOM'].includes(visit.status)
+                  ? 'Bệnh nhân đang điều trị. Bác sĩ kết luận sau khi kỹ thuật viên lưu báo cáo điều trị.'
+                  : a.status === 'IN_PROGRESS' && !doctor
+                    ? 'Bác sĩ sẽ lập phiếu kết quả sau khi khám xong. Bệnh nhân xem được kết quả trên website khi phiếu đã lưu.'
+                    : 'Chỉ lập phiếu kết quả cho người đang được khám. Phiếu khám này hiện ở trạng thái khác, chưa có phiếu kết quả.'}
           </p>
         </section>
       )}
@@ -248,7 +281,7 @@ export default function RecordForm() {
               </p>
             </div>
           )}
-          <RecordFields form={current} setForm={setCurrent} errors={tried ? errs : {}} visitDate={visitDate} />
+          <RecordFields form={current} setForm={setCurrent} errors={tried ? errs : {}} visitDate={visitDate} withHistory={!(creating && visit)} />
           <ErrorAlert error={error} />
           <div className="t-actions" style={{ alignItems: 'center', paddingTop: 8, borderTop: '1px solid var(--line-soft)' }}>
             <button type="submit" className="t-btn t-btn-primary">
@@ -282,7 +315,7 @@ export default function RecordForm() {
             records={records}
             locked={p.isLocked}
             onView={(r) => setDialog({ type: 'view', record: r })}
-            onEdit={(r) => (r.id === record?.id ? startEdit() : setDialog({ type: 'editOther', record: r }))}
+            onEdit={doctor ? (r) => (r.id === record?.id ? startEdit() : setDialog({ type: 'editOther', record: r })) : null}
           />
         ) : (
           <div className="t-boxed" style={{ padding: '22px 20px' }}>
@@ -313,7 +346,7 @@ export default function RecordForm() {
           patient={p}
           locked={p.isLocked}
           onClose={() => setDialog(null)}
-          onEdit={dialog.record.id === record?.id ? startEdit : () => setDialog({ type: 'editOther', record: dialog.record })}
+          onEdit={!doctor ? null : dialog.record.id === record?.id ? startEdit : () => setDialog({ type: 'editOther', record: dialog.record })}
         />
       )}
     </>

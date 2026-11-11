@@ -7,7 +7,7 @@ import { MonthGrid } from '../MonthGrid.jsx';
 import { useDismiss } from '../../../shared/lib/hooks.js';
 
 /** Biểu mẫu phiếu kết quả: nội dung khám, tiền sử bệnh, hoàn tất phiếu. */
-export function RecordFields({ form, setForm, errors, visitDate }) {
+export function RecordFields({ form, setForm, errors, visitDate, withHistory = true }) {
   const uid = useId();
   const id = (k) => `${uid}-${k}`;
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -116,23 +116,38 @@ export function RecordFields({ form, setForm, errors, visitDate }) {
           </div>
           <div className="t-field" style={{ flex: '1 1 280px' }}>
             <label htmlFor={id('bh')} className="t-label">
-              Bấm huyệt
+              Xoa bóp — bấm huyệt
             </label>
             <textarea autoComplete="off" id={id('bh')} rows={3} className="t-textarea" placeholder="Để trống nếu không thực hiện" value={form.acupressure} onChange={set('acupressure')} />
           </div>
         </div>
-        <div className="t-field">
-          <label htmlFor={id('kh')} className="t-label">
-            Khác
-          </label>
-          <textarea autoComplete="off" id={id('kh')} rows={2} className="t-textarea" placeholder="Thuốc Nam, xông, dặn dò tại nhà…" value={form.other} onChange={set('other')} />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '18px 20px' }}>
+          <div className="t-field" style={{ flex: '1 1 280px' }}>
+            <label htmlFor={id('vl')} className="t-label">
+              Vật lý trị liệu
+            </label>
+            <textarea autoComplete="off" id={id('vl')} rows={2} className="t-textarea" placeholder="Để trống nếu không thực hiện" value={form.physio} onChange={set('physio')} />
+          </div>
+          <div className="t-field" style={{ flex: '1 1 280px' }}>
+            <label htmlFor={id('kh')} className="t-label">
+              Khác
+            </label>
+            <textarea autoComplete="off" id={id('kh')} rows={2} className="t-textarea" placeholder="Thuốc Nam, xông, dặn dò tại nhà…" value={form.other} onChange={set('other')} />
+          </div>
         </div>
         <p className="t-iconrow" style={{ gap: 10, color: 'var(--gold-700)', fontWeight: 600 }}>
           <Icon name="info" size={22} />
-          Tiếp tân không tự nhận xét chuyên môn. Chỉ ghi lại nội dung đã được bác sĩ hoặc người có chuyên môn của phòng khám xác nhận.
+          Phần điều trị đã điền sẵn theo báo cáo của kỹ thuật viên. Bác sĩ kiểm tra và sửa lại nếu cần trước khi lưu.
         </p>
+        <div className="t-field" style={{ marginTop: 6 }}>
+          <label htmlFor={id('lk')} className="t-label">
+            3. Lời khuyên của bác sĩ
+          </label>
+          <textarea autoComplete="off" id={id('lk')} rows={3} className="t-textarea" value={form.advice} onChange={set('advice')} />
+        </div>
       </fieldset>
 
+      {withHistory && (
       <fieldset style={{ margin: 0, padding: 0, border: 0, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <legend className="t-legend">Tiền sử bệnh</legend>
         <p className="t-muted" style={{ marginBottom: 8 }}>
@@ -159,6 +174,7 @@ export function RecordFields({ form, setForm, errors, visitDate }) {
           </p>
         )}
       </fieldset>
+      )}
 
       <fieldset style={{ margin: 0, padding: 0, border: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
         <legend className="t-legend">Hoàn tất phiếu</legend>
