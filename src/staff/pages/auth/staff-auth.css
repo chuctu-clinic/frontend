@@ -101,6 +101,7 @@
 .s-send-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
 .s-send-row .a-input { flex: 1 1 220px; min-width: 0; width: auto; }
 .s-send-row .s-send-btn { flex: 0 0 auto; width: auto; padding: 0 22px; font-size: 17px; font-weight: 700; white-space: nowrap; }
+.s-send-row .s-send-btn { min-width: 150px; font-variant-numeric: tabular-nums; }
 .s-sent { display: flex; gap: 8px; align-items: flex-start; font-size: 16px; line-height: 24px; font-weight: 600; color: var(--green-700); }
 .s-sent svg { flex-shrink: 0; margin-top: 1px; }
 .s-pw-row { display: flex; gap: 10px; align-items: stretch; }
@@ -137,3 +138,5 @@
   .s-intro h1 { font-size: 28px; line-height: 38px; }
   .s-avatar { width: 120px; height: 120px; }
 }
+/* Đang đếm ngược tới lúc được gửi lại mã (không phải đang gửi) */
+.s-send-row .s-send-btn[disabled]:not([aria-busy]) { cursor: not-allowed; opacity: 0.6; }

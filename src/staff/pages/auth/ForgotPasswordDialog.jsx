@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog } from '../../../site/components/Dialog.jsx';
 import { FieldError } from '../../../site/components/fields.jsx';
 import { AccountNameHint } from '../../components/fields.jsx';
@@ -7,6 +7,8 @@ import { api } from '../../../shared/lib/api.js';
 import { MIN_PASSWORD_LENGTH } from '../../lib/password.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Lỗi "chờ N giây rồi gửi lại" thì nút tự đếm ngược; chờ lâu hơn (đủ số mã trong giờ) mới hiện lỗi. */
+const MAX_COUNTDOWN_SECONDS = 120;
 
 function emailError(email) {
   if (!email.trim()) return 'Vui lòng nhập email.';
@@ -50,6 +52,13 @@ function CodeStep({ onVerified, onClose }) {
   const [codeErr, setCodeErr] = useState(null);
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [wait, setWait] = useState(0);
+
+  useEffect(() => {
+    if (wait <= 0) return undefined;
+    const t = setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => clearTimeout(t);
+  }, [wait]);
 
   const sendCode = async () => {
     const err = emailError(email);
@@ -64,8 +73,16 @@ function CodeStep({ onVerified, onClose }) {
       const res = await api.post('/auth/staff/forgot-password', { email: email.trim() });
       setSent(res);
       setCode('');
+      setWait(res.resendAfterSeconds ?? 60);
     } catch (e) {
-      setEmailErr(e.fields?.email || e.message);
+      const retryAfter = Number(e.data?.retryAfter);
+      if (e.status === 429 && retryAfter > 0 && retryAfter <= MAX_COUNTDOWN_SECONDS) {
+        // Mã gửi lần trước vẫn dùng được: hiện ô nhập mã, nút đếm ngược tới lúc được gửi lại
+        setSent((s) => s ?? { email: email.trim() });
+        setWait(retryAfter);
+      } else {
+        setEmailErr(e.fields?.email || e.message);
+      }
     } finally {
       setSending(false);
     }
@@ -109,12 +126,20 @@ function CodeStep({ onVerified, onClose }) {
                 setEmailErr(null);
                 setSent(null);
                 setCodeErr(null);
+                setWait(0);
               }}
               aria-invalid={emailErr ? 'true' : 'false'}
               aria-describedby={emailErr ? 'fp-email-loi' : undefined}
             />
-            <button type="button" className="a-btn-primary s-send-btn" onClick={sendCode} disabled={sending} aria-busy={sending || undefined}>
-              {sent ? 'Gửi lại mã' : 'Gửi mã'}
+            <button
+              type="button"
+              className="a-btn-primary s-send-btn"
+              onClick={sendCode}
+              disabled={sending || wait > 0}
+              aria-busy={sending || undefined}
+              aria-label={wait > 0 ? `Gửi lại mã sau ${wait} giây` : undefined}
+            >
+              {wait > 0 ? `Gửi lại (${wait}s)` : sent ? 'Gửi lại mã' : 'Gửi mã'}
             </button>
           </div>
           <FieldError id="fp-email-loi">{emailErr}</FieldError>
