@@ -1,9 +1,5 @@
-// BẢN CHÉP: file này có ở cả repo backend (src/shared/) và repo frontend (shared/src/). Sửa bên nào thì chép sang bên kia.
-// Hằng số dùng chung giữa server và hai ứng dụng client.
-// File này chỉ là JavaScript thuần (không React, không import.meta.env) để Node.js nạp được.
+// Nhãn và hằng số dùng chung trong giao diện; giá trị khớp với backend.
 
-export const ROLES = ['USER', 'RECEPTIONIST', 'DOCTOR', 'TECHNICIAN', 'ADMIN'];
-export const STAFF_ROLES = ['RECEPTIONIST', 'DOCTOR', 'TECHNICIAN', 'ADMIN'];
 export const ROLE_LABELS = { USER: 'Người dùng', RECEPTIONIST: 'Tiếp tân', DOCTOR: 'Bác sĩ', TECHNICIAN: 'Kỹ thuật viên', ADMIN: 'Quản trị viên' };
 
 // Kỹ thuật bác sĩ chỉ định cho kỹ thuật viên
@@ -36,26 +32,6 @@ export const RELATIONSHIPS = {
   KHAC: 'Khác',
 };
 
-export const SERVICE_TYPES = {
-  CHUA_RO: 'Chưa rõ — nhờ bác sĩ khám và chỉ định',
-  CHAM_CUU: 'Châm cứu',
-  VAT_LY_TRI_LIEU: 'Vật lý trị liệu — phục hồi chức năng',
-  XOA_BOP_BAM_HUYET: 'Xoa bóp — bấm huyệt',
-  BOC_THUOC: 'Bốc thuốc — thuốc Nam, thuốc Bắc',
-};
-
-// Trạng thái phiếu khám. Người dùng chỉ thấy Đã đặt lịch, Đã hoàn thành, Đã huỷ (BR.17).
-export const APPOINTMENT_STATUSES = ['BOOKED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
-export const ACTIVE_STATUSES = ['BOOKED', 'CHECKED_IN', 'IN_PROGRESS'];
-
 // Giờ nhận bệnh (giờ Việt Nam), tất cả các ngày: chỉ check-in trong khoảng này, từ 16:30 là đóng cửa.
 // Từ noShowCancel, phiếu trong ngày còn Chưa đến tự chuyển sang Đã huỷ.
 export const RECEIVING_HOURS = { open: '08:00', close: '16:30', label: '8:00 – 16:30', noShowCancel: '17:00' };
-export const STATUS_LABELS = {
-  BOOKED: 'Chưa đến',
-  CHECKED_IN: 'Đã check-in',
-  IN_PROGRESS: 'Đang khám',
-  COMPLETED: 'Đã hoàn thành',
-  CANCELLED: 'Đã huỷ',
-};
-export const USER_STATUS_LABELS = { BOOKED: 'Đã đặt lịch', COMPLETED: 'Đã hoàn thành', CANCELLED: 'Đã huỷ' };

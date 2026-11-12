@@ -202,7 +202,6 @@ img { max-width: 100%; }
 .btn-ghost:hover { background: var(--green-100); text-decoration: underline; }
 .btn-danger { background: var(--surface-card); color: var(--alert-700); border-color: var(--alert-700); }
 .btn-danger:hover { background: var(--alert-100); }
-.btn-danger-solid { background: var(--alert-700); color: var(--on-brand); }
 .btn[disabled],
 .btn[aria-disabled='true'] {
   cursor: not-allowed;
@@ -210,9 +209,6 @@ img { max-width: 100%; }
   color: var(--ink-500);
   border-color: var(--line-soft);
   box-shadow: none;
-}
-@media (max-width: 767px) {
-  .btn-mobile-block { width: 100%; }
 }
 
 .spinner {

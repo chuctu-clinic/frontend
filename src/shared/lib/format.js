@@ -1,4 +1,4 @@
-// Nhãn dùng chung với server nằm ở shared/constants.js (bản chép của backend)
+// Nhãn dùng chung nằm ở shared/domain/constants.js
 export { GENDERS, RELATIONSHIPS, ROLE_LABELS } from '../domain/constants.js';
 
 export const CLINIC = {
@@ -46,12 +46,6 @@ export function fmtTime(value) {
   if (!value) return '—';
   const vn = new Date(new Date(value).getTime() + 7 * 3600_000);
   return `${pad(vn.getUTCHours())}:${pad(vn.getUTCMinutes())}`;
-}
-
-/** "08:00" → "8:00 – 9:00" */
-export function slotLabel(start) {
-  const [h, m] = start.split(':').map(Number);
-  return `${h}:${pad(m)} – ${h + 1}:${pad(m)}`;
 }
 
 export function shortTime(start) {

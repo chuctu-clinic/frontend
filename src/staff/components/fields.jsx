@@ -5,22 +5,7 @@ import { Picker } from '../../site/components/Picker.jsx';
 import '../../site/pages/auth/auth.css';
 import { phoneDigits, phoneInputError, toPhone } from '../../shared/domain/phone.js';
 
-// Thông báo và ô nhập của khu nội bộ
-
-/** Thông báo đã xong việc, nền xanh. */
-export function Notice({ children, onClose }) {
-  return (
-    <div className="t-notice" role="status">
-      <Icon name="checkCircle" size={28} />
-      <p style={{ lineHeight: '24px' }}>{children}</p>
-      {onClose && (
-        <button type="button" className="t-notice-close" onClick={onClose} aria-label="Đóng thông báo">
-          <Icon name="x" />
-        </button>
-      )}
-    </div>
-  );
-}
+// Ô nhập của khu nội bộ
 
 export function FieldError({ id, children }) {
   if (!children) return null;

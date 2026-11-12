@@ -35,19 +35,6 @@ function Row({ label, children }) {
   );
 }
 
-/** Chỉ định của bác sĩ: kỹ thuật và ghi chú cho kỹ thuật viên. */
-export function OrderBox({ visit }) {
-  return (
-    <div className="t-tint-green" style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <p>
-        <strong className="t-strong">Chỉ định:</strong> {kindLabels(visit.treatmentKinds, visit.treatmentOther) || '—'}
-      </p>
-      {visit.treatmentOrder && <p style={{ whiteSpace: 'pre-line' }}>{visit.treatmentOrder}</p>}
-      {visit.doctorName && <p className="t-muted">Bác sĩ {visit.doctorName}</p>}
-    </div>
-  );
-}
-
 /**
  * Toàn bộ những gì đã ghi trong lượt khám, để bác sĩ đọc trước khi kết luận. Không hiện gì khi lượt chưa qua khám sơ bộ.
  */
