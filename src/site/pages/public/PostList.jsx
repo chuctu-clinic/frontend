@@ -42,6 +42,7 @@ export function PostCard({ post, compact }) {
           <div className="p-meta">
             <PostTag post={post} />
             <span>{fmtDate(post.publishedAt)}</span>
+            {post.authorName && <span>· {post.authorName}</span>}
           </div>
         )}
         <h3>{post.title}</h3>
