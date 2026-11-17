@@ -783,8 +783,8 @@ button.t-check { cursor: pointer; }
 }
 
 /* ---------- Hàng đợi: bảng chờ khám ---------- */
-.hd-table { min-width: 780px; }
-.hd-table .t-tr { grid-template-columns: 76px minmax(0, 1fr) 210px 110px 110px 140px; }
+.hd-table { min-width: 890px; }
+.hd-table .t-tr { grid-template-columns: 76px minmax(0, 1fr) 210px 110px 110px 110px 140px; }
 .hd-table .t-td { padding: 14px 16px; }
 .hd-table .t-c { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .hd-group { padding: 10px 24px; background: var(--surface-100); border-bottom: 1px solid var(--line-soft); font-size: 14px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-500); }

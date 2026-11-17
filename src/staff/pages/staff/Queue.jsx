@@ -37,6 +37,9 @@ function WaitingTable({ waiting }) {
               Check-in
             </div>
             <div role="columnheader" className="t-th t-c">
+              Đã chờ
+            </div>
+            <div role="columnheader" className="t-th t-c">
               Loại
             </div>
           </div>
@@ -68,6 +71,9 @@ function WaitingTable({ waiting }) {
                     </div>
                     <div role="cell" className="t-td t-c hd-num">
                       {clock(w.checkInTime)}
+                    </div>
+                    <div role="cell" className="t-td t-c hd-num">
+                      {w.waitedMinutes != null ? `${w.waitedMinutes} phút` : '—'}
                     </div>
                     <div role="cell" className="t-td t-c">
                       <span className={`hd-kind ${kindTone}`}>{kind}</span>
