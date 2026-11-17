@@ -11,7 +11,9 @@ export function validateNewPatient({ fullName, birthYear, phone }) {
   const thisYear = Number(todayVN().slice(0, 4));
   return {
     fullName: fullName.trim().length >= 2 ? null : 'Vui lòng nhập họ và tên bệnh nhân.',
-    birthYear: /^(19|20)\d{2}$/.test(birthYear) && year <= thisYear ? null : 'Nhập năm sinh gồm 4 chữ số, ví dụ 1952.',
+    birthYear: !String(birthYear ?? '').trim()
+      ? 'Vui lòng nhập năm sinh.'
+      : /^(19|20)\d{2}$/.test(birthYear) && year <= thisYear ? null : 'Nhập năm sinh gồm 4 chữ số, ví dụ 1952.',
     phone: phoneError(phone),
   };
 }
