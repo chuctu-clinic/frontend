@@ -7,6 +7,7 @@ import { shortTime } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { clock } from '../../components/visit/VisitSummary.jsx';
 import { arrival, waitingGroups } from '../../lib/arrival.js';
+import { SlotMap } from '../../components/SlotMap.jsx';
 
 const ageOf = (birthYear) => (birthYear ? `${new Date().getFullYear() - birthYear} tuổi` : null);
 
@@ -125,6 +126,7 @@ export default function Queue() {
       <ErrorAlert error={error} />
       {loading && !data && <Loading />}
       {data && <WaitingTable waiting={data.waiting} />}
+      {data && <SlotMap slots={data.slotMap} headingId="hd-slotmap" />}
     </>
   );
 }
