@@ -93,7 +93,7 @@ export default function StaffApp() {
         <Route path="kham-benh" element={only(['DOCTOR'], <DoctorQueue />)} />
         <Route path="kham-benh/:checkinId" element={only(['DOCTOR'], <ExamForm />)} />
         <Route path="dieu-tri" element={only(['TECHNICIAN'], <TreatmentRoom />)} />
-        <Route path="benh-nhan" element={only(['RECEPTIONIST'], <Patients />)} />
+        <Route path="benh-nhan" element={only(['RECEPTIONIST', 'DOCTOR'], <Patients />)} />
         <Route path="benh-nhan/:id" element={<PatientDetail />} />
         <Route path="phieu-kham/:appointmentId/ket-qua" element={<RecordForm />} />
         <Route path="tai-khoan" element={<AccountInfo />} />
