@@ -175,6 +175,7 @@ export function CancelDialog({ appt, onClose, onDone }) {
           <Icon name="warning" size={26} strokeWidth={1.75} />
           <p className="t-text">
             Phiếu khám đã huỷ <strong className="t-strong">không dùng để check-in được nữa</strong>. Bệnh nhân muốn khám thì phải đặt lịch mới.
+            {(appt.status === 'CHECKED_IN' || appt.status === 'IN_PROGRESS') && ' Bệnh nhân đã check-in sẽ rời hàng đợi (hoặc rời chỗ điều trị) ngay.'}
           </p>
         </div>
         <ErrorAlert error={error} />
