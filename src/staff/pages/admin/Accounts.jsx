@@ -82,6 +82,7 @@ export default function Accounts() {
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
   const [role, setRole] = useState('');
+  const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [menu, setMenu] = useState(null);
   const [dialog, setDialog] = useState(null);
@@ -105,9 +106,9 @@ export default function Accounts() {
     setParams({}, { replace: true });
   }, [params, setParams]);
 
-  const { data, loading, reload } = useAsync(() => api.get(`/admin/accounts${qs({ q: query, role, page, limit: PER_PAGE })}`), [query, role, page]);
+  const { data, loading, reload } = useAsync(() => api.get(`/admin/accounts${qs({ q: query, role, status, page, limit: PER_PAGE })}`), [query, role, status, page]);
   const all = data ? Object.values(data.roleCounts).reduce((x, y) => x + y, 0) : 0;
-  const filtered = Boolean(query || role);
+  const filtered = Boolean(query || role || status);
 
   const changeRole = async (a, next) => {
     setError(null);
@@ -176,6 +177,24 @@ export default function Accounts() {
               setPage(1);
             }}
             items={[{ value: '', label: 'Tất cả' }, ...ROLE_ITEMS]}
+          />
+        </div>
+        <div className="t-field" style={{ flex: '1 1 200px' }}>
+          <label htmlFor="tk-trangthai" className="t-label">
+            Trạng thái
+          </label>
+          <TPicker
+            id="tk-trangthai"
+            value={status}
+            onChange={(v) => {
+              setStatus(v);
+              setPage(1);
+            }}
+            items={[
+              { value: '', label: 'Tất cả' },
+              { value: 'active', label: ACCOUNT_STATUS.active.label },
+              { value: 'locked', label: ACCOUNT_STATUS.locked.label },
+            ]}
           />
         </div>
       </div>
@@ -278,7 +297,7 @@ export default function Accounts() {
           <div className="t-empty">
             <p>Không tìm thấy tài khoản nào</p>
             <p className="t-text">
-              Kiểm tra lại tên, số điện thoại hoặc chọn vai trò <strong>Tất cả</strong>.
+              Kiểm tra lại tên, số điện thoại hoặc chọn <strong>Tất cả</strong> ở vai trò và trạng thái.
             </p>
           </div>
         )}
