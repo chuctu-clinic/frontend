@@ -1,4 +1,4 @@
-// BẢN CHÉP: file này có ở cả repo backend (src/shared/) và repo frontend (shared/src/). Sửa bên nào thì chép sang bên kia.
+// Đi đôi với backend common/Phones.java: sửa quy tắc bên nào thì sửa cả bên kia.
 // Số điện thoại di động Việt Nam: dùng chung giữa server và client để hai bên báo cùng một lỗi
 
 /** Chuẩn hoá về dạng 0xxxxxxxxx: bỏ khoảng trắng, dấu chấm, gạch; "+84…" hoặc "84…" (11 số) đổi thành "0…". */
@@ -39,8 +39,11 @@ export function phoneDigits(v) {
   return d.slice(0, 12);
 }
 
-/** Chữ số trong ô → số gửi lên server: 9 số sau +84 thì thêm số 0 ở đầu. */
-export const toPhone = (digits) => (digits.length === 9 ? `0${digits}` : digits);
+/**
+ * Chữ số trong ô → số gửi lên server: 9 số sau +84 thì thêm số 0 ở đầu. Chuỗi đã bắt đầu bằng 0 là người dùng gõ theo
+ * dạng 0xxx, không phải phần sau +84, nên giữ nguyên ("091234567" báo thiếu 1 chữ số, không thành "0091234567").
+ */
+export const toPhone = (digits) => (digits.length === 9 && !digits.startsWith('0') ? `0${digits}` : digits);
 
 /** Lỗi của ô số điện thoại (có tiền tố +84), cùng quy tắc với server. */
 export const phoneInputError = (digits, { required = true } = {}) => phoneProblem(toPhone(digits), { required });
