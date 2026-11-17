@@ -6,6 +6,7 @@ import { api } from '../../../shared/lib/api.js';
 import { fmtDate, fmtTime } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import './admin.css';
+import { SlotMap } from '../../components/SlotMap.jsx';
 
 const clock = (value) => fmtTime(value).replace(/^0/, '');
 
@@ -145,6 +146,7 @@ export default function Dashboard() {
       </div>
 
       <TodayStats appointments={data.appointments} queue={data.queue} />
+      <SlotMap slots={(queue.data || data.queue)?.slotMap} headingId="db-slotmap" />
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
         {queue.data && <QueueNow queue={queue.data} />}

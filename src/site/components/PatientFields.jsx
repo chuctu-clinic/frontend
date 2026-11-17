@@ -33,11 +33,15 @@ export function patientForm(profile) {
   };
 }
 
+/** Số điện thoại chỉ bắt buộc với hồ sơ chính chủ (số đăng nhập); hồ sơ người thân để trống được (A20). */
+const phoneRequired = (form) => form.relationship === 'BAN_THAN';
+
 /** Lỗi phía giao diện cho các ô bắt buộc; Backend vẫn kiểm tra lại. */
 export function validatePatient(form) {
   const e = {};
   if (form.fullName.trim().length < 2) e.fullName = 'Vui lòng nhập họ và tên.';
-  const p = phoneError(form.phone);
+  // Không bắt buộc nhưng có nhập thì vẫn phải đúng định dạng
+  const p = phoneError(form.phone, { required: phoneRequired(form) });
   if (p) e.phone = p;
   const d = dobError(form.dob);
   if (d) e.dob = d;
@@ -56,7 +60,7 @@ export const patientErrors = (form, error, tried) => {
 
 export const patientBody = (form) => ({
   fullName: form.fullName.trim(),
-  phone: toPhone(form.phone),
+  phone: form.phone ? toPhone(form.phone) : null,
   dob: joinDob(form.dob),
   gender: form.gender,
   address: joinAddress(form.address),
@@ -106,7 +110,7 @@ export function PatientFields({ id, form, setForm, errors: fe, phoneNote, phoneR
             <FieldError id={`${id}-ten-loi`}>{fe.fullName}</FieldError>
           </div>
           <div style={{ flex: '1 1 300px', minWidth: 0 }}>
-            <PhoneField id={`${id}-sdt`} label="Số điện thoại" required value={form.phone} onChange={(v) => setValue('phone', v)} error={fe.phone} note={phoneNote} readOnly={phoneReadOnly} />
+            <PhoneField id={`${id}-sdt`} label="Số điện thoại" required={phoneRequired(form)} value={form.phone} onChange={(v) => setValue('phone', v)} error={fe.phone} note={phoneNote} readOnly={phoneReadOnly} />
           </div>
         </div>
         <DobField id={`${id}-ns`} required value={form.dob} onChange={(v) => setValue('dob', v)} error={fe.dob} />

@@ -16,7 +16,7 @@ const TREATMENT = { to: '/noi-bo/dieu-tri', label: 'Điều trị', icon: 'check
 
 const NAV = {
   RECEPTIONIST: [SCHEDULE, QUEUE, PATIENTS],
-  DOCTOR: [EXAM, QUEUE],
+  DOCTOR: [EXAM, QUEUE, PATIENTS],
   TECHNICIAN: [TREATMENT, QUEUE],
   ADMIN: [
     { to: '/noi-bo/quan-tri', label: 'Tổng quan', icon: 'dashboard', end: true },

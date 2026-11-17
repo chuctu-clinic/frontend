@@ -4,6 +4,7 @@ import { api } from '../../../shared/lib/api.js';
 import { fmtTime, todayVN } from '../../../shared/lib/format.js';
 import { useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { longDay } from '../../components/appointments/time.js';
+import { publicName } from '../../lib/publicName.js';
 import './queueDisplay.css';
 
 // Màn hình hàng đợi chiếu lên TV ở phòng chờ: chỉ xem, tự làm mới, không có thao tác nào.
@@ -13,11 +14,8 @@ const POLL_MS = 5_000;
 const NEXT_LIMIT = 10;
 const HIGHLIGHT_MS = 10_000;
 
-/** Họ tên đầy đủ, gom khoảng trắng thừa. */
-function displayName(full) {
-  const name = String(full || '').trim().replace(/\s+/g, ' ');
-  return name || 'Bệnh nhân';
-}
+/** Màn hình chiếu công khai: không hiện họ tên đầy đủ, chỉ tên che bớt ("N. V. An"). */
+const displayName = publicName;
 
 /** Tên dài thì thu nhỏ chữ ô lớn một bậc để vẫn hiện trọn, không cắt. */
 const callSize = (name) => (name.length > 26 ? 'xl' : name.length > 18 ? 'lg' : '');

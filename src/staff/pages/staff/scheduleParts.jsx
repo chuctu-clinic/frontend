@@ -77,7 +77,9 @@ export function RowMenu({ a, isToday, isPast, open, onToggle, act }) {
   if (a.status === 'COMPLETED') items.push(['record', 'file', 'Xem lượt khám']);
   items.push(['patient', 'user', 'Mở hồ sơ bệnh nhân']);
   if (a.status === 'CHECKED_IN' && isToday) items.push(['undo-checkin', 'undo', 'Hoàn tác check-in']);
-  if (a.status === 'BOOKED' && !isPast) items.push(['cancel', 'x', 'Huỷ phiếu khám', 'danger']);
+  // Đã check-in hoặc đang khám vẫn huỷ được tại quầy (README: đã được tiếp nhận thì báo tiếp tân để huỷ): rời hàng đợi, nhả chỗ
+  const atClinic = (a.status === 'CHECKED_IN' || a.status === 'IN_PROGRESS') && isToday;
+  if ((a.status === 'BOOKED' && !isPast) || atClinic) items.push(['cancel', 'x', 'Huỷ phiếu khám', 'danger']);
 
   return (
     <div className="t-menu-wrap" ref={ref}>

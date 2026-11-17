@@ -298,6 +298,49 @@ export default function Posts() {
         {data && <Pager page={page} total={data.total} perPage={PER_PAGE} unit="bài viết" onPage={setPage} />}
       </div>
 
+      {/* Trang thông tin cố định: không thuộc 4 danh mục bài viết nên không lọc, không đếm, chỉ mở để sửa */}
+      {data?.pages?.length > 0 && (
+        <div className="t-card">
+          <div style={{ padding: '20px 24px 14px' }}>
+            <p className="t-label">Trang thông tin của website — luôn hiển thị, chỉ sửa được, không ẩn hay xoá được</p>
+          </div>
+          <div className="t-scroll">
+            <div role="table" aria-label="Trang thông tin của website" className="t-table a-pages">
+              <div role="row" className="t-tr t-thead" style={{ borderTop: '1px solid var(--line-soft)' }}>
+                {['Trang', 'Cập nhật', 'Thao tác'].map((h) => (
+                  <div key={h} role="columnheader" className="t-th">
+                    {h}
+                  </div>
+                ))}
+              </div>
+              <div role="rowgroup" className="t-tbody">
+                {data.pages.map((p) => (
+                  <div key={p.id} role="row" className="t-tr">
+                    <div role="cell" className="t-td t-td-name">
+                      {p.title}
+                    </div>
+                    <div role="cell" className="t-td t-text">
+                      <span style={{ display: 'block', whiteSpace: 'nowrap' }}>{fmtDate(p.updatedAt)}</span>
+                      <span style={{ display: 'block', color: 'var(--ink-500)' }}>{fmtTime(p.updatedAt)}</span>
+                    </div>
+                    <div role="cell" className="t-td a-td-action" style={{ gap: 8 }}>
+                      <Link className="t-btn t-btn-ghost" style={{ padding: '0 16px' }} to={`/noi-bo/quan-tri/bai-viet/${p.id}/xem-thu`} state={{ from: 'list' }} aria-label={`Xem trang ${p.title}`}>
+                        <Icon name="eye" size={20} />
+                        Xem
+                      </Link>
+                      <Link className="t-btn t-btn-ghost" style={{ padding: '0 16px' }} to={`/noi-bo/quan-tri/bai-viet/${p.id}`} aria-label={`Sửa trang ${p.title}`}>
+                        <Icon name="edit" size={20} />
+                        Sửa
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {delTarget && (
         <PlainDialog labelledBy={delTitle} width={600} onClose={() => setDelTarget(null)}>
           <div className="a-modal-head">

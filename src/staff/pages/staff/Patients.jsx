@@ -5,7 +5,7 @@ import { Loading } from '../../../shared/ui/ui.jsx';
 import { api, qs } from '../../../shared/lib/api.js';
 import { fmtDate } from '../../../shared/lib/format.js';
 import { useAsync, useDismiss, useDocumentTitle, useMenuPlacement } from '../../../shared/lib/hooks.js';
-import { isAdmin, useSession } from '../../../shared/lib/session.jsx';
+import { can, isAdmin, useSession } from '../../../shared/lib/session.jsx';
 import { Pager } from '../../components/Pager.jsx';
 import { NoticeDialog, TDialog } from '../../components/dialogs.jsx';
 import { NewPatientFields } from '../../components/appointments/NewPatientFields.jsx';
@@ -92,10 +92,13 @@ export default function Patients() {
             Hồ sơ tồn tại độc lập với tài khoản website. Bệnh nhân đến lần đầu chỉ cần cho biết họ tên, năm sinh và số điện thoại là tạo được hồ sơ, dù chưa có tài khoản.
           </p>
         </div>
-        <button type="button" className="t-btn t-btn-primary" style={{ padding: '0 26px' }} onClick={() => setCreating(true)}>
-          <Icon name="userPlus" strokeWidth={1.75} />
-          Thêm hồ sơ mới
-        </button>
+        {/* Bác sĩ chỉ xem danh sách; thêm hồ sơ là việc của Tiếp tân */}
+        {can(user, 'RECEPTIONIST') && (
+          <button type="button" className="t-btn t-btn-primary" style={{ padding: '0 26px' }} onClick={() => setCreating(true)}>
+            <Icon name="userPlus" strokeWidth={1.75} />
+            Thêm hồ sơ mới
+          </button>
+        )}
       </div>
 
       {created && (
@@ -214,7 +217,7 @@ export default function Patients() {
           <div className="t-empty">
             <p>Không tìm thấy hồ sơ nào</p>
             <p className="t-text">
-              Kiểm tra lại mã, họ tên hoặc số điện thoại, hoặc đổi bộ lọc <strong>Trạng thái</strong>. Bệnh nhân đến lần đầu thì bấm <strong>Thêm hồ sơ mới</strong>.
+              Kiểm tra lại mã, họ tên hoặc số điện thoại, hoặc đổi bộ lọc <strong>Trạng thái</strong>.{can(user, 'RECEPTIONIST') && <> Bệnh nhân đến lần đầu thì bấm <strong>Thêm hồ sơ mới</strong>.</>}
             </p>
           </div>
         )}
