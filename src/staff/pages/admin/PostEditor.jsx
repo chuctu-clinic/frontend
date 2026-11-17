@@ -73,7 +73,10 @@ export function toPayload(form, status) {
   };
 }
 
-/** Bắt buộc khi công khai: tiêu đề, mô tả, nội dung, tác giả, ngày đăng, ảnh thu nhỏ. Lưu nháp chỉ cần tiêu đề. */
+/**
+ * Bắt buộc khi công khai: tiêu đề, mô tả, nội dung, tác giả, ngày đăng, ảnh thu nhỏ (trừ trang thông tin cố định, vốn
+ * không có ảnh). Lưu nháp chỉ cần tiêu đề.
+ */
 export function checkPost(form, full) {
   const errs = { title: !form.title.trim() };
   if (full) {
@@ -81,7 +84,7 @@ export function checkPost(form, full) {
     errs.content = !hasContent(form.content);
     errs.authorName = !form.authorName.trim();
     errs.date = !form.date;
-    errs.thumbnail = !form.thumbnailUrl;
+    errs.thumbnail = !form.slug && !form.thumbnailUrl;
   }
   return errs;
 }
@@ -374,7 +377,7 @@ export default function PostEditor() {
 
           <div className="a-side-card" style={{ gap: 16 }}>
             <h2 className="t-h2">
-              Ảnh thu nhỏ <span className="t-req">*</span>
+              Ảnh thu nhỏ {!fixedPage && <span className="t-req">*</span>}
             </h2>
             <div className="a-thumb-box">
               {form.thumbnailUrl ? (
