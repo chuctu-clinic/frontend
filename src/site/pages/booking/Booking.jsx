@@ -31,9 +31,11 @@ function SlotGroup({ label, slots, value, onPick }) {
             aria-pressed={value === s.start}
             aria-disabled={!s.available}
             onClick={() => s.available && onPick(s.start)}
+            title={s.available && s.capacity ? `Còn ${s.remaining} trên ${s.capacity} chỗ` : undefined}
           >
             {shortTime(s.start)}
-            {!s.available && <small>{s.reason || 'Không chọn được'}</small>}
+            {/* Khung còn chọn được thì báo số chỗ còn lại (mỗi khung tối đa 6 người) */}
+            {s.available ? s.remaining != null && <small>Còn {s.remaining} chỗ</small> : <small>{s.reason || 'Không chọn được'}</small>}
           </button>
         ))}
       </div>
